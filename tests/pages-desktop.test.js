@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { APP_REPOSITORIES, createAppRepositorySeeds } = require('../scripts/create-app-repository-seeds');
-const { createDesktopDownload } = require('../src/standalone-downloads');
+const { createDesktopDownload } = require('../src/desktop-downloads');
 
 test('Brightdesk Pages has the correct desktop product identity', () => {
   const pages = APP_REPOSITORIES.find(item => item.appId === 'pages');
