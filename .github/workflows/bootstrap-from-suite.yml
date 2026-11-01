@@ -1,4 +1,5 @@
 name: Bootstrap Brightdesk Pages from approved suite seed
+# Updated by Brightdesk setup automation to start the standalone source import.
 
 on:
   push:
