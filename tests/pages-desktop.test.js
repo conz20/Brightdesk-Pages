@@ -44,3 +44,24 @@ test('Brightdesk Pages macOS installer resolves to the expected release file', (
   assert.equal(download.filename, 'Brightdesk-Pages-0.1.0-universal.dmg');
   assert.match(download.url, /Brightdesk-Pages-0\.1\.0-universal\.dmg$/);
 });
+
+
+test('Pages repository performs scheduled full release-readiness checks', () => {
+  const root = path.resolve(__dirname, '..');
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
+  assert.ok(workflow.includes("cron: '37 4 * * *'"));
+  for (const command of [
+    'npm run lock:prepare',
+    'npm run lock:verify',
+    'npm ci --no-audit --no-fund',
+    'npm run verify:licenses',
+    'npm test',
+    'npm run release:preflight',
+    'npm audit --audit-level=high'
+  ]) assert.ok(workflow.includes(command), 'missing Pages quality check: ' + command);
+
+  const dependabot = fs.readFileSync(path.join(root, '.github', 'dependabot.yml'), 'utf8');
+  assert.match(dependabot, /package-ecosystem: npm/);
+  assert.match(dependabot, /package-ecosystem: github-actions/);
+  assert.equal((dependabot.match(/interval: weekly/g) || []).length, 2);
+});
