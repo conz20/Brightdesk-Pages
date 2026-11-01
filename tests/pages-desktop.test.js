@@ -40,7 +40,7 @@ test('Brightdesk Pages installer package is configured for Pages only', () => {
 
 test('Brightdesk Pages macOS installer resolves to the expected release file', () => {
   const download = createDesktopDownload({ productId: 'pages', platform: 'darwin', version: '0.1.0' });
-  assert.equal(download.appId, 'pages');
+  assert.equal(download.productId, 'pages');
   assert.equal(download.filename, 'Brightdesk-Pages-0.1.0-universal.dmg');
   assert.match(download.url, /Brightdesk-Pages-0\.1\.0-universal\.dmg$/);
 });
