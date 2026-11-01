@@ -1,5 +1,4 @@
 name: Bootstrap Brightdesk Pages from approved suite seed
-# Updated by Brightdesk setup automation to start the standalone source import.
 
 on:
   push:
@@ -37,7 +36,7 @@ jobs:
 
       - name: Copy only Brightdesk Pages into this repository
         run: |
-          rsync -a --delete --exclude='.git' \
+          rsync -a --delete --exclude='.git' --exclude='.github' \
             suite-source/release/app-repository-seeds/Brightdesk-Pages/ \
             pages-repository/
 
