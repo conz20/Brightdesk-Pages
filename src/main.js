@@ -6,7 +6,7 @@ const fs = require('node:fs/promises');
 const { openOfficeFile, exportOfficeFile, cleanFileName, ensureExtension } = require('./file-service');
 const { BUILTIN_LANGUAGES, validateLanguagePack, getBuiltinLanguage } = require('./language-service');
 const { DictionaryService } = require('./dictionary-service');
-const { APP_SLUGS, createStandaloneDownload } = require('./standalone-downloads');
+const { APP_SLUGS, createDesktopDownload } = require('./standalone-downloads');
 let mainWindow;
 let agreementWindow;
 let termsAccepted = false;
@@ -15,23 +15,23 @@ const updatePublishingConfigured = Array.isArray(packageConfig.build?.publish) &
 let updateCheckInProgress = false;
 let lastUpdateCheckAt = 0;
 let dictionaryService;
-const standaloneAppNames = {
+const productNames = {
   pages: 'Pages', sheets: 'Sheets', slides: 'Decks', notes: 'Notes',
   database: 'Database', forms: 'Forms', lists: 'Lists', planner: 'Planner',
   todo: 'To Do', loop: 'Workspace'
 };
-const supportedStandaloneApps = new Set(Object.keys(APP_SLUGS));
-const standaloneAppId = packageConfig.brightdeskAppId || null;
-if (standaloneAppId && !supportedStandaloneApps.has(standaloneAppId)) {
-  throw new Error(`Unsupported Brightdesk standalone app: ${standaloneAppId}`);
+const supportedProducts = new Set(Object.keys(APP_SLUGS));
+const selectedProductId = packageConfig.brightdeskAppId || null;
+if (selectedProductId && !supportedProducts.has(selectedProductId)) {
+  throw new Error(`Unsupported Brightdesk product: ${selectedProductId}`);
 }
 
 function sendUpdateState(state) { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('updates:state', state); }
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1440, height: 920, minWidth: 980, minHeight: 680,
-    title: standaloneAppId ? `Brightdesk ${standaloneAppNames[standaloneAppId]}` : 'Brightdesk', backgroundColor: '#f5f6fa',
-    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, additionalArguments: standaloneAppId ? [`--brightdesk-app=${standaloneAppId}`] : [] }
+    title: selectedProductId ? `Brightdesk ${productNames[selectedProductId]}` : 'Brightdesk', backgroundColor: '#f5f6fa',
+    webPreferences: { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false, sandbox: true, additionalArguments: selectedProductId ? [`--brightdesk-app=${selectedProductId}`] : [] }
   });
   mainWindow.loadFile(path.join(__dirname, 'index.html'));
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -99,9 +99,9 @@ ipcMain.handle('terms:decline', event => {
 });
 ipcMain.handle('app:version', event => { if (!senderIsMain(event)) throw new Error('Invalid sender.'); return app.getVersion(); });
 
-ipcMain.handle('downloads:standalone-app', async (event, appId) => {
+ipcMain.handle('downloads:desktop-installer', async (event, appId) => {
   if (!senderIsMain(event)) throw new Error('Invalid sender.');
-  const download = createStandaloneDownload({
+  const download = createDesktopDownload({
     appId,
     platform: process.platform,
     version: packageConfig.version
@@ -265,12 +265,12 @@ function initUpdater() {
     autoUpdater.autoInstallOnAppQuit = true;
     autoUpdater.allowUnverifiedLinuxPackages = false;
     autoUpdater.on('checking-for-update', () => sendUpdateState({ status: 'checking', message: 'Checking for updates…' }));
-    autoUpdater.on('update-available', info => sendUpdateState({ status: 'available', message: `Brightdesk ${info.version} is available. Downloading the suite and changed app modules automatically…` }));
+    autoUpdater.on('update-available', info => sendUpdateState({ status: 'available', message: `Brightdesk ${info.version} is available. Downloading the suite and updated product features automatically…` }));
     autoUpdater.on('update-not-available', () => sendUpdateState({ status: 'current', message: 'Brightdesk is up to date.' }));
     autoUpdater.on('download-progress', p => sendUpdateState({ status: 'downloading', message: `Downloading update: ${Math.round(p.percent)}%` }));
-    autoUpdater.on('update-downloaded', info => sendUpdateState({ status: 'downloaded', message: `Brightdesk ${info.version} and its updated app modules are ready. Restart to apply the update.` }));
+    autoUpdater.on('update-downloaded', info => sendUpdateState({ status: 'downloaded', message: `Brightdesk ${info.version} and its updated product features are ready. Restart to apply the update.` }));
     autoUpdater.on('error', err => sendUpdateState({ status: 'error', message: err.message || 'Update check failed.' }));
-    /* The suite installer contains the app modules. A suite release updates the shell and every changed module together. */
+    /* The suite installer contains the product features. A suite release updates the desktop software and its changed components together. */
     setTimeout(() => checkForUpdates({ quiet: true, force: true }), 12000);
     setInterval(() => checkForUpdates({ quiet: true, force: true }), 6 * 60 * 60 * 1000);
   } catch (error) { sendUpdateState({ status: 'unavailable', message: 'Update service is not configured in this build.' }); }
