@@ -1,9 +1,8 @@
-# Brightdesk-Pages
+# Brightdesk Pages
 
-- Product: Brightdesk Pages
-- App ID: `pages`
-- Repository visibility: choose when creating the GitHub repository
+- Product name: Brightdesk Pages
+- Product identifier: `pages`
 - Description: Create letters, reports and formatted documents.
-- Main suite: https://github.com/connormolloy12/Brightdesk-suite
+- Related project: https://github.com/connormolloy12/Brightdesk-suite
 
-This seed is ready to push to a GitHub repository named `Brightdesk-Pages`. It is a standalone edition locked to Brightdesk Pages. The shared suite keeps the complete ten-app experience.
+This repository contains the Brightdesk Pages desktop editor and the build files used to prepare its Windows, macOS and Linux installers.
