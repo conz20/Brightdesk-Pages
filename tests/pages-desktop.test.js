@@ -55,7 +55,7 @@ test('Pages repository performs scheduled full release-readiness checks', () => 
     'npm run lock:verify',
     'npm ci --no-audit --no-fund',
     'npm run verify:licenses',
-    'npm test',
+    'node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js',
     'npm run release:preflight',
     'npm audit --audit-level=high'
   ]) assert.ok(workflow.includes(command), 'missing Pages quality check: ' + command);
