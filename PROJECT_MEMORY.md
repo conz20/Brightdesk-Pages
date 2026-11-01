@@ -2,7 +2,7 @@
 
 Use exactly Node.js 24.22.2 LTS for development, testing and desktop installer builds.
 
-The product in this repository is called **Brightdesk Pages**. Use that name on its own in customer-facing text, repository descriptions, installer names and release titles. Do not describe it as a separate or standalone product, and do not use the word "app" to describe it. This repository prepares desktop installers for Brightdesk Pages.
+The product in this repository is called **Brightdesk Pages**. Use that name on its own in customer-facing text, repository descriptions, installer names and release titles. Describe its distribution in terms of desktop installers.
 
 Brightdesk Pages is part of Brightdesk Office Suite. The approved Brightdesk product range is:
 - Brightdesk Pages
