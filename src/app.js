@@ -499,13 +499,13 @@ function renderAppManager() {
     }
     const downloadButton = document.createElement('button');
     downloadButton.className = 'text-button small-action';
-    downloadButton.textContent = 'Download standalone';
-    downloadButton.setAttribute('aria-label', `Download ${item.name} standalone`);
-    downloadButton.title = 'Open the latest verified standalone installer for this operating system.';
+    downloadButton.textContent = 'Download desktop installer';
+    downloadButton.setAttribute('aria-label', `Download the ${item.name} desktop installer`);
+    downloadButton.title = 'Open the latest verified desktop installer for this operating system.';
     downloadButton.addEventListener('click', async () => {
       downloadButton.disabled = true;
       try {
-        await window.brightdesk.downloadStandaloneApp(item.id);
+        await window.brightdesk.downloadDesktopInstaller(item.id);
       } catch (error) {
         alert(`Could not open the ${item.name} download: ${error.message}`);
       } finally {
@@ -519,7 +519,7 @@ function renderAppManager() {
 function toggleAppInstall(id) {
   if (!installableCatalog.some(item => item.id === id) || launchAppId) return;
   if (installedApp(id)) {
-    if (state.installedApps.length === 1) { alert('Keep at least one app installed in your Brightdesk workspace.'); return; }
+    if (state.installedApps.length === 1) { alert('Keep at least one Brightdesk product available in your workspace.'); return; }
     state.installedApps = state.installedApps.filter(appId => appId !== id);
     if (state.app === id) { state.app = state.installedApps[0]; state.ribbonTab = 'home'; }
   } else { state.installedApps.push(id); }
@@ -527,7 +527,7 @@ function toggleAppInstall(id) {
 }
 function completeAppSetup() {
   const selected = [...state.firstRunSelection].filter(id => installableCatalog.some(item => item.id === id));
-  if (!selected.length) { alert('Choose at least one app to install.'); return; }
+  if (!selected.length) { alert('Choose at least one Brightdesk product.'); return; }
   state.installedApps = selected; state.setupComplete = true; state.app = selected[0]; state.view = 'workspace';
   saveAppSetup(); render();
 }
