@@ -1,8 +1,10 @@
-# Brightdesk project memory
+# Brightdesk Pages project notes
 
-The standing project requirement is to use exactly Node.js 24.22.2 LTS for development, testing and release builds.
+Use exactly Node.js 24.22.2 LTS for development, testing and desktop installer builds.
 
-The approved and fixed product scope is exactly ten apps:
+The product in this repository is called **Brightdesk Pages**. Use that name on its own in customer-facing text, repository descriptions, installer names and release titles. Do not describe it as a separate or standalone product, and do not use the word "app" to describe it. This repository prepares desktop installers for Brightdesk Pages.
+
+Brightdesk Pages is part of Brightdesk Office Suite. The approved Brightdesk product range is:
 - Brightdesk Pages
 - Brightdesk Sheets
 - Brightdesk Decks
@@ -13,10 +15,6 @@ The approved and fixed product scope is exactly ten apps:
 - Brightdesk Planner
 - Brightdesk To Do
 - Brightdesk Workspace
-
-All ten apps are integrated into Brightdesk-suite. The complete suite remains available as one native desktop installer. Each approved app also has a standalone installer build target and a standalone app repository seed with app-specific metadata, original artwork and build workflow.
-
-The individual app repositories are generated from the same tested suite source. Each standalone package is locked to one app ID, while Brightdesk-suite continues to contain and launch all ten apps together.
 
 Outlook, OneDrive and Teams are excluded. Do not add them.
 
