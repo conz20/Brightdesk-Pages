@@ -1,6 +1,6 @@
-# Brightdesk product scope lock
+# Brightdesk product scope
 
-The approved Brightdesk product scope contains exactly these ten apps:
+The approved Brightdesk product range contains exactly these ten named products:
 
 1. Brightdesk Pages
 2. Brightdesk Sheets
@@ -15,7 +15,7 @@ The approved Brightdesk product scope contains exactly these ten apps:
 
 ## First-release lineup
 
-The first-release product lineup is all ten apps listed above. The catalogue and app manager must show every app, its original Brightdesk artwork, name, short explanation and honest availability status. Do not hide planned apps just because they are not implemented yet.
+The first-release product lineup is all ten names listed above. The product catalogue must show each name, original Brightdesk artwork, a short explanation and an accurate availability status.
 
 ## Version 0.1.0 implementation status
 
@@ -39,7 +39,7 @@ Outlook, OneDrive and Teams are not part of Brightdesk and must not be added.
 
 ## Change control
 
-This scope can change only when the user explicitly instructs. Do not infer approval to add apps from a technical dependency, design reference or workflow comparison.
+This scope can change only when the user explicitly instructs. Do not infer approval to add products from a technical dependency, design reference or workflow comparison.
 
 ## Identity
 
