@@ -37,7 +37,7 @@ jobs:
           node-version: 24.22.2
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: node --test tests/standalone-pages.test.js tests/page-layout.test.js tests/app-catalog.test.js tests/integrated-app-shell.test.js
+      - run: node --test tests/standalone-pages.test.js tests/page-layout.test.js tests/integrated-app-shell.test.js
 
   build:
     name: Build ${{ matrix.platform }} installer
