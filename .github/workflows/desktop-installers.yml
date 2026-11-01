@@ -37,7 +37,7 @@ jobs:
           node-version: 24.22.2
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - run: node --test tests/pages-desktop.test.js tests/page-layout.test.js
+      - run: node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js
 
   build:
     name: Build ${{ matrix.platform }} desktop installer
