@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { APP_REPOSITORIES, createAppRepositorySeeds } = require('../scripts/create-app-repository-seeds');
-const { createStandaloneDownload } = require('../src/standalone-downloads');
+const { createDesktopDownload } = require('../src/standalone-downloads');
 
 test('Brightdesk Pages has the correct desktop product identity', () => {
   const pages = APP_REPOSITORIES.find(item => item.appId === 'pages');
@@ -39,7 +39,7 @@ test('Brightdesk Pages installer package is configured for Pages only', () => {
 });
 
 test('Brightdesk Pages macOS installer resolves to the expected release file', () => {
-  const download = createStandaloneDownload({ appId: 'pages', platform: 'darwin', version: '0.1.0' });
+  const download = createDesktopDownload({ appId: 'pages', platform: 'darwin', version: '0.1.0' });
   assert.equal(download.appId, 'pages');
   assert.equal(download.filename, 'Brightdesk-Pages-0.1.0-universal.dmg');
   assert.match(download.url, /Brightdesk-Pages-0\.1\.0-universal\.dmg$/);
