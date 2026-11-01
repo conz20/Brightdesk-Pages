@@ -6,7 +6,7 @@ const fs = require('node:fs/promises');
 const { openOfficeFile, exportOfficeFile, cleanFileName, ensureExtension } = require('./file-service');
 const { BUILTIN_LANGUAGES, validateLanguagePack, getBuiltinLanguage } = require('./language-service');
 const { DictionaryService } = require('./dictionary-service');
-const { APP_SLUGS, createDesktopDownload } = require('./desktop-downloads');
+const { PRODUCT_SLUGS, createDesktopDownload } = require('./desktop-downloads');
 let mainWindow;
 let agreementWindow;
 let termsAccepted = false;
@@ -20,7 +20,7 @@ const productNames = {
   database: 'Database', forms: 'Forms', lists: 'Lists', planner: 'Planner',
   todo: 'To Do', loop: 'Workspace'
 };
-const supportedProducts = new Set(Object.keys(APP_SLUGS));
+const supportedProducts = new Set(Object.keys(PRODUCT_SLUGS));
 const selectedProductId = packageConfig.brightdeskAppId || null;
 if (selectedProductId && !supportedProducts.has(selectedProductId)) {
   throw new Error(`Unsupported Brightdesk product: ${selectedProductId}`);
@@ -99,10 +99,10 @@ ipcMain.handle('terms:decline', event => {
 });
 ipcMain.handle('app:version', event => { if (!senderIsMain(event)) throw new Error('Invalid sender.'); return app.getVersion(); });
 
-ipcMain.handle('downloads:desktop-installer', async (event, appId) => {
+ipcMain.handle('downloads:desktop-installer', async (event, productId) => {
   if (!senderIsMain(event)) throw new Error('Invalid sender.');
   const download = createDesktopDownload({
-    appId,
+    productId,
     platform: process.platform,
     version: packageConfig.version
   });
