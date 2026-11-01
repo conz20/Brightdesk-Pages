@@ -34,9 +34,9 @@
     "dist:desktop:win": "node scripts/build-app.js pages win",
     "dist:desktop:mac": "node scripts/build-app.js pages mac",
     "dist:desktop:linux": "node scripts/build-app.js pages linux",
-    "verify:desktop:win": "node scripts/verify-standalone-apps.js win release/apps pages",
-    "verify:desktop:mac": "node scripts/verify-standalone-apps.js mac release/apps pages",
-    "verify:desktop:linux": "node scripts/verify-standalone-apps.js linux release/apps pages"
+    "verify:desktop:win": "node scripts/verify-desktop-installers.js win release/apps pages",
+    "verify:desktop:mac": "node scripts/verify-desktop-installers.js mac release/apps pages",
+    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages"
   },
   "dependencies": {
     "docx": "9.15.1",
