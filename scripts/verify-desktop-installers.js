@@ -4,7 +4,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { APP_SLUGS } = require('../src/standalone-downloads');
+const { APP_SLUGS } = require('../src/desktop-downloads');
 
 const PLATFORMS = Object.freeze({
   win: { arch: 'x64', extensions: ['exe'] },
