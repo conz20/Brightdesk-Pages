@@ -47,7 +47,8 @@ jobs:
       - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
       - run: npm run verify:licenses
-      - run: npm test
+      - name: Test Pages, page layout and product downloads
+        run: node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js
       - run: npm run release:preflight
       - run: npm audit --audit-level=high
 
