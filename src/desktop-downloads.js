@@ -24,7 +24,7 @@ function createDesktopDownload({ productId, platform, version }) {
   if (!slug) throw new Error(`Brightdesk product "${productId}" is not available for desktop installation.`);
   const target = PLATFORM_SUFFIXES[platform];
   if (!target) throw new Error(`Desktop installer links are not supported on ${platform}.`);
-  if (typeof version !== 'string' || !/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
     throw new Error('A valid release version is required to prepare a desktop installer.');
   }
 
