@@ -4,7 +4,7 @@
 Use exactly Node.js **24.22.2 LTS**. Do not change the pinned runtime in package.json, .nvmrc, .node-version, .npmrc, the dev container or GitHub Actions without explicit project-owner approval.
 
 ## Product identity
-The product in this repository is **Brightdesk Pages**. Use that exact name in customer-facing text, release titles and installer descriptions. Do not describe it as a separate or standalone product or call it an app. This repository prepares desktop installers for Brightdesk Pages.
+The product in this repository is **Brightdesk Pages**. Use that exact name in customer-facing text, release titles and installer descriptions. Describe distribution only in terms of desktop installers.
 
 Brightdesk is an independent product. Use original names, source code, interface design and artwork. Do not claim Microsoft affiliation or copy proprietary Microsoft code or assets.
 
