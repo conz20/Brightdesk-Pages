@@ -1,28 +1,28 @@
 # Brightdesk Pages
 
-![Brightdesk Pages repository banner](assets/social-preview.svg)
+![Brightdesk Pages preview](assets/social-preview.svg)
 
-![Brightdesk Pages app artwork](assets/brightdesk-app.svg)
-
-Create letters, reports and formatted documents.
-
-Brightdesk is an independent desktop product. This repository is the standalone edition of **Brightdesk Pages**. It uses the shared Brightdesk desktop engine and opens directly into this app, with app switching disabled.
-
-## What this app does
+![Brightdesk Pages document preview](assets/brightdesk-pages.svg)
 
 Create letters, reports and formatted documents.
 
-## Download
+**Brightdesk Pages** is a desktop document editor for writing and formatting your work. It is delivered through a desktop installer for your computer.
 
-The latest standalone installers are published from this repository's verified release workflow when a release is approved.
+## What you can do
 
-| Platform | Installer |
+Create letters, reports and formatted documents with familiar editing and page-layout tools.
+
+## Desktop installers
+
+Choose the installer for your computer:
+
+| Computer | Installer |
 | --- | --- |
 | Windows | Windows x64 installer (.exe) |
-| macOS | Universal installer (.dmg), package (.pkg) and archive (.zip) |
-| Linux | x64 AppImage and Debian package (.deb) |
+| macOS | Universal installer (.dmg), package (.pkg) or archive (.zip) |
+| Linux | Portable Linux package or Debian package (.deb) |
 
-The complete ten-app desktop suite remains available from [Brightdesk-suite](https://github.com/connormolloy12/Brightdesk-suite).
+Installers are published here after the release checks have passed and a release has been approved.
 
 ## Run from source
 
@@ -33,25 +33,25 @@ npm ci
 npm start
 ```
 
-To build an installer on its native operating system:
+To build and verify an installer on its native operating system:
 
 ```sh
-npm run dist:app:mac
-npm run verify:app:mac
+npm run dist:desktop:mac
+npm run verify:desktop:mac
 ```
 
 Use `win` on Windows or `linux` on Linux instead of `mac`.
 
-## Project structure
+## Project files
 
-- `src/` — Brightdesk desktop renderer and app modules.
-- `assets/brightdesk-app.svg` — original preview artwork for this app.
+- `src/` — the Brightdesk Pages editor and supporting desktop code.
+- `assets/brightdesk-pages.svg` — Brightdesk Pages preview artwork.
 - `scripts/` — build and release verification tools.
-- `tests/` — automated app and shared-engine tests.
+- `tests/` — automated checks.
 
 ## Related project
 
-[Brightdesk Office Suite](https://github.com/connormolloy12/Brightdesk-suite) brings all ten approved Brightdesk apps together in one desktop installer.
+[Brightdesk Office Suite](https://github.com/connormolloy12/Brightdesk-suite) brings the approved Brightdesk products together in one desktop installation.
 
 ## Identity and licence
 
