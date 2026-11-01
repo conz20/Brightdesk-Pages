@@ -19,7 +19,7 @@ function sha256File(file) {
 function expectedFilename(appId, platform, version) {
   const slug = APP_SLUGS[appId];
   const target = PLATFORMS[platform];
-  if (!slug || !target) throw new Error('An approved app and supported platform are required.');
+  if (!slug || !target) throw new Error('An approved Brightdesk product and supported platform are required.');
   const base = platform === 'linux'
     ? `brightdesk-${slug.toLowerCase()}-${version}-${target.arch}`
     : `Brightdesk-${slug}-${version}-${target.arch}`;
@@ -30,18 +30,18 @@ function verifyStandaloneApps({ directory, platform, version, appId = null }) {
   const target = PLATFORMS[platform];
   if (!target) throw new Error(`Unsupported platform: ${platform}`);
   if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
-    throw new Error('A valid release version is required for standalone app verification.');
+    throw new Error('A valid release version is required for desktop installer verification.');
   }
 
   if (appId !== null && !APP_SLUGS[appId]) {
-    throw new Error(`Unknown approved Brightdesk app: ${appId}`);
+    throw new Error(`Unknown approved Brightdesk product: ${appId}`);
   }
   const selectedApps = appId ? [[appId, APP_SLUGS[appId]]] : Object.entries(APP_SLUGS);
   const appResults = [];
   for (const [appId, slug] of selectedApps) {
     const appDirectory = path.join(directory, appId);
     if (!fs.existsSync(appDirectory) || !fs.statSync(appDirectory).isDirectory()) {
-      throw new Error(`Missing standalone output folder for Brightdesk ${slug}: ${appDirectory}`);
+      throw new Error(`Missing desktop installer output folder for Brightdesk ${slug}: ${appDirectory}`);
     }
     const expected = expectedFilename(appId, platform, version);
     const files = expected.map(filename => path.join(appDirectory, filename));
@@ -51,7 +51,7 @@ function verifyStandaloneApps({ directory, platform, version, appId = null }) {
     }
     const rows = files.map(file => {
       const bytes = fs.statSync(file).size;
-      if (bytes <= 0) throw new Error(`Standalone installer is empty: ${file}`);
+      if (bytes <= 0) throw new Error(`Desktop installer is empty: ${file}`);
       return {
         file: path.relative(directory, file).split(path.sep).join('/'),
         bytes,
@@ -80,7 +80,7 @@ if (require.main === module) {
   const appId = process.argv[4] || null;
   try {
     const result = verifyStandaloneApps({ directory, platform, version, appId });
-    console.log(`Verified ${result.fileCount} standalone installer(s) across all ${result.appCount} approved apps for ${platform}.`);
+    console.log(`Verified ${result.fileCount} desktop installer(s) for ${result.appCount} Brightdesk product(s) on ${platform}.`);
     for (const item of result.apps) {
       console.log(`- Brightdesk ${item.appName}: ${item.files.length} installer(s); checksum: ${path.relative(directory, item.checksumFile)}`);
     }
