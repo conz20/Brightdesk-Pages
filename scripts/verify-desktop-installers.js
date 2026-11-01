@@ -29,7 +29,7 @@ function expectedFilename(productId, platform, version) {
 function verifyDesktopInstallers({ directory, platform, version, productId = null }) {
   const target = PLATFORMS[platform];
   if (!target) throw new Error(`Unsupported platform: ${platform}`);
-  if (typeof version !== 'string' || !/^\\d+\\.\\d+\\.\\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
+  if (typeof version !== 'string' || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
     throw new Error('A valid release version is required for desktop installer verification.');
   }
 
