@@ -6,7 +6,7 @@ const fs = require('node:fs/promises');
 const { openOfficeFile, exportOfficeFile, cleanFileName, ensureExtension } = require('./file-service');
 const { BUILTIN_LANGUAGES, validateLanguagePack, getBuiltinLanguage } = require('./language-service');
 const { DictionaryService } = require('./dictionary-service');
-const { APP_SLUGS, createDesktopDownload } = require('./standalone-downloads');
+const { APP_SLUGS, createDesktopDownload } = require('./desktop-downloads');
 let mainWindow;
 let agreementWindow;
 let termsAccepted = false;
