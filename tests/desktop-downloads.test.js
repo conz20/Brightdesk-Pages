@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createDesktopDownload, APP_SLUGS } = require('../src/standalone-downloads');
+const { createDesktopDownload, APP_SLUGS } = require('../src/desktop-downloads');
 
 const expected = {
   pages: 'Pages',
@@ -52,7 +52,7 @@ test('desktop installer verifier can verify one app repository without requiring
   const fs = require('node:fs');
   const os = require('node:os');
   const path = require('node:path');
-  const { expectedFilename, verifyStandaloneApps } = require('../scripts/verify-standalone-apps');
+  const { expectedFilename, verifyStandaloneApps } = require('../scripts/verify-desktop-installers');
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'brightdesk-one-product-'));
   try {
     const appDirectory = path.join(directory, 'pages');
