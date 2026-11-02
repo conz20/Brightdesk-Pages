@@ -71,12 +71,17 @@
     "directories": {
       "output": "release"
     },
-    "publish": [],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "connormolloy12",
+        "repo": "Brightdesk-Pages",
+        "releaseType": "release"
+      }
+    ],
     "win": {
-      "target": [
-        "nsis"
-      ],
-      "artifactName": "Brightdesk-Setup-${version}-${arch}.${ext}"
+      "target": ["nsis"],
+      "artifactName": "Brightdesk-Pages-Setup-${version}-${arch}.${ext}"
     },
     "nsis": {
       "oneClick": false,
@@ -86,27 +91,20 @@
       "license": "TERMS_AND_CONDITIONS.txt"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "pkg",
-        "zip"
-      ],
+      "target": ["dmg", "pkg", "zip"],
       "category": "public.app-category.productivity",
-      "artifactName": "Brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "Brightdesk-Pages-${version}-${arch}.${ext}"
     },
     "dmg": {
       "sign": false
     },
     "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
+      "target": ["AppImage", "deb"],
       "category": "Office",
-      "artifactName": "brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "brightdesk-pages-${version}-${arch}.${ext}"
     },
     "appImage": {
-      "artifactName": "Brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "brightdesk-pages-${version}-${arch}.${ext}"
     },
     "pkg": {
       "license": "TERMS_AND_CONDITIONS.txt",

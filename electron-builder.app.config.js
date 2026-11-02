@@ -42,7 +42,7 @@ module.exports = {
   asar: true,
   files: ['src/**/*', 'package.json', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'TERMS_AND_CONDITIONS.txt'],
   directories: { output: path.join('release', 'apps', appId) },
-  publish: [],
+  publish: [{ provider: 'github', owner: 'connormolloy12', repo: 'Brightdesk-Pages', releaseType: 'release' }],
   win: {
     target: ['nsis'],
     artifactName: 'Brightdesk-' + appSlug + '-${version}-${arch}.${ext}'
