@@ -6,13 +6,13 @@
 
 Create letters, reports and formatted documents.
 
-**Brightdesk Pages** is a desktop document editor for writing and formatting your work. It is delivered through a desktop installer for your computer.
+**Brightdesk Pages Desktop Edition** is a desktop document editor for writing and formatting your work. It is available for Windows, macOS and Linux.
 
 ## What you can do
 
 Create letters, reports and formatted documents with familiar editing and page-layout tools.
 
-## Desktop installers
+## Desktop edition
 
 Choose the installer for your computer:
 
@@ -55,4 +55,4 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 ## Identity and licence
 
-Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt) and [NOTICE](NOTICE) for the relevant rights and licensing terms.
