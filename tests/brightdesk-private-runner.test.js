@@ -15,18 +15,34 @@ test('private project check script has valid Bash syntax', { skip: process.platf
 
 test('private check script never prints raw build logs', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
-  assert.match(source, />> \"\$LOG_FILE\" 2>&1/);
+  assert.match(source, />> "\$LOG_FILE" 2>&1/);
   assert.match(source, /Detailed output was kept only on the temporary runner/);
-  assert.doesNotMatch(source, /cat \"\$LOG_FILE\"/);
+  assert.doesNotMatch(source, /cat "\$LOG_FILE"/);
 });
 
-test('central workflow uses the public runner and read-only private checkout', () => {
+test('controller grants only read access through the default workflow token', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.match(source, /runs-on: ubuntu-latest/);
-  assert.match(source, /BRIGHTDESK_PRIVATE_REPOSITORIES_READ/);
-  assert.match(source, /persist-credentials: false/);
-  assert.match(source, /contents: read/);
+  assert.match(source, /permissions:\n  contents: read/);
   assert.doesNotMatch(source, /contents: write/);
+});
+
+test('private jobs use pinned, project-scoped, read-only GitHub App tokens', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 2);
+  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 2);
+  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 2);
+  assert.match(source, /vars\.BRIGHTDESK_APP_ID/);
+  assert.match(source, /secrets\.BRIGHTDESK_APP_PRIVATE_KEY/);
+  assert.match(source, /persist-credentials: false/);
+  assert.doesNotMatch(source, /BRIGHTDESK_PRIVATE_REPOSITORIES_READ/);
+});
+
+test('both private jobs safely skip when App credentials are missing', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  assert.equal((source.match(/id: private-token/g) || []).length, 2);
+  assert.equal((source.match(/available=false/g) || []).length, 2);
+  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 4);
 });
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
@@ -35,10 +51,4 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
     assert.ok(source.includes('project: ' + project), project + ' is missing from the build matrix');
   }
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
-});
-test('private jobs skip safely when the read-only token has not been configured', () => {
-  const source = fs.readFileSync(workflow, 'utf8');
-  assert.match(source, /id: private-token/);
-  assert.match(source, /available=false/);
-  assert.match(source, /steps\.private-token\.outputs\.available == 'true'/);
 });
