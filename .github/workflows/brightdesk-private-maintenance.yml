@@ -62,6 +62,13 @@ jobs:
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
           node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
+      - name: Verify the Pages Rust foundation
+        shell: bash
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy
+          cargo fmt --manifest-path rust/Cargo.toml --all -- --check
+          cargo clippy --manifest-path rust/Cargo.toml --locked --all-targets -- -D warnings
+          cargo test --manifest-path rust/Cargo.toml --locked
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
