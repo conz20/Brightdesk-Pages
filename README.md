@@ -55,7 +55,7 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 ## Private maintenance checks
 
-The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. For a failed Brightdesk Suite test run, a separate Issues-only token may post a bounded diagnostic containing failing test names to the private Suite maintenance issue. Private source files, assertion details, stack traces and raw test logs are not published in this public repository.
+The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. For a failed Brightdesk Suite test run, a separate Issues-only token may post a bounded diagnostic containing failing test names to the private Suite maintenance issue. A one-time request can build Brightdesk Suite for Windows, macOS and Linux, verify the expected packages and checksums, and run native temporary install/launch/uninstall smoke tests. Private source files, assertion details, stack traces, raw test logs and installer binaries are not published in this public repository; build files are kept only on ephemeral runners.
 
 ## Identity and licence
 
