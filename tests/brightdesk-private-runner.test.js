@@ -367,7 +367,7 @@ test('private installer diagnostics classify known Linux install and executable 
       'Linux package installation failed with exit code 1.',
       'source=/home/runner/work/private/source/src/main.js',
       'SECRET_SOURCE_CONTENT'
-    ].join('\\n')
+    ].join('\n')
   });
 
   assert.match(output, /Installed Linux application executable was not found/);
