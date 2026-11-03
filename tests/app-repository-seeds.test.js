@@ -49,6 +49,11 @@ test('app repository seed exports a locked single-app package with suite source 
       assert.ok(pkg.scripts['verify:app:win']);
       assert.ok(pkg.scripts['verify:app:mac']);
       assert.ok(pkg.scripts['verify:app:linux']);
+      for (const platform of ['win', 'mac', 'linux']) {
+        assert.ok(pkg.scripts[`verify:app:${platform}`].includes('verify-desktop-installers.js'));
+        assert.ok(pkg.scripts[`verify:app:${platform}`].includes(item.appId));
+      }
+      assert.ok(fs.existsSync(path.join(destination, 'scripts', 'verify-desktop-installers.js')));
       assert.ok(readme.includes(item.name));
       assert.ok(readme.includes('assets/brightdesk-app.svg'));
       assert.ok(fs.statSync(path.join(destination, 'assets', 'brightdesk-app.svg')).size > 0);
