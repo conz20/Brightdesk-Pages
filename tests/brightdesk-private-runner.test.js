@@ -25,6 +25,23 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, /installer_failure_summary_file/);
 });
 
+test('private project checker runs Rust format, Clippy and Cargo tests when a workspace exists', () => {
+  const source = fs.readFileSync(runnerScript, 'utf8');
+  assert.match(source, /if \\[\\[ ! -f "\\$PROJECT_DIR\\/rust\\/Cargo\\.toml" \\]\\]/);
+  assert.match(source, /run_private_command "Rust formatting check" cargo fmt --manifest-path rust\\/Cargo\\.toml --all -- --check/);
+  assert.match(source, /run_private_command "Rust Clippy" cargo clippy --manifest-path rust\\/Cargo\\.toml --workspace --all-targets -- -D warnings/);
+  assert.match(source, /run_private_command "Rust unit tests" cargo test --manifest-path rust\\/Cargo\\.toml --workspace/);
+  assert.equal((source.match(/  run_rust_checks/g) || []).length, 2);
+});
+
+test('private project jobs install the pinned Rust toolchain only for Rust-enabled checkouts', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  assert.equal((source.match(/dtolnay\\/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8/g) || []).length, 3);
+  assert.equal((source.match(/hashFiles\\('source\\/rust\\/Cargo\\.toml'\\) != ''/g) || []).length, 3);
+  assert.equal((source.match(/toolchain: 1\\.99\\.1/g) || []).length, 3);
+  assert.equal((source.match(/components: rustfmt, clippy/g) || []).length, 3);
+});
+
 test('controller grants only read access through the default workflow token', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.match(source, /permissions:\n  contents: read/);
