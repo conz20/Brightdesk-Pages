@@ -19,6 +19,12 @@ const WINDOWS_MESSAGES = [
   'The installed Windows application did not launch its version check.',
   'The Windows installer did not create its uninstaller.'
 ];
+const LINUX_MESSAGES = [
+  'Place exactly one Brightdesk .deb installer beside this script.',
+  'This installer requires a Debian/Ubuntu system with apt-get.',
+  'Installed Linux package did not register a desktop application.',
+  'Installed Linux application executable was not found in the desktop entry or PATH.'
+];
 
 function safeMissingLibraries(log) {
   const lines = String(log || '').split(/\r?\n/);
@@ -40,9 +46,19 @@ function safeMissingLibraries(log) {
 }
 
 function hasMissingCommandDiagnostic(log) {
-  return String(log || '').split(/\\r?\\n/).some(line =>
-    /\\bcommand not found\\b|not recognized as an internal or external command|is not recognized as the name of a cmdlet|The term .+ is not recognized/i.test(line)
+  return String(log || '').split(/\r?\n/).some(line =>
+    /\bcommand not found\b|not recognized as an internal or external command|is not recognized as the name of a cmdlet|The term .+ is not recognized/i.test(line)
   );
+}
+
+function safeLinuxMessages(log) {
+  const messages = new Set(String(log || '').split(/\r?\n/).map(line => line.trim()));
+  const result = LINUX_MESSAGES.filter(message => messages.has(message));
+  for (const line of messages) {
+    const match = line.match(/^Linux package (installation|uninstall) failed with exit code ([0-9]{1,3})\.$/);
+    if (match) result.push('Linux package ' + match[1] + ' failed with exit code ' + Number(match[2]) + '.');
+  }
+  return [...new Set(result)].slice(0, 5);
 }
 
 function safeWindowsMessages(log) {
@@ -70,6 +86,8 @@ function formatPrivateInstallerFailure({ platform, stage, exitCode, log = '' } =
     }
     const missing = safeMissingLibraries(log);
     if (missing.length) lines.push('Missing system runtime libraries: ' + missing.join(', '));
+    const messages = safeLinuxMessages(log);
+    if (messages.length) lines.push('Result: ' + messages.join(' '));
   } else if (platform === 'win') {
     const messages = safeWindowsMessages(log);
     if (messages.length) lines.push('Result: ' + messages.join(' '));
@@ -94,4 +112,4 @@ if (require.main === module) {
   process.stdout.write(Buffer.from(safe, 'utf8').toString('base64'));
 }
 
-module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeWindowsMessages, hasMissingCommandDiagnostic, PLATFORMS, STAGES };
+module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeLinuxMessages, safeWindowsMessages, hasMissingCommandDiagnostic, PLATFORMS, STAGES };

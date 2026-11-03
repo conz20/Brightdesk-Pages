@@ -354,3 +354,24 @@ test('installer smoke-test script uses an absolute controller path after changin
   assert.ok(runner.includes('bash "$SCRIPT_DIR/verify-private-install.sh"'));
   assert.ok(!runner.includes('run_private_command "installer installation smoke test" bash "$(dirname'));
 });
+
+
+test('private installer diagnostics classify known Linux install and executable failures safely', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux',
+    stage: 'installer installation smoke test',
+    exitCode: 1,
+    log: [
+      'Installed Linux application executable was not found in the desktop entry or PATH.',
+      'Linux package installation failed with exit code 1.',
+      'source=/home/runner/work/private/source/src/main.js',
+      'SECRET_SOURCE_CONTENT'
+    ].join('\n')
+  });
+
+  assert.match(output, /Installed Linux application executable was not found/);
+  assert.match(output, /Linux package installation failed with exit code 1/);
+  assert.ok(!output.includes('/home/runner/work'));
+  assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
+});
