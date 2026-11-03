@@ -171,6 +171,11 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /command -v.*APP_BINARY/);
   assert.match(install, /run_bounded_launch/);
   assert.match(install, /BRIGHTDESK_STARTUP_SMOKE_TEST=1/);
+  assert.match(install, /BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1/);
+  assert.ok(install.includes("Contents/Resources/app.asar.unpacked/native/brightdesk_engine.node"));
+  assert.ok(install.includes("resources/app.asar.unpacked/native/brightdesk_engine.node"));
+  assert.ok(windows.includes("resources\\app.asar.unpacked\\native\\brightdesk_engine.node"));
+  assert.ok(windows.includes("$env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = '1'"));
   assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
