@@ -129,7 +129,7 @@ jobs:
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitized failure names to the private Suite issue
-        if: failure() && steps.issue-token.outputs.token != ''
+        if: steps.run-private-check.outcome == 'failure' && steps.issue-token.outcome == 'success'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ steps.issue-token.outputs.token }}
