@@ -236,6 +236,7 @@ jobs:
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
+        if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.22.2
