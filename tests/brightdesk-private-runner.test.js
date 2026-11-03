@@ -437,3 +437,10 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));
 });
+
+
+test('private project test and build checks run the high-severity dependency audit', () => {
+  const source = fs.readFileSync(runnerScript, 'utf8');
+  const auditSteps = source.match(/run_private_command "high-severity dependency audit" npm audit --audit-level=high/g) || [];
+  assert.equal(auditSteps.length, 2, 'test and build modes must both run the high-severity npm audit');
+});
