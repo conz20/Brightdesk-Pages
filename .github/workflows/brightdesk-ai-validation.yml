@@ -37,12 +37,11 @@ jobs:
           APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "Private AI validation is paused because the read-only GitHub App credentials are not configured." >> "$GITHUB_STEP_SUMMARY"
+          if [[ -z "$APP_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::Required read-only GitHub App credentials are missing. Configure BRIGHTDESK_APP_ID and BRIGHTDESK_APP_PRIVATE_KEY before running private AI validation."
+            exit 1
           fi
+          echo "available=true" >> "$GITHUB_OUTPUT"
 
       - name: Mint a short-lived token for Brightdesk-AI only
         id: app-token
@@ -60,7 +59,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/Brightdesk-AI
-          ref: b7b999e824db1295caa87e5eca06018acafc318b
+          ref: a142db98f153ea357c675bdbe60960f4b24d6f56
           token: ${{ steps.app-token.outputs.token }}
           path: private-ai
           persist-credentials: false
@@ -69,7 +68,7 @@ jobs:
         if: steps.credentials.outputs.available == 'true'
         shell: bash
         run: |
-          if ! docker pull node:24.22.2-bookworm-slim >/dev/null 2>&1; then
+          if ! docker pull node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c >/dev/null 2>&1; then
             echo "Could not prepare the Node.js test container." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
@@ -90,7 +89,7 @@ jobs:
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \
             --workdir /workspace \
-            node:24.22.2-bookworm-slim node --test \
+            node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c node --test \
             > "$RUNNER_TEMP/brightdesk-private-ai-tests.log" 2>&1
           result=$?
           set -e
@@ -162,7 +161,7 @@ jobs:
       - name: Pull the pinned Node.js test image
         shell: bash
         run: |
-          if ! docker pull node:24.22.2-bookworm-slim >/dev/null 2>&1; then
+          if ! docker pull node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c >/dev/null 2>&1; then
             echo "Could not prepare the Node.js test container for ${{ matrix.project }}." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
@@ -182,7 +181,7 @@ jobs:
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --volume "$GITHUB_WORKSPACE/source:/workspace:ro" \
             --workdir /workspace \
-            node:24.22.2-bookworm-slim node --test tests/update-policy.test.js \
+            node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c node --test tests/update-policy.test.js \
             > "$RUNNER_TEMP/brightdesk-update-policy-tests.log" 2>&1
           result=$?
           set -e
