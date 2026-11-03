@@ -28,7 +28,7 @@ try {
     throw 'The Windows installer did not install Brightdesk.exe.'
   }
 
-  & $appPath --version *> $null
+  & $appPath --version
   if ($LASTEXITCODE -ne 0) {
     throw 'The installed Windows application did not launch its version check.'
   }
