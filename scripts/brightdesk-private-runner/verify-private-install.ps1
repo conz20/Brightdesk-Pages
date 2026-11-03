@@ -18,6 +18,7 @@ try {
     Remove-Item -LiteralPath $installDir -Recurse -Force
   }
 
+  Write-Output 'Brightdesk Windows smoke test stage: installer execution.'
   $install = Start-Process -FilePath $installerPath -ArgumentList @('/S', "/D=$installDir") -Wait -PassThru
   if ($install.ExitCode -ne 0) {
     throw "The Windows installer exited with code $($install.ExitCode)."
@@ -28,6 +29,7 @@ try {
     throw 'The Windows installer did not install Brightdesk.exe.'
   }
 
+  Write-Output 'Brightdesk Windows smoke test stage: application launch.'
   & $appPath --version *> $null
   if ($LASTEXITCODE -ne 0) {
     throw 'The installed Windows application did not launch its version check.'
@@ -38,6 +40,7 @@ try {
     throw 'The Windows installer did not create its uninstaller.'
   }
 
+  Write-Output 'Brightdesk Windows smoke test stage: uninstaller execution.'
   $remove = Start-Process -FilePath $uninstaller -ArgumentList '/S' -Wait -PassThru
   if ($remove.ExitCode -ne 0) {
     throw "The Windows uninstaller exited with code $($remove.ExitCode)."

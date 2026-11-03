@@ -61,6 +61,16 @@ function safeLinuxMessages(log) {
   return [...new Set(result)].slice(0, 5);
 }
 
+function safeWindowsStage(log) {
+  const allowed = new Set(['installer execution', 'application launch', 'uninstaller execution']);
+  let last = null;
+  for (const line of String(log || '').split(/\r?\n/)) {
+    const match = line.trim().match(/^Brightdesk Windows smoke test stage: (installer execution|application launch|uninstaller execution)\.$/);
+    if (match && allowed.has(match[1])) last = match[1];
+  }
+  return last;
+}
+
 function safeWindowsMessages(log) {
   const lines = new Set(String(log || '').split(/\r?\n/).map(line => line.trim()));
   const result = WINDOWS_MESSAGES.filter(message => lines.has(message));
@@ -96,6 +106,8 @@ function formatPrivateInstallerFailure({ platform, stage, exitCode, log = '' } =
   } else if (platform === 'win') {
     const messages = safeWindowsMessages(log);
     if (messages.length) lines.push('Result: ' + messages.join(' '));
+    const stage = safeWindowsStage(log);
+    if (stage) lines.push('Result: Windows smoke test failed during ' + stage + '.');
   }
 
   if (hasMissingCommandDiagnostic(log)) {
@@ -117,4 +129,4 @@ if (require.main === module) {
   process.stdout.write(Buffer.from(safe, 'utf8').toString('base64'));
 }
 
-module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeLinuxMessages, safeWindowsMessages, hasMissingCommandDiagnostic, PLATFORMS, STAGES };
+module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeLinuxMessages, safeWindowsMessages, safeWindowsStage, hasMissingCommandDiagnostic, PLATFORMS, STAGES };
