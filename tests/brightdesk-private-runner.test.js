@@ -394,3 +394,25 @@ test('private installer diagnostics classify Windows install and uninstall exit 
   assert.ok(!output.includes('C:\\Users'));
   assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
 });
+
+
+test('Windows installer diagnostics expose only the last bounded smoke-test stage', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const powershell = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'win',
+    stage: 'installer installation smoke test',
+    exitCode: 1,
+    log: [
+      'Brightdesk Windows smoke test stage: installer execution.',
+      'Brightdesk Windows smoke test stage: application launch.',
+      'C:\\Users\\runner\\private\\source\\src\\main.js'
+    ].join('\\n')
+  });
+
+  assert.match(output, /Windows smoke test failed during application launch/);
+  assert.ok(!output.includes('C:\\Users'));
+  assert.match(powershell, /Brightdesk Windows smoke test stage: installer execution/);
+  assert.match(powershell, /Brightdesk Windows smoke test stage: application launch/);
+  assert.match(powershell, /Brightdesk Windows smoke test stage: uninstaller execution/);
+});
