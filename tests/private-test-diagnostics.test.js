@@ -49,7 +49,7 @@ test('private test diagnostics handles TAP output without individual failing tes
 test('private test diagnostics bounds and sanitizes untrusted test names', () => {
   const tap = [
     'not ok 1 - bad\u001b[31mname\u001b[0m',
-    'not ok 2 - bad name'
+    'not ok 2 - bad\\u001b[31mname\\u001b[0m'
   ].join('\n');
 
   const names = parseTapFailureNames(tap);
