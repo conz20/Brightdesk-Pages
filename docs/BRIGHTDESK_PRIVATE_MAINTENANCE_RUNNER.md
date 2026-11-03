@@ -35,6 +35,21 @@ To configure the repository settings:
 
 The workflow creates a short-lived installation token for only the repository being checked in that job, requesting **Contents: Read-only**. It does not need a personal access token. Never expose or log the private key or generated token.
 
+### Optional private Suite failure diagnostics
+
+When Brightdesk-suite tests fail, the runner creates a small summary containing sanitised failing test names only. It does not include assertion messages, source paths, stack traces, raw logs or source code.
+
+To post that summary to the private [Brightdesk-suite issue #27](https://github.com/connormolloy12/Brightdesk-suite/issues/27), the dedicated GitHub App also needs the repository permission **Issues: Read and write**. The workflow requests this through a separate short-lived installation token restricted to the `Brightdesk-suite` repository and used only by the issue-comment step. The normal checkout token remains **Contents: Read-only**. No **Contents: Write**, Actions, Administration, Secrets or signing permission is required.
+
+To approve the additional permission:
+
+1. Open [your GitHub Apps settings](https://github.com/settings/apps) and select the Brightdesk maintenance app.
+2. Open **Permissions & events**.
+3. Under **Repository permissions**, set **Issues** to **Read and write**, then save.
+4. Approve the permission update for the installed app when GitHub prompts you.
+
+GitHub requires an installation owner to approve newly requested permissions before they take effect. Until that approval is complete, the test job still runs and correctly fails, but the diagnostic names remain on the temporary runner and are not posted.
+
 If these two settings are already present and the App installation has the required access, do not recreate the App or replace the key.
 
 ## Run the checks
