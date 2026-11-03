@@ -86,3 +86,18 @@ test('trusted controller updates trigger daily private checks but never start th
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
 });
+
+
+test('Brightdesk-AI validation follows current main and records the exact tested revision', () => {
+  for (const name of [
+    'brightdesk-ai-validation.yml',
+    'brightdesk-ai-test-coverage-validation.yml'
+  ]) {
+    const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', name), 'utf8');
+    assert.match(source, /repository: connormolloy12\/Brightdesk-AI/);
+    assert.match(source, /ref: main/);
+    assert.doesNotMatch(source, /ref: [a-f0-9]{40}/);
+    assert.match(source, /git -C private-ai rev-parse HEAD/);
+    assert.match(source, /Source revision:/);
+  }
+});
