@@ -41,7 +41,7 @@ case "$PLATFORM" in
       echo "Installed Linux application executable was not found in the desktop entry or PATH." >&2
       exit 1
     fi
-    if "$APP_BINARY" --no-sandbox --version >/dev/null 2>&1; then
+    if "$APP_BINARY" --no-sandbox --version; then
       :
     else
       launch_status=$?
@@ -85,7 +85,7 @@ case "$PLATFORM" in
     fi
     ditto "$DMG_APP_SOURCE" "$DMG_APP"
     DMG_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$DMG_APP/Contents/Info.plist")"
-    "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE" --version >/dev/null 2>&1
+    "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE" --version
     hdiutil detach "$MOUNT_DIR" -quiet
 
     sudo installer -allowUntrusted -pkg "$PKG_FILE" -target / -agreeToLicense
@@ -94,7 +94,7 @@ case "$PLATFORM" in
       exit 1
     fi
     APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PATH/Contents/Info.plist")"
-    "$APP_PATH/Contents/MacOS/$APP_EXECUTABLE" --version >/dev/null 2>&1
+    "$APP_PATH/Contents/MacOS/$APP_EXECUTABLE" --version
     sudo rm -rf "$APP_PATH"
     rm -rf "$MOUNT_DIR" "$DMG_APP"
     trap - EXIT
