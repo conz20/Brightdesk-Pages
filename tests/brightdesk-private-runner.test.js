@@ -20,7 +20,7 @@ test('private check script never prints raw build logs', () => {
   assert.doesNotMatch(source, /cat "\$LOG_FILE"/);
   assert.match(source, /npm test -- --test-reporter=tap/);
   assert.match(source, /failure_summary_file/);
-  assert.match(source, /failure-summary\\.b64/);
+  assert.ok(source.includes('failure-summary.b64'));
 });
 
 test('controller grants only read access through the default workflow token', () => {
