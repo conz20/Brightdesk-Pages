@@ -66,7 +66,7 @@ run_private_tests() {
       local summary
       summary="$(node "$(dirname "$0")/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        printf 'failure_summary_base64=%s\\n' "$summary" >> "$GITHUB_OUTPUT"
+        printf 'failure_summary_base64=%s\n' "$summary" >> "$GITHUB_OUTPUT"
       fi
     fi
     fail_check "$status"
