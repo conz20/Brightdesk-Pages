@@ -1,0 +1,198 @@
+name: Brightdesk private project maintenance
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-private-maintenance.yml'
+      - 'scripts/brightdesk-private-runner/**'
+      - 'tests/brightdesk-private-runner.test.js'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-private-maintenance.yml'
+      - 'scripts/brightdesk-private-runner/**'
+      - 'tests/brightdesk-private-runner.test.js'
+  schedule:
+    - cron: '13 17 * * *'
+    - cron: '17 17 * * 0'
+  workflow_dispatch:
+    inputs:
+      run_cross_platform_builds:
+        description: Build and verify all private project installers on Windows, macOS and Linux
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-private-project-maintenance
+  cancel-in-progress: false
+
+jobs:
+  validate-controller:
+    name: Validate the public maintenance controller
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Brightdesk Pages
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up the required Node.js runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          cache: npm
+      - name: Check the private project runner script
+        shell: bash
+        run: |
+          bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
+          node --test tests/brightdesk-private-runner.test.js
+
+  daily-private-tests:
+    name: Test ${{ matrix.project }} on Linux
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - Brightdesk-suite
+          - Brightdesk-Sheets
+          - Brightdesk-Decks
+          - Brightdesk-Notes
+          - Brightdesk-Database
+          - Brightdesk-Forms
+    steps:
+      - name: Check out the public controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: controller
+      - name: Check out the private Brightdesk project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: connormolloy12/${{ matrix.project }}
+          token: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+          path: source
+          persist-credentials: false
+      - name: Set up the required Node.js runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Run private project tests without publishing source logs
+        shell: bash
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
+            test source "${{ matrix.project }}"
+
+  weekly-private-installer-builds:
+    name: Build ${{ matrix.project }} for ${{ matrix.platform }}
+    if: >-
+      (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
+      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true)
+    needs: daily-private-tests
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: Brightdesk-suite
+            platform: win
+            runner: windows-latest
+            verify_script: release:verify:win
+          - project: Brightdesk-suite
+            platform: mac
+            runner: macos-latest
+            verify_script: release:verify:mac
+          - project: Brightdesk-suite
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: release:verify:linux
+          - project: Brightdesk-Sheets
+            platform: win
+            runner: windows-latest
+            verify_script: verify:product:win
+          - project: Brightdesk-Sheets
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:product:mac
+          - project: Brightdesk-Sheets
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:product:linux
+          - project: Brightdesk-Decks
+            platform: win
+            runner: windows-latest
+            verify_script: verify:product:win
+          - project: Brightdesk-Decks
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:product:mac
+          - project: Brightdesk-Decks
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:product:linux
+          - project: Brightdesk-Notes
+            platform: win
+            runner: windows-latest
+            verify_script: verify:product:win
+          - project: Brightdesk-Notes
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:product:mac
+          - project: Brightdesk-Notes
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:product:linux
+          - project: Brightdesk-Database
+            platform: win
+            runner: windows-latest
+            verify_script: verify:product:win
+          - project: Brightdesk-Database
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:product:mac
+          - project: Brightdesk-Database
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:product:linux
+          - project: Brightdesk-Forms
+            platform: win
+            runner: windows-latest
+            verify_script: verify:product:win
+          - project: Brightdesk-Forms
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:product:mac
+          - project: Brightdesk-Forms
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:product:linux
+    steps:
+      - name: Check out the public controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: controller
+      - name: Check out the private Brightdesk project
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: connormolloy12/${{ matrix.project }}
+          token: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+          path: source
+          persist-credentials: false
+      - name: Set up the required Node.js runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Build and verify the selected installer without publishing it
+        shell: bash
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
+            build source "${{ matrix.project }}" "${{ matrix.platform }}" "${{ matrix.verify_script }}"
