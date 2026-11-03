@@ -92,8 +92,14 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_command "release readiness check" npm run release:preflight
+  if [[ "$PLATFORM" == "mac" ]]; then
+    export CSC_IDENTITY_AUTO_DISCOVERY=false
+  fi
   run_private_command "installer build" npm run "dist:${PLATFORM}"
   run_private_command "installer package verification" npm run "$VERIFY_SCRIPT"
+  if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+    run_private_command "installer installation smoke test" bash "$(dirname "$0")/verify-private-install.sh" "$PROJECT_DIR" "$PLATFORM"
+  fi
 else
   STAGE="unknown check mode"
   fail_check 2

@@ -14,6 +14,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/brightdesk-private-maintenance.yml'
+      - '.github/requests/brightdesk-suite-installers.request'
       - '.github/workflows/brightdesk-ai-validation.yml'
       - '.github/workflows/brightdesk-ai-test-coverage-validation.yml'
       - 'scripts/brightdesk-private-runner/**'
@@ -155,7 +156,10 @@ jobs:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true)
+      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true) ||
+      (github.event_name == 'push' &&
+       matrix.project == 'Brightdesk-suite' &&
+       contains(toJSON(github.event.commits), '.github/requests/brightdesk-suite-installers.request'))
     needs: daily-private-tests
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60

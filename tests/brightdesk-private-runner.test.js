@@ -121,3 +121,43 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     assert.ok(pushPaths.includes(file), file + ' must trigger controller validation on main');
   }
 });
+
+
+test('Suite cross-platform builds perform native install and launch smoke tests', () => {
+  const installScript = path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh');
+  const windowsScript = path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1');
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+  const install = fs.readFileSync(installScript, 'utf8');
+  const windows = fs.readFileSync(windowsScript, 'utf8');
+
+  assert.match(runner, /if \[\[ "\$PROJECT_NAME" == "Brightdesk-suite" \]\]/);
+  assert.match(runner, /installer installation smoke test/);
+  assert.match(runner, /verify-private-install\.sh/);
+  assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
+  assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
+  assert.match(install, /apt-get install/);
+  assert.match(install, /apt-get remove/);
+  assert.match(install, /installer -pkg/);
+  assert.match(install, /hdiutil attach/);
+  assert.match(install, /verify-private-install\.ps1/);
+  assert.match(windows, /Brightdesk-Setup-/);
+  assert.match(windows, /Uninstall Brightdesk\.exe/);
+  assert.match(windows, /--version/);
+});
+
+test('native installer smoke-test shell script has valid Bash syntax', { skip: process.platform === 'win32' }, () => {
+  const installScript = path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh');
+  execFileSync('bash', ['-n', installScript], { stdio: 'pipe' });
+});
+
+test('one-time Suite installer request starts only Suite platform builds', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
+  const buildJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+
+  assert.ok(pushTrigger.includes('.github/requests/brightdesk-suite-installers.request'));
+  assert.match(buildJob, /github\.event_name == 'push'/);
+  assert.match(buildJob, /matrix\.project == 'Brightdesk-suite'/);
+  assert.match(buildJob, /toJSON\(github\.event\.commits\)/);
+  assert.match(buildJob, /brightdesk-suite-installers\.request/);
+});
