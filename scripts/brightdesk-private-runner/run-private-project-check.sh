@@ -20,7 +20,7 @@ fail_check() {
   status="$1"
   if [[ "$MODE" == "build" && "$PROJECT_NAME" == "Brightdesk-suite" && "$PLATFORM" =~ ^(win|mac|linux)$ ]]; then
     local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-suite-installer-${PLATFORM}-failure-summary.b64"
-    if node "$(dirname "$0")/private-installer-diagnostics.js" "$LOG_FILE" "$PLATFORM" "$STAGE" "$status" > "$summary_file"; then
+    if node "$(dirname "$0")/private-installer-diagnostics.js" "$LOG_FILE" "$PLATFORM" "$STAGE" "$status" > "$summary_file" 2>/dev/null; then
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
         printf 'installer_failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
