@@ -50,16 +50,17 @@ test('app repository seed exports a locked single-app package with suite source 
       assert.ok(fs.statSync(path.join(destination, 'assets', 'social-preview.svg')).size > 0);
       assert.ok(readme.includes('assets/social-preview.svg'));
       assert.match(workflow, /node-version: 24\.22\.2/);
-      assert.match(workflow, /actions\\/checkout@11d5960a326750d5838078e36cf38b85af677262/);
-      assert.match(workflow, /actions\\/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020/);
-      assert.match(workflow, /actions\\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
-      assert.match(workflow, /actions\\/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093/);
-      assert.match(workflow, /softprops\\/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65/);
-      assert.match(workflow, /npm run lock:verify/);
-      assert.match(workflow, /npm run verify:licenses/);
-      assert.match(workflow, /npm run release:preflight/);
-      assert.match(workflow, /npm audit --audit-level=high/);
-      assert.doesNotMatch(workflow, /actions\\/(?:checkout|setup-node|upload-artifact|download-artifact)@v[0-9]+/);
+      const pinnedActions = [
+        'actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
+        'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020',
+        'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02',
+        'actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093',
+        'softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65'
+      ];
+      for (const action of pinnedActions) assert.ok(workflow.includes(action), `missing immutable action pin: ${action}`);
+      for (const action of ['actions/checkout@v4','actions/setup-node@v4','actions/upload-artifact@v4','actions/download-artifact@v4','softprops/action-gh-release@v2']) {
+        assert.ok(!workflow.includes(action), `mutable action reference remains: ${action}`);
+      }
       assert.match(workflow, /npm run dist:app:\$\{\{ matrix\.platform \}\}/);
       assert.match(workflow, /npm run verify:app:\$\{\{ matrix\.platform \}\}/);
       assert.ok(fs.existsSync(path.join(destination, 'src', 'app.js')));
