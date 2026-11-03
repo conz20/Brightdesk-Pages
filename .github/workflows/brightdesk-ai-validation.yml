@@ -130,7 +130,7 @@ jobs:
             --pids-limit=128 \\
             --memory=512m \\
             --cpus=1 \\
-            --tmpfs /tmp:rw,noexec,nosuid,size=128m \\
+            --tmpfs /tmp:rw,nosuid,size=128m \\
             --env CARGO_HOME=/tmp/cargo-home \\
             --env CARGO_TARGET_DIR=/tmp/cargo-target \\
             --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \\
