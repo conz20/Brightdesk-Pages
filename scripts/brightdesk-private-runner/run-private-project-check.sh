@@ -22,7 +22,7 @@ fail_check() {
     local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-suite-installer-${PLATFORM}-failure-summary.b64"
     if node "$(dirname "$0")/private-installer-diagnostics.js" "$LOG_FILE" "$PLATFORM" "$STAGE" "$status" > "$summary_file"; then
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        printf 'installer_failure_summary_file=%s\\n' "$summary_file" >> "$GITHUB_OUTPUT"
+        printf 'installer_failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
     else
       rm -f "$summary_file"
