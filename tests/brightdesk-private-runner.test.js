@@ -42,7 +42,7 @@ test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 2);
   assert.equal((source.match(/available=false/g) || []).length, 2);
-  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 4);
+  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 8);
 });
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
