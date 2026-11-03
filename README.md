@@ -53,6 +53,10 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 [Brightdesk Office Suite](https://github.com/connormolloy12/Brightdesk-suite) brings the approved Brightdesk products together in one desktop installation.
 
+## Private maintenance checks
+
+The private maintenance workflow uses short-lived, repository-scoped **Contents: read-only** tokens. It does not require GitHub Issues write access. Automated checks do not post private failure summaries to GitHub issues; diagnostic output remains on the temporary runner and is not published in public workflow logs.
+
 ## Identity and licence
 
 Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
