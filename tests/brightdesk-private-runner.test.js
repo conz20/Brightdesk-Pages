@@ -152,6 +152,6 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.ok(pushTrigger.includes('.github/requests/brightdesk-suite-installers.request'));
   assert.match(buildJob, /github\.event_name == 'push'/);
   assert.match(buildJob, /matrix\.project == 'Brightdesk-suite'/);
-  assert.match(buildJob, /github\.event\.head_commit\.modified/);
+  assert.match(buildJob, /toJSON\(github\.event\.commits\)/);
   assert.match(buildJob, /brightdesk-suite-installers\.request/);
 });
