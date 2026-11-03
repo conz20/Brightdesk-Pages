@@ -5,6 +5,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '11 17 * * *'
   workflow_dispatch:
     inputs:
       build_installers:
@@ -36,8 +38,13 @@ jobs:
         with:
           node-version: 24.22.2
           cache: npm
+      - run: npm run check:node
+      - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
-      - run: node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js
+      - run: npm run verify:licenses
+      - run: npm test
+      - run: npm run release:preflight
+      - run: npm audit --audit-level=high
 
   build:
     name: Build ${{ matrix.platform }} desktop installer
@@ -60,7 +67,11 @@ jobs:
         with:
           node-version: 24.22.2
           cache: npm
+      - run: npm run check:node
+      - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
+      - run: npm run verify:licenses
+      - run: npm run release:preflight
       - run: npm run dist:desktop:${{ matrix.platform }}
       - run: npm run verify:desktop:${{ matrix.platform }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

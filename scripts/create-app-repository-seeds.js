@@ -141,6 +141,10 @@ The latest standalone installers are published from this repository's verified r
 
 The complete ten-app desktop suite remains available from [Brightdesk-suite](https://github.com/connormolloy12/Brightdesk-suite).
 
+## Quality and security
+
+Pull requests, pushes to `main` and a daily scheduled run verify Node.js 24.22.2, the committed dependency lock, third-party licences, automated tests, release preflight and high-severity dependency vulnerabilities. Installer builds require a manual workflow dispatch. Publishing is disabled unless `publish_release` is explicitly selected.
+
 ## Run from source
 
 Use Node.js **24.22.2**.
@@ -184,6 +188,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
       publish_release:
@@ -206,13 +212,18 @@ jobs:
     name: Test ${app.name}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.22.2
           cache: npm
+      - run: npm run check:node
+      - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
+      - run: npm run verify:licenses
       - run: npm test
+      - run: npm run release:preflight
+      - run: npm audit --audit-level=high
 
   build:
     name: Build \${{ matrix.platform }} installer
@@ -230,15 +241,19 @@ jobs:
             runner: ubuntu-latest
     runs-on: \${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.22.2
           cache: npm
+      - run: npm run check:node
+      - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
+      - run: npm run verify:licenses
+      - run: npm run release:preflight
       - run: npm run dist:app:\${{ matrix.platform }}
       - run: npm run verify:app:\${{ matrix.platform }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${app.repository}-\${{ matrix.platform }}
           path: release/apps/${app.appId}/**
@@ -253,12 +268,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: ${app.repository}-*
           path: release
           merge-multiple: true
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           tag_name: \${{ inputs.release_tag }}
           name: ${app.name} \${{ inputs.release_tag }}
@@ -291,12 +306,19 @@ function makePackage(app, target) {
   manifest.build.productName = app.name;
   manifest.build.directories = { ...(manifest.build.directories || {}), output: 'release' };
   manifest.build.publish = [];
+  manifest.scripts.release = 'npm run verify:licenses && electron-builder --publish never';
   manifest.scripts['dist:app:win'] = `node scripts/build-app.js ${app.appId} win`;
   manifest.scripts['dist:app:mac'] = `node scripts/build-app.js ${app.appId} mac`;
   manifest.scripts['dist:app:linux'] = `node scripts/build-app.js ${app.appId} linux`;
-  manifest.scripts['verify:app:win'] = `node scripts/verify-standalone-apps.js win release/apps ${app.appId}`;
-  manifest.scripts['verify:app:mac'] = `node scripts/verify-standalone-apps.js mac release/apps ${app.appId}`;
-  manifest.scripts['verify:app:linux'] = `node scripts/verify-standalone-apps.js linux release/apps ${app.appId}`;
+  manifest.scripts['verify:app:win'] = `node scripts/verify-desktop-installers.js win release/apps ${app.appId}`;
+  manifest.scripts['verify:app:mac'] = `node scripts/verify-desktop-installers.js mac release/apps ${app.appId}`;
+  manifest.scripts['verify:app:linux'] = `node scripts/verify-desktop-installers.js linux release/apps ${app.appId}`;
+  manifest.scripts['dist:desktop:win'] = `node scripts/build-app.js ${app.appId} win`;
+  manifest.scripts['dist:desktop:mac'] = `node scripts/build-app.js ${app.appId} mac`;
+  manifest.scripts['dist:desktop:linux'] = `node scripts/build-app.js ${app.appId} linux`;
+  manifest.scripts['verify:desktop:win'] = `node scripts/verify-desktop-installers.js win release/apps ${app.appId}`;
+  manifest.scripts['verify:desktop:mac'] = `node scripts/verify-desktop-installers.js mac release/apps ${app.appId}`;
+  manifest.scripts['verify:desktop:linux'] = `node scripts/verify-desktop-installers.js linux release/apps ${app.appId}`;
 
   lock.name = app.packageName;
   if (lock.packages && lock.packages['']) {
