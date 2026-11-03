@@ -351,6 +351,6 @@ test('private installer diagnostics classify missing commands without exposing c
 test('installer smoke-test script uses an absolute controller path after changing into the private project', () => {
   const runner = fs.readFileSync(runnerScript, 'utf8');
   assert.match(runner, /SCRIPT_DIR=.*BASH_SOURCE/);
-  assert.match(runner, /bash "\\$SCRIPT_DIR\\/verify-private-install\\.sh"/);
-  assert.doesNotMatch(runner, /run_private_command "installer installation smoke test" bash "\\$\\(dirname/);
+  assert.ok(runner.includes('bash "$SCRIPT_DIR/verify-private-install.sh"'));
+  assert.ok(!runner.includes('run_private_command "installer installation smoke test" bash "$(dirname'));
 });
