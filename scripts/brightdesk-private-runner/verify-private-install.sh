@@ -6,6 +6,28 @@ PLATFORM="$2"
 RELEASE_DIR="$PROJECT_DIR/release"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 
+run_bounded_launch() {
+  local app_pid process_state status attempt
+  "$@" >/dev/null 2>&1 &
+  app_pid=$!
+  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+    process_state="$(ps -o stat= -p "$app_pid" 2>/dev/null | tr -d '[:space:]' || true)"
+    if [[ -z "$process_state" || "$process_state" == Z* ]]; then
+      if wait "$app_pid"; then
+        return 0
+      else
+        status=$?
+        echo "Installed application launch check failed with exit code $status." >&2
+        return "$status"
+      fi
+    fi
+    sleep 1
+  done
+  kill "$app_pid" 2>/dev/null || true
+  wait "$app_pid" 2>/dev/null || true
+  return 0
+}
+
 if [[ -z "$PROJECT_DIR" || ! -d "$PROJECT_DIR" ]]; then
   echo "Brightdesk installer smoke test received an invalid project directory." >&2
   exit 2
@@ -41,18 +63,10 @@ case "$PLATFORM" in
       echo "Installed Linux application executable was not found in the desktop entry or PATH." >&2
       exit 1
     fi
-    if "$APP_BINARY" --no-sandbox --version >/dev/null 2>&1; then
-      :
+    if command -v xvfb-run >/dev/null 2>&1; then
+      run_bounded_launch xvfb-run -a "$APP_BINARY" --no-sandbox
     else
-      launch_status=$?
-      echo "Installed application launch check failed with exit code $launch_status." >&2
-      if command -v ldd >/dev/null 2>&1; then
-        missing_libraries="$(ldd "$APP_BINARY" 2>/dev/null | awk '/not found/ {print $1}' | sort -u)"
-        if [[ -n "$missing_libraries" ]]; then
-          echo "Missing system runtime libraries: $missing_libraries" >&2
-        fi
-      fi
-      exit "$launch_status"
+      run_bounded_launch "$APP_BINARY" --no-sandbox
     fi
     sudo apt-get remove -y "$PACKAGE_NAME"
     trap - EXIT
@@ -85,7 +99,7 @@ case "$PLATFORM" in
     fi
     ditto "$DMG_APP_SOURCE" "$DMG_APP"
     DMG_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$DMG_APP/Contents/Info.plist")"
-    "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE" --version >/dev/null 2>&1
+    run_bounded_launch "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE"
     hdiutil detach "$MOUNT_DIR" -quiet
 
     sudo installer -allowUntrusted -pkg "$PKG_FILE" -target / -agreeToLicense
@@ -94,7 +108,7 @@ case "$PLATFORM" in
       exit 1
     fi
     APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PATH/Contents/Info.plist")"
-    "$APP_PATH/Contents/MacOS/$APP_EXECUTABLE" --version >/dev/null 2>&1
+    run_bounded_launch "$APP_PATH/Contents/MacOS/$APP_EXECUTABLE"
     sudo rm -rf "$APP_PATH"
     rm -rf "$MOUNT_DIR" "$DMG_APP"
     trap - EXIT
