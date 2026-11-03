@@ -1,8 +1,16 @@
 'use strict';
 
+const fs = require('node:fs');
+
 const MARKER = '<!-- brightdesk-private-test-diagnostic -->';
 const REPOSITORY = 'connormolloy12/Brightdesk-suite';
 const ISSUE_NUMBER = 27;
+
+function readPrivateFailureSummary(filePath, fsImpl = fs) {
+  if (!filePath) return '';
+  const encoded = fsImpl.readFileSync(filePath, 'utf8').trim();
+  return Buffer.from(encoded, 'base64').toString('utf8');
+}
 
 function buildDiagnosticComment(summary) {
   const safeSummary = String(summary || '')
@@ -55,7 +63,7 @@ async function upsertDiagnosticComment({ token, summary, fetchImpl = fetch, apiU
 if (require.main === module) {
   upsertDiagnosticComment({
     token: process.env.GITHUB_TOKEN,
-    summary: process.env.BRIGHTDESK_FAILURE_SUMMARY || Buffer.from(process.env.BRIGHTDESK_FAILURE_SUMMARY_BASE64 || '', 'base64').toString('utf8'),
+    summary: readPrivateFailureSummary(process.env.BRIGHTDESK_FAILURE_SUMMARY_FILE),
     apiUrl: process.env.GITHUB_API_URL || 'https://api.github.com'
   }).then(result => {
     process.stdout.write(`Private diagnostic comment ${result} on Brightdesk-suite issue #27.\n`);
@@ -65,4 +73,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { MARKER, buildDiagnosticComment, upsertDiagnosticComment };
+module.exports = { MARKER, readPrivateFailureSummary, buildDiagnosticComment, upsertDiagnosticComment };

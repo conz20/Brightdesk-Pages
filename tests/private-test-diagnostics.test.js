@@ -62,9 +62,19 @@ test('private test diagnostics bounds and sanitizes untrusted test names', () =>
 
 const {
   MARKER,
+  readPrivateFailureSummary,
   buildDiagnosticComment,
   upsertDiagnosticComment
 } = require('../scripts/brightdesk-private-runner/report-private-test-failure');
+
+test('private diagnostic summary is read from a runner-local file instead of an environment variable', () => {
+  const encoded = Buffer.from('Failing test cases: private name only', 'utf8').toString('base64');
+  const summary = readPrivateFailureSummary('runner-local-summary.b64', {
+    readFileSync: () => encoded
+  });
+
+  assert.equal(summary, 'Failing test cases: private name only');
+});
 
 test('private diagnostic comment includes only the bounded sanitized summary', () => {
   const body = buildDiagnosticComment('Failing test cases: first feature');

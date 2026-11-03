@@ -64,9 +64,11 @@ run_private_tests() {
     local status=$?
     if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
       local summary
+      local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-private-${PROJECT_NAME}-failure-summary.b64"
       summary="$(node "$(dirname "$0")/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
+      printf '%s' "$summary" > "$summary_file"
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        printf 'failure_summary_base64=%s\n' "$summary" >> "$GITHUB_OUTPUT"
+        printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
     fi
     fail_check "$status"
