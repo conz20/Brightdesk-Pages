@@ -8,12 +8,14 @@ on:
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
       - 'tests/private-test-diagnostics.test.js'
+      - 'tests/private-test-diagnostics.test.js'
   push:
     branches: [main]
     paths:
       - '.github/workflows/brightdesk-private-maintenance.yml'
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
+      - 'tests/private-test-diagnostics.test.js'
   schedule:
     - cron: '13 17 * * *'
     - cron: '17 17 * * 0'
@@ -49,7 +51,7 @@ jobs:
         shell: bash
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
-          node --test tests/brightdesk-private-runner.test.js
+          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
