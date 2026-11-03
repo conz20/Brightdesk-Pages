@@ -7,12 +7,14 @@ on:
       - '.github/workflows/brightdesk-private-maintenance.yml'
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
+      - 'tests/private-test-diagnostics.test.js'
   push:
     branches: [main]
     paths:
       - '.github/workflows/brightdesk-private-maintenance.yml'
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
+      - 'tests/private-test-diagnostics.test.js'
   schedule:
     - cron: '13 17 * * *'
     - cron: '17 17 * * 0'
@@ -48,7 +50,7 @@ jobs:
         shell: bash
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
-          node --test tests/brightdesk-private-runner.test.js
+          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
@@ -109,11 +111,30 @@ jobs:
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private project tests without publishing source logs
+        id: run-private-check
         if: steps.private-token.outputs.available == 'true'
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
             test source "${{ matrix.project }}"
+      - name: Create an issue-only token for the private Suite diagnostic
+        id: issue-token
+        if: failure() && matrix.project == 'Brightdesk-suite' && steps.run-private-check.outputs.failure_summary_base64 != ''
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: connormolloy12
+          repositories: Brightdesk-suite
+          permission-issues: write
+      - name: Save sanitized failure names to the private Suite issue
+        if: failure() && steps.issue-token.outputs.token != ''
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ steps.issue-token.outputs.token }}
+          BRIGHTDESK_FAILURE_SUMMARY_BASE64: ${{ steps.run-private-check.outputs.failure_summary_base64 }}
+        run: node controller/scripts/brightdesk-private-runner/report-private-test-failure.js
 
   weekly-private-installer-builds:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}

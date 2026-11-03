@@ -56,12 +56,29 @@ if ! node -e "const p=require(process.argv[1]); if (p.engines?.node !== '24.22.2
   fail_check 2
 fi
 
+run_private_tests() {
+  STAGE="automated tests"
+  if (cd "$PROJECT_DIR" && npm test -- --test-reporter=tap) >> "$LOG_FILE" 2>&1; then
+    return 0
+  else
+    local status=$?
+    if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+      local summary
+      summary="$(node "$(dirname "$0")/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
+      if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+        printf 'failure_summary_base64=%s\n' "$summary" >> "$GITHUB_OUTPUT"
+      fi
+    fi
+    fail_check "$status"
+  fi
+}
+
 if [[ "$MODE" == "test" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
   run_private_command "third-party licence check" npm run verify:licenses
-  run_private_command "automated tests" npm test
+  run_private_tests
   run_private_command "release readiness check" npm run release:preflight
 elif [[ "$MODE" == "build" ]]; then
   if [[ -z "$PLATFORM" || -z "$VERIFY_SCRIPT" ]]; then
