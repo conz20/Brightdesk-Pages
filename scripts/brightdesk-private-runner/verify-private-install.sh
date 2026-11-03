@@ -100,11 +100,14 @@ case "$PLATFORM" in
     trap - EXIT
     ;;
   win)
-    if ! command -v powershell.exe >/dev/null 2>&1; then
+    if command -v pwsh >/dev/null 2>&1; then
+      pwsh -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT_DIR/verify-private-install.ps1" -ProjectDir "$PROJECT_DIR"
+    elif command -v powershell.exe >/dev/null 2>&1; then
+      powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT_DIR/verify-private-install.ps1" -ProjectDir "$PROJECT_DIR"
+    else
       echo "Windows installer smoke test requires PowerShell." >&2
       exit 2
     fi
-    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT_DIR/verify-private-install.ps1" -ProjectDir "$PROJECT_DIR"
     ;;
   *)
     echo "Unsupported installer smoke-test platform: $PLATFORM" >&2
