@@ -90,7 +90,7 @@ jobs:
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \
             --workdir /workspace \
-            node:24.22.2-bookworm-slim npm test \
+            node:24.22.2-bookworm-slim node --test \
             > "$RUNNER_TEMP/brightdesk-private-ai-tests.log" 2>&1
           result=$?
           set -e
