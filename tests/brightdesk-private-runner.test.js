@@ -387,7 +387,7 @@ test('private installer diagnostics classify Windows install and uninstall exit 
       'The Windows installer exited with code 1.',
       'C:\\Users\\runner\\source\\src\\main.js',
       'SECRET_SOURCE_CONTENT'
-    ].join('\\n')
+    ].join('\n')
   });
 
   assert.match(output, /The Windows installer exited with code 1/);
