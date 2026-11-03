@@ -316,3 +316,33 @@ test('installer failure workflow uses a separate Suite-only Issues token and pos
   assert.match(job, /continue-on-error: true/);
   assert.doesNotMatch(job, /upload-artifact/);
 });
+
+
+test('private installer diagnostics classify missing commands without exposing command lines or paths', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const linux = diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: 'bash: line 42: sudo: command not found\\n/home/runner/work/private/source/installer/install-linux.sh'
+  });
+  const windows = diagnostics.formatPrivateInstallerFailure({
+    platform: 'win',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: "The term 'pwsh' is not recognized as the name of a cmdlet."
+  });
+  const generic = diagnostics.formatPrivateInstallerFailure({
+    platform: 'mac',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: ''
+  });
+
+  for (const output of [linux, windows, generic]) {
+    assert.match(output, /command or executable could not (be found|start)/i);
+    assert.ok(!output.includes('sudo'));
+    assert.ok(!output.includes('pwsh'));
+    assert.ok(!output.includes('/home/runner/work'));
+  }
+});
