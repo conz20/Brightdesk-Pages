@@ -96,6 +96,7 @@ elif [[ "$MODE" == "build" ]]; then
     export CSC_IDENTITY_AUTO_DISCOVERY=false
   fi
   run_private_command "installer build" npm run "dist:${PLATFORM}"
+  run_private_command "release asset preparation" npm run release:prepare -- "$PLATFORM"
   run_private_command "installer package verification" npm run "$VERIFY_SCRIPT"
   if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
     run_private_command "installer installation smoke test" bash "$(dirname "$0")/verify-private-install.sh" "$PROJECT_DIR" "$PLATFORM"
