@@ -146,7 +146,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.doesNotMatch(install, /cygpath/);
   assert.match(install, /command -v.*APP_BINARY/);
   assert.match(install, /ldd.*not found/);
-  assert.match(install, /installed application launch check failed/);
+  assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
   assert.match(windows, /--version/);
