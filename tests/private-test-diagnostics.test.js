@@ -42,7 +42,7 @@ test('private test diagnostics never includes raw errors, source paths, or stack
 test('private test diagnostics handles TAP output without individual failing test names', () => {
   const summary = formatPrivateFailureSummary('Brightdesk-suite', []);
 
-  assert.match(summary, /test command failed/);
+  assert.match(summary, /Automated tests failed/);
   assert.match(summary, /individual failing test/i);
 });
 
