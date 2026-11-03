@@ -71,7 +71,7 @@ test('private diagnostic comment includes only the bounded sanitized summary', (
 
   assert.ok(body.includes(MARKER));
   assert.ok(body.includes('first feature'));
-  assert.doesNotMatch(body, /SECRET_SOURCE_CONTENT|private\\.js|stack trace detail/);
+  assert.doesNotMatch(body, /SECRET_SOURCE_CONTENT|private\.js|stack trace detail/);
 });
 
 test('private diagnostic reporter creates one marked comment when none exists', async () => {
