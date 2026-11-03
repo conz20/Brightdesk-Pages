@@ -28,7 +28,7 @@ function parseTapFailureNames(tapOutput) {
 }
 
 function escapeMarkdown(value) {
-  return value.replace(/[\\`*_{}\[\]()#+.!|>~-]/g, '\\$&');
+  return value.replace(/[\\`*_{}\[\]()#+.!|<>~-]/g, '\\$&');
 }
 
 function formatPrivateFailureSummary(project, failedNames) {
