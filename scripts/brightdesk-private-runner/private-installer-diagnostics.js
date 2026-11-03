@@ -39,6 +39,12 @@ function safeMissingLibraries(log) {
   return [...found].sort().slice(0, 20);
 }
 
+function hasMissingCommandDiagnostic(log) {
+  return String(log || '').split(/\\r?\\n/).some(line =>
+    /\\bcommand not found\\b|not recognized as an internal or external command|is not recognized as the name of a cmdlet|The term .+ is not recognized/i.test(line)
+  );
+}
+
 function safeWindowsMessages(log) {
   const lines = new Set(String(log || '').split(/\r?\n/).map(line => line.trim()));
   return WINDOWS_MESSAGES.filter(message => lines.has(message));
@@ -69,6 +75,12 @@ function formatPrivateInstallerFailure({ platform, stage, exitCode, log = '' } =
     if (messages.length) lines.push('Result: ' + messages.join(' '));
   }
 
+  if (hasMissingCommandDiagnostic(log)) {
+    lines.push('Result: a required command or executable could not be found.');
+  } else if (exitCode === 127) {
+    lines.push('Result: a command or executable could not start (exit code 127).');
+  }
+
   lines.push('', 'Only the platform, failed stage, exit code and allow-listed runtime diagnostic details are included. Raw logs, file paths, source contents, stack traces and credentials remain private.');
   return lines.join('\n');
 }
@@ -82,4 +94,4 @@ if (require.main === module) {
   process.stdout.write(Buffer.from(safe, 'utf8').toString('base64'));
 }
 
-module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeWindowsMessages, PLATFORMS, STAGES };
+module.exports = { formatPrivateInstallerFailure, safeMissingLibraries, safeWindowsMessages, hasMissingCommandDiagnostic, PLATFORMS, STAGES };
