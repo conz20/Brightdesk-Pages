@@ -147,11 +147,11 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /verify-private-install\.ps1/);
   assert.doesNotMatch(install, /cygpath/);
   assert.match(install, /command -v.*APP_BINARY/);
-  assert.match(install, /ldd.*not found/);
+  assert.match(install, /run_bounded_launch/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
-  assert.match(windows, /--version/);
+  assert.doesNotMatch(windows, /--version/);
 });
 
 test('native installer smoke-test shell script has valid Bash syntax', { skip: process.platform === 'win32' }, () => {
