@@ -10,6 +10,9 @@ on:
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
       - 'tests/private-test-diagnostics.test.js'
+      - 'rust/**'
+      - 'rust-toolchain.toml'
+      - 'docs/RUST-INTEGRATION.md'
   push:
     branches: [main]
     paths:
@@ -20,6 +23,9 @@ on:
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
       - 'tests/private-test-diagnostics.test.js'
+      - 'rust/**'
+      - 'rust-toolchain.toml'
+      - 'docs/RUST-INTEGRATION.md'
   schedule:
     - cron: '13 17 * * *'
     - cron: '17 17 * * 0'

@@ -73,6 +73,15 @@ jobs:
             exit 1
           fi
 
+      - name: Pull the pinned Rust test image
+        if: steps.credentials.outputs.available == 'true'
+        shell: bash
+        run: |
+          if ! docker pull rust:1.99.1-slim >/dev/null 2>&1; then
+            echo "Could not prepare the Rust test container." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
       - name: Run unit tests in a network-isolated container
         if: steps.credentials.outputs.available == 'true'
         shell: bash
@@ -101,6 +110,74 @@ jobs:
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
             echo "- Source revision: $(git -C private-ai rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **FAILED**. Detailed output was withheld to keep private source and test output out of public logs." >> "$GITHUB_STEP_SUMMARY"
+            exit "$result"
+          fi
+
+      - name: Run Rust foundation tests in a network-isolated container
+        if: steps.credentials.outputs.available == 'true'
+        shell: bash
+        run: |
+          if [[ ! -f private-ai/rust/Cargo.toml ]]; then
+            echo "- Rust foundation: not present; no Rust test was required." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          set +e
+          docker run --rm \\
+            --network none \\
+            --read-only \\
+            --cap-drop=ALL \\
+            --security-opt=no-new-privileges \\
+            --pids-limit=128 \\
+            --memory=512m \\
+            --cpus=1 \\
+            --tmpfs /tmp:rw,noexec,nosuid,size=128m \\
+            --env CARGO_HOME=/tmp/cargo-home \\
+            --env CARGO_TARGET_DIR=/tmp/cargo-target \\
+            --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \\
+            --workdir /workspace \\
+            rust:1.99.1-slim \\
+            cargo test --manifest-path rust/Cargo.toml --locked \\
+            > "$RUNNER_TEMP/brightdesk-private-ai-rust-tests.log" 2>&1
+          result=$?
+          set -e
+          if [[ "$result" -eq 0 ]]; then
+            echo "- Rust foundation tests: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Rust foundation tests: **FAILED**. Detailed output was withheld to keep private source and test output out of public logs." >> "$GITHUB_STEP_SUMMARY"
+            exit "$result"
+          fi
+
+      - name: Run Rust foundation tests in a network-isolated container
+        if: steps.credentials.outputs.available == 'true'
+        shell: bash
+        run: |
+          if [[ ! -f private-ai/rust/Cargo.toml ]]; then
+            echo "- Rust foundation: not present; no Rust test was required." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          set +e
+          docker run --rm \
+            --network none \
+            --read-only \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=128 \
+            --memory=512m \
+            --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,size=128m \
+            --env CARGO_HOME=/tmp/cargo-home \
+            --env CARGO_TARGET_DIR=/tmp/cargo-target \
+            --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \
+            --workdir /workspace \
+            rust:1.99.1-slim \
+            cargo test --manifest-path rust/Cargo.toml --locked \
+            > "$RUNNER_TEMP/brightdesk-private-ai-rust-tests.log" 2>&1
+          result=$?
+          set -e
+          if [[ "$result" -eq 0 ]]; then
+            echo "- Rust foundation tests: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Rust foundation tests: **FAILED**. Detailed output was withheld to keep private source and test output out of public logs." >> "$GITHUB_STEP_SUMMARY"
             exit "$result"
           fi
 
