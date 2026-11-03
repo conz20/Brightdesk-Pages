@@ -19,7 +19,8 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, /Detailed output was kept only on the temporary runner/);
   assert.doesNotMatch(source, /cat "\$LOG_FILE"/);
   assert.match(source, /npm test -- --test-reporter=tap/);
-  assert.match(source, /failure_summary_base64/);
+  assert.match(source, /failure_summary_file/);
+  assert.match(source, /failure-summary\\.b64/);
 });
 
 test('controller grants only read access through the default workflow token', () => {
