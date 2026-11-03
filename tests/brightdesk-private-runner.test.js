@@ -183,3 +183,112 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
   assert.match(concurrency, /brightdesk-private-project-maintenance/);
 });
+
+
+test('private installer diagnostics only expose whitelisted platform, stage, exit code and missing libraries', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: [
+      'Installed application launch check failed with exit code 127.',
+      'Missing system runtime libraries: libasound.so.2, libnss3.so, libgtk-3.so.0',
+      'source=/home/runner/work/private/source/src/main.js',
+      'SECRET_SOURCE_CONTENT',
+      'at privateFunction (/home/runner/work/private/source/app.js:42:5)'
+    ].join('\n')
+  });
+
+  assert.match(output, /Brightdesk-suite/);
+  assert.match(output, /Platform: linux/);
+  assert.match(output, /Failed stage: installer installation smoke test/);
+  assert.match(output, /Exit code: 127/);
+  assert.match(output, /libasound\.so\.2/);
+  assert.match(output, /libnss3\.so/);
+  assert.match(output, /libgtk-3\.so\.0/);
+  assert.doesNotMatch(output, /SECRET_SOURCE_CONTENT|private\.js|source\/src|stack|runner\/work/);
+});
+
+test('private installer diagnostics discard unknown paths and malformed library names', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'win',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: [
+      'The Windows installer did not install Brightdesk.exe.',
+      'Missing system runtime libraries: C:\\private\\evil.dll, libvalid.so.1;SECRET, ../private.dll',
+      'C:\\Users\\runner\\source\\app.js'
+    ].join('\n')
+  });
+
+  assert.match(output, /Windows installer did not install Brightdesk\.exe/);
+  assert.doesNotMatch(output, /C:\\\\|private|evil|SECRET|\\.\\.\\//);
+  assert.doesNotMatch(output, /Missing system runtime libraries:/);
+});
+
+test('private installer diagnostics reject unsupported platform and stage metadata', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  assert.throws(() => diagnostics.formatPrivateInstallerFailure({
+    platform: 'unknown', stage: 'installer installation smoke test', exitCode: 1, log: ''
+  }), /unsupported platform/i);
+  assert.throws(() => diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux', stage: '/private/path', exitCode: 1, log: ''
+  }), /unsupported stage/i);
+  assert.throws(() => diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux', stage: 'installer build', exitCode: '127', log: ''
+  }), /exit code/i);
+});
+
+test('private installer diagnostic reporter updates one marked comment per platform', async () => {
+  const reporter = require('../scripts/brightdesk-private-runner/report-private-installer-failure');
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({ url, options });
+    return calls.length === 1
+      ? { ok: true, json: async () => [{ id: 789, body: '<!-- brightdesk-private-installer-diagnostic-linux -->\nold' }] }
+      : { ok: true, json: async () => ({ id: 789 }) };
+  };
+
+  const result = await reporter.upsertInstallerDiagnostic({
+    token: 'test-token',
+    platform: 'linux',
+    summary: 'Platform: linux\nExit code: 127',
+    fetchImpl,
+    apiUrl: 'https://api.example.test'
+  });
+
+  assert.equal(result, 'updated');
+  assert.equal(calls[1].options.method, 'PATCH');
+  assert.ok(calls[1].url.endsWith('/issues/comments/789'));
+  const body = JSON.parse(calls[1].options.body).body;
+  assert.ok(body.includes('<!-- brightdesk-private-installer-diagnostic-linux -->'));
+  assert.ok(body.includes('Platform: linux'));
+});
+
+test('private installer diagnostic reporter refuses missing tokens and empty summaries', async () => {
+  const reporter = require('../scripts/brightdesk-private-runner/report-private-installer-failure');
+  await assert.rejects(
+    reporter.upsertInstallerDiagnostic({ token: '', platform: 'linux', summary: 'safe', fetchImpl: async () => ({ok:true,json:async()=>[]}) }),
+    /short-lived issue-scoped GitHub token/
+  );
+  await assert.rejects(
+    reporter.upsertInstallerDiagnostic({ token: 'test-token', platform: 'linux', summary: '', fetchImpl: async () => ({ok:true,json:async()=>[]}) }),
+    /non-empty/
+  );
+});
+
+test('installer failure workflow uses a separate Suite-only Issues token and posts only the bounded summary', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const job = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  assert.match(job, /id: build-installer/);
+  assert.match(job, /id: installer-issue-token/);
+  assert.match(job, /permission-issues: write/);
+  assert.match(job, /repositories: Brightdesk-suite/);
+  assert.match(job, /installer_failure_summary_file/);
+  assert.match(job, /report-private-installer-failure\.js/);
+  assert.match(job, /GITHUB_TOKEN/);
+  assert.match(job, /continue-on-error: true/);
+  assert.doesNotMatch(job, /upload-artifact/);
+});
