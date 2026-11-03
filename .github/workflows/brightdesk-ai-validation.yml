@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: brightdesk-private-ai-validation
+  group: brightdesk-private-ai-main-validation
   cancel-in-progress: false
 
 jobs:
