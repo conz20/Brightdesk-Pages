@@ -50,6 +50,10 @@ test('app repository seed exports a locked single-app package with suite source 
       assert.ok(pkg.scripts['verify:app:mac']);
       assert.ok(pkg.scripts['verify:app:linux']);
       for (const platform of ['win', 'mac', 'linux']) {
+        assert.equal(pkg.scripts[`dist:desktop:${platform}`], `node scripts/build-app.js ${item.appId} ${platform}`);
+        assert.equal(pkg.scripts[`verify:desktop:${platform}`], `node scripts/verify-desktop-installers.js ${platform} release/apps ${item.appId}`);
+      }
+      for (const platform of ['win', 'mac', 'linux']) {
         assert.ok(pkg.scripts[`verify:app:${platform}`].includes('verify-desktop-installers.js'));
         assert.ok(pkg.scripts[`verify:app:${platform}`].includes(item.appId));
       }
