@@ -36,7 +36,11 @@
     "dist:desktop:linux": "node scripts/build-app.js pages linux",
     "verify:desktop:win": "node scripts/verify-desktop-installers.js win release/apps pages",
     "verify:desktop:mac": "node scripts/verify-desktop-installers.js mac release/apps pages",
-    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages"
+    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages",
+    "rust:fmt": "cargo fmt --manifest-path rust/Cargo.toml --all -- --check",
+    "rust:test": "cargo test --manifest-path rust/Cargo.toml --workspace",
+    "rust:build": "cargo build --manifest-path rust/Cargo.toml --workspace --release",
+    "rust:check": "npm run rust:fmt && cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings && npm run rust:test && npm run rust:build"
   },
   "dependencies": {
     "docx": "9.15.1",
