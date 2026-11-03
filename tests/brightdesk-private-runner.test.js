@@ -137,7 +137,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
   assert.ok(install.includes('Brightdesk-Install-Linux.sh'));
   assert.match(install, /apt-get remove/);
-  assert.match(install, /installer -pkg/);
+  assert.match(install, /installer -allowUntrusted -pkg/);
   assert.match(install, /hdiutil attach/);
   assert.match(install, /verify-private-install\.ps1/);
   assert.match(windows, /Brightdesk-Setup-/);
