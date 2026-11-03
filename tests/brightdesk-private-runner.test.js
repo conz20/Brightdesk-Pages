@@ -133,6 +133,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(runner, /if \[\[ "\$PROJECT_NAME" == "Brightdesk-suite" \]\]/);
   assert.match(runner, /installer installation smoke test/);
   assert.match(runner, /verify-private-install\.sh/);
+  assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
   assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
   assert.match(install, /apt-get install/);
   assert.match(install, /apt-get remove/);
@@ -142,6 +143,11 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
   assert.match(windows, /--version/);
+});
+
+test('native installer smoke-test shell script has valid Bash syntax', { skip: process.platform === 'win32' }, () => {
+  const installScript = path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh');
+  execFileSync('bash', ['-n', installScript], { stdio: 'pipe' });
 });
 
 test('one-time Suite installer request starts only Suite platform builds', () => {
