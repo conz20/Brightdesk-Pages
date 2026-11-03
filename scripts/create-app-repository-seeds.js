@@ -141,6 +141,10 @@ The latest standalone installers are published from this repository's verified r
 
 The complete ten-app desktop suite remains available from [Brightdesk-suite](https://github.com/connormolloy12/Brightdesk-suite).
 
+## Quality and security
+
+Pull requests, pushes to `main` and a daily scheduled run verify Node.js 24.22.2, the committed dependency lock, third-party licences, automated tests, release preflight and high-severity dependency vulnerabilities. Installer builds require a manual workflow dispatch. Publishing is disabled unless `publish_release` is explicitly selected.
+
 ## Run from source
 
 Use Node.js **24.22.2**.
@@ -184,6 +188,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '17 4 * * *'
   workflow_dispatch:
     inputs:
       publish_release:
@@ -300,6 +306,7 @@ function makePackage(app, target) {
   manifest.build.productName = app.name;
   manifest.build.directories = { ...(manifest.build.directories || {}), output: 'release' };
   manifest.build.publish = [];
+  manifest.scripts.release = 'npm run verify:licenses && electron-builder --publish never';
   manifest.scripts['dist:app:win'] = `node scripts/build-app.js ${app.appId} win`;
   manifest.scripts['dist:app:mac'] = `node scripts/build-app.js ${app.appId} mac`;
   manifest.scripts['dist:app:linux'] = `node scripts/build-app.js ${app.appId} linux`;
