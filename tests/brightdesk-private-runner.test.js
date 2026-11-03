@@ -50,7 +50,8 @@ test('private diagnostic reporter always runs its local guard after a job failur
   assert.ok(reporter.includes('if: always()'));
   assert.ok(reporter.includes('BRIGHTDESK_PROJECT'));
   assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME'));
-  assert.ok(reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_BASE64'));
+  assert.ok(reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_FILE'));
+  assert.ok(!reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_BASE64'));
   assert.ok(reporter.includes('-n "$GITHUB_TOKEN"'));
   assert.ok(reporter.includes('BRIGHTDESK_PROJECT" == "Brightdesk-suite"'));
   assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME" == "failure"'));
