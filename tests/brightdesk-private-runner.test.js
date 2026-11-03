@@ -52,3 +52,19 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   }
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
+
+test('trusted controller updates trigger daily private checks but never start the installer matrix', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
+  assert.match(pushTrigger, /branches: \[main\]/);
+  assert.match(pushTrigger, /brightdesk-private-maintenance\.yml/);
+
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  assert.match(
+    dailyJob,
+    /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'/
+  );
+
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
+});

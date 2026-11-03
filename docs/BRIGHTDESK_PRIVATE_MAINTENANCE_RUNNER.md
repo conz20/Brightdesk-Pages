@@ -44,7 +44,7 @@ If these two settings are already present and the App installation has the requi
 3. Leave **Build and verify all private project installers on Windows, macOS and Linux** unchecked for the ordinary daily test run.
 4. Start the workflow and inspect the six private-project test jobs.
 
-The workflow also runs daily. Its weekly schedule builds and verifies the configured Windows, macOS and Linux packages after the daily checks pass. The manual cross-platform option starts the full 18-project/platform build matrix.
+The workflow also runs daily. A trusted push to the controller on `main` triggers the same six-repository daily checks, while pull-request events only validate the public controller and never check out private projects. Its weekly schedule builds and verifies the configured Windows, macOS and Linux packages after the daily checks pass. The manual cross-platform option starts the full 18-project/platform build matrix.
 
 All build commands use the existing non-publishing scripts. The controller does not upload artifacts or publish a release.
 
