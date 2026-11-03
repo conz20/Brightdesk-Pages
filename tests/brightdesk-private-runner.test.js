@@ -416,3 +416,19 @@ test('Windows installer diagnostics expose only the last bounded smoke-test stag
   assert.match(powershell, /Brightdesk Windows smoke test stage: application launch/);
   assert.match(powershell, /Brightdesk Windows smoke test stage: uninstaller execution/);
 });
+
+
+test('native installer smoke tests bound application launch time and clean up test processes', () => {
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+  const powershell = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+
+  assert.match(install, /run_bounded_launch/);
+  assert.match(install, /ps -o stat=/);
+  assert.match(install, /kill "\\$app_pid"/);
+  assert.match(install, /for attempt in 1 2 3 4 5 6 7 8 9 10/);
+  assert.match(install, /xvfb-run -a/);
+  assert.match(powershell, /Start-Sleep -Seconds 5/);
+  assert.match(powershell, /Stop-Process -Id \\$process\.Id/);
+  assert.match(powershell, /taskkill\.exe \/PID/);
+  assert.doesNotMatch(powershell, /& \\$appPath --version/);
+});
