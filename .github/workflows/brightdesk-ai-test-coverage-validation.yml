@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   private-auditor-tests:
-    name: Test the pinned private auditor revision
+    name: Test the current private auditor main revision
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -51,12 +51,12 @@ jobs:
           repositories: Brightdesk-AI
           permission-contents: read
 
-      - name: Check out the pinned private auditor revision
+      - name: Check out the current private auditor main revision
         if: steps.credentials.outputs.available == 'true'
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
         with:
           repository: connormolloy12/Brightdesk-AI
-          ref: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507
+          ref: main
           token: ${{ steps.app-token.outputs.token }}
           path: private-ai
           persist-credentials: false
@@ -92,11 +92,11 @@ jobs:
           set -e
           if [[ "$result" -eq 0 ]]; then
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Source revision: $(git -C private-ai rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Source revision: $(git -C private-ai rev-parse HEAD)" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **FAILED**. Detailed output was withheld." >> "$GITHUB_STEP_SUMMARY"
             exit "$result"
           fi
