@@ -7,3 +7,4 @@ Retry activated after bounded smoke-test diagnostics and PowerShell Core fallbac
 Retry activated after making bounded smoke-test diagnostics visible in Actions logs. Controller commit d89b19a1c5af78dd739e60f7b2dc032fe71a73f2. [build-brightdesk-suite-installers]
 
 Retry activated after private installer diagnostic reporter merge 4ecae58f7edf676a3ef9c71cb941953e1f399331. [build-brightdesk-suite-installers]
+Retry activated with private installer diagnostics and a safe fallback for unclassified exit codes. Controller commit c8f5b41d9c1f180716cf42c8db7de81f0204ba40. [build-brightdesk-suite-installers]
