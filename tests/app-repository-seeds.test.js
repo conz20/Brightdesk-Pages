@@ -32,10 +32,15 @@ test('app repository seed exports a locked single-app package with suite source 
       const lock = JSON.parse(fs.readFileSync(path.join(destination, 'package-lock.json'), 'utf8'));
       const readme = fs.readFileSync(path.join(destination, 'README.md'), 'utf8');
       const workflow = fs.readFileSync(path.join(destination, '.github', 'workflows', 'standalone-app.yml'), 'utf8');
+      const appBuilder = fs.readFileSync(path.join(destination, 'electron-builder.app.config.js'), 'utf8');
       assert.equal(pkg.name, item.packageName);
       assert.equal(pkg.brightdeskAppId, item.appId);
       assert.equal(pkg.build.appId, `org.brightdesk.${item.appId}`);
       assert.equal(pkg.build.productName, item.name);
+      assert.ok(appBuilder.includes("loop: 'Workspace'"));
+      assert.ok(appBuilder.includes("todo: 'To-Do'"));
+      assert.ok(appBuilder.includes('desktopName: `org.brightdesk.${appId}.desktop`'));
+      assert.ok(appBuilder.includes('syncDesktopName: true'));
       assert.equal(lock.name, item.packageName);
       assert.equal(lock.packages[''].name, item.packageName);
       assert.ok(pkg.scripts['dist:app:win']);
