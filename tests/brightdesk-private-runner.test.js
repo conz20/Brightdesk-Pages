@@ -157,12 +157,12 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
 
   assert.ok(pushTrigger.includes('.github/requests/brightdesk-suite-installers.request'));
-  assert.match(oneTimeJob, /github\\.event_name == 'push'/);
-  assert.match(oneTimeJob, /toJSON\\(github\\.event\\.commits\\)/);
-  assert.match(oneTimeJob, /brightdesk-suite-installers\\.request/);
+  assert.match(oneTimeJob, /github\.event_name == 'push'/);
+  assert.match(oneTimeJob, /toJSON\(github\.event\.commits\)/);
+  assert.match(oneTimeJob, /brightdesk-suite-installers\.request/);
   assert.ok(oneTimeJob.includes('repository: connormolloy12/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
-  assert.doesNotMatch(weeklyJob, /github\\.event_name == 'push'/);
-  assert.doesNotMatch(oneTimeJob, /actions\\/upload-artifact/);
+  assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
+  assert.doesNotMatch(oneTimeJob, /actions\/upload-artifact/);
 });
