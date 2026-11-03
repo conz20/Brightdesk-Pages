@@ -35,3 +35,9 @@ Brightdesk-AI remains a private control plane and is not bundled into customer a
 - Windows and Linux build the native addon for the runner architecture. macOS builds both `aarch64-apple-darwin` and `x86_64-apple-darwin` libraries and combines them into a universal module for the universal desktop installer.
 
 The Rust toolchain is pinned to 1.99.1. Cross-platform CI targets Linux, Windows, and macOS. GitHub has not assigned runners to the current jobs yet, so compilation and test results remain unverified until those workflows actually execute.
+
+## Runtime fallback
+
+The Node.js adapter attempts to load the native Node-API module first. If the addon is missing or cannot be loaded, it selects a bundled JavaScript implementation with the same bounded source-analysis and vector-operation contract. The app remains usable and reports the active engine through `getNativeEngineInfo()`; fallback status is explicit and is not reported as a successful native load.
+
+The fallback is a resilience path, not a substitute for validating the native library. CI must still compile the Rust crate, run Clippy and Cargo tests, build the Node-API addon, and exercise the native bridge on Linux, Windows, and macOS before the integration is accepted.
