@@ -148,6 +148,8 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.doesNotMatch(install, /cygpath/);
   assert.match(install, /command -v.*APP_BINARY/);
   assert.match(install, /run_bounded_launch/);
+  assert.match(install, /BRIGHTDESK_STARTUP_SMOKE_TEST=1/);
+  assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
@@ -427,8 +429,11 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.ok(install.includes('kill "$app_pid"'));
   assert.match(install, /for attempt in 1 2 3 4 5 6 7 8 9 10/);
   assert.match(install, /xvfb-run -a/);
-  assert.match(powershell, /Start-Sleep -Seconds 5/);
+  assert.match(powershell, /BRIGHTDESK_STARTUP_SMOKE_TEST/);
+  assert.match(powershell, /WaitForExit\(15000\)/);
   assert.ok(powershell.includes("Wait-Process -Id $appProcess.Id"));
+  assert.match(powershell, /did not complete its startup check/);
+  assert.doesNotMatch(powershell, /Start-Sleep -Seconds 5/);
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));
 });

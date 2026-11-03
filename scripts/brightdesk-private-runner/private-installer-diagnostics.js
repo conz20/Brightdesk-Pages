@@ -17,6 +17,7 @@ const STAGES = new Set([
 const WINDOWS_MESSAGES = [
   'The Windows installer did not install Brightdesk.exe.',
   'The installed Windows application did not launch its version check.',
+  'The installed Windows application did not complete its startup check.',
   'The Windows installer did not create its uninstaller.'
 ];
 const LINUX_MESSAGES = [

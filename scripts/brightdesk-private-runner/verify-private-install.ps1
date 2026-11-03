@@ -30,16 +30,25 @@ try {
   }
 
   Write-Output 'Brightdesk Windows smoke test stage: application launch.'
-  $appProcess = Start-Process -FilePath $appPath -PassThru
-  Start-Sleep -Seconds 5
-  $appProcess.Refresh()
-  if ($appProcess.HasExited) {
-    if ($appProcess.ExitCode -ne 0) {
-      throw 'The installed Windows application did not launch its version check.'
+  $previousSmokeTestSetting = $env:BRIGHTDESK_STARTUP_SMOKE_TEST
+  try {
+    $env:BRIGHTDESK_STARTUP_SMOKE_TEST = '1'
+    $appProcess = Start-Process -FilePath $appPath -PassThru
+    if (-not $appProcess.WaitForExit(15000)) {
+      taskkill.exe /PID $appProcess.Id /T /F | Out-Null
+      Wait-Process -Id $appProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
+      throw 'The installed Windows application did not complete its startup check.'
     }
-  } else {
-    taskkill.exe /PID $appProcess.Id /T /F | Out-Null
-    Wait-Process -Id $appProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
+    if ($appProcess.ExitCode -ne 0) {
+      throw 'The installed Windows application did not complete its startup check.'
+    }
+  }
+  finally {
+    if ($null -eq $previousSmokeTestSetting) {
+      Remove-Item Env:BRIGHTDESK_STARTUP_SMOKE_TEST -ErrorAction SilentlyContinue
+    } else {
+      $env:BRIGHTDESK_STARTUP_SMOKE_TEST = $previousSmokeTestSetting
+    }
   }
 
   $uninstaller = Join-Path $installDir 'Uninstall Brightdesk.exe'
