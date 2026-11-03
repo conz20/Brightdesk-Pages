@@ -135,6 +135,9 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(runner, /verify-private-install\.sh/);
   assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
   assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
+  assert.match(runner, /release:prepare/);
+  assert.ok(runner.indexOf('release:prepare') > runner.indexOf('installer build'));
+  assert.ok(runner.indexOf('release:prepare') < runner.indexOf('installer package verification'));
   assert.ok(install.includes('Brightdesk-Install-Linux.sh'));
   assert.match(install, /apt-get remove/);
   assert.match(install, /installer -allowUntrusted -pkg/);
@@ -165,4 +168,14 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
   assert.doesNotMatch(oneTimeJob, /actions\/upload-artifact/);
+});
+
+test('installer verification and pull request validation use isolated concurrency groups', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const concurrency = source.match(/concurrency:\n([\s\S]*?)\n\njobs:/)?.[1] ?? '';
+  assert.match(concurrency, /github\.event_name == 'pull_request'/);
+  assert.match(concurrency, /brightdesk-private-maintenance-pr-/);
+  assert.match(concurrency, /build-brightdesk-suite-installers/);
+  assert.match(concurrency, /brightdesk-suite-installer-request-/);
+  assert.match(concurrency, /brightdesk-private-project-maintenance/);
 });
