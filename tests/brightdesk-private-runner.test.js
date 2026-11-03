@@ -169,3 +169,13 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
   assert.doesNotMatch(oneTimeJob, /actions\/upload-artifact/);
 });
+
+test('installer verification and pull request validation use isolated concurrency groups', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const concurrency = source.match(/concurrency:\n([\s\S]*?)\n\njobs:/)?.[1] ?? '';
+  assert.match(concurrency, /github\.event_name == 'pull_request'/);
+  assert.match(concurrency, /brightdesk-private-maintenance-pr-/);
+  assert.match(concurrency, /build-brightdesk-suite-installers/);
+  assert.match(concurrency, /brightdesk-suite-installer-request-/);
+  assert.match(concurrency, /brightdesk-private-project-maintenance/);
+});
