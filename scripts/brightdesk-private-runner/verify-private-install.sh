@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 run_bounded_launch() {
   local app_pid process_state status attempt
-  "$@" >/dev/null 2>&1 &
+  BRIGHTDESK_STARTUP_SMOKE_TEST=1 "$@" >/dev/null 2>&1 &
   app_pid=$!
   for attempt in 1 2 3 4 5 6 7 8 9 10; do
     process_state="$(ps -o stat= -p "$app_pid" 2>/dev/null | tr -d '[:space:]' || true)"
@@ -25,7 +25,8 @@ run_bounded_launch() {
   done
   kill "$app_pid" 2>/dev/null || true
   wait "$app_pid" 2>/dev/null || true
-  return 0
+  echo "Installed application launch check failed with exit code 124." >&2
+  return 124
 }
 
 if [[ -z "$PROJECT_DIR" || ! -d "$PROJECT_DIR" ]]; then
