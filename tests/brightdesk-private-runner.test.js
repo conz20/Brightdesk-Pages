@@ -375,3 +375,22 @@ test('private installer diagnostics classify known Linux install and executable 
   assert.ok(!output.includes('/home/runner/work'));
   assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
 });
+
+
+test('private installer diagnostics classify Windows install and uninstall exit codes safely', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'win',
+    stage: 'installer installation smoke test',
+    exitCode: 1,
+    log: [
+      'The Windows installer exited with code 1.',
+      'C:\\Users\\runner\\source\\src\\main.js',
+      'SECRET_SOURCE_CONTENT'
+    ].join('\n')
+  });
+
+  assert.match(output, /The Windows installer exited with code 1/);
+  assert.ok(!output.includes('C:\\Users'));
+  assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
+});
