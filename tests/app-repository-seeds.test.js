@@ -65,7 +65,7 @@ test('app repository seed exports a locked single-app package with suite source 
       assert.ok(fs.statSync(path.join(destination, 'assets', 'social-preview.svg')).size > 0);
       assert.ok(readme.includes('assets/social-preview.svg'));
       assert.match(workflow, /node-version: 24\.22\.2/);
-      assert.match(workflow, /schedule:\s*\n\s*- cron: '17 4 \\* \\* \\*'/);
+      assert.match(workflow, /schedule:\s*\n\s*- cron: '17 4 \* \* \*'/);
       assert.match(workflow, /npm audit --audit-level=high/);
       const pinnedActions = [
         'actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
