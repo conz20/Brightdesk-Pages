@@ -46,16 +46,16 @@ function safeMissingLibraries(log) {
 }
 
 function hasMissingCommandDiagnostic(log) {
-  return String(log || '').split(/\\r?\\n/).some(line =>
-    /\\bcommand not found\\b|not recognized as an internal or external command|is not recognized as the name of a cmdlet|The term .+ is not recognized/i.test(line)
+  return String(log || '').split(/\r?\n/).some(line =>
+    /\bcommand not found\b|not recognized as an internal or external command|is not recognized as the name of a cmdlet|The term .+ is not recognized/i.test(line)
   );
 }
 
 function safeLinuxMessages(log) {
-  const messages = new Set(String(log || '').split(/\\r?\\n/).map(line => line.trim()));
+  const messages = new Set(String(log || '').split(/\r?\n/).map(line => line.trim()));
   const result = LINUX_MESSAGES.filter(message => messages.has(message));
   for (const line of messages) {
-    const match = line.match(/^Linux package (installation|uninstall) failed with exit code ([0-9]{1,3})\\.$/);
+    const match = line.match(/^Linux package (installation|uninstall) failed with exit code ([0-9]{1,3})\.$/);
     if (match) result.push('Linux package ' + match[1] + ' failed with exit code ' + Number(match[2]) + '.');
   }
   return [...new Set(result)].slice(0, 5);
