@@ -125,6 +125,9 @@ if [[ "$MODE" == "test" ]]; then
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
   run_rust_checks
   run_private_command "third-party licence check" npm run verify:licenses
+  if [[ -f "$PROJECT_DIR/rust/Cargo.toml" ]]; then
+    run_private_command "Rust Node-API addon build" npm run native:build
+  fi
   run_private_tests
   run_private_command "release readiness check" npm run release:preflight
 elif [[ "$MODE" == "build" ]]; then
