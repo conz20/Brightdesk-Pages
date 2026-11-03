@@ -10,3 +10,5 @@ Retry activated after private installer diagnostic reporter merge 4ecae58f7edf67
 Retry activated with private installer diagnostics and a safe fallback for unclassified exit codes. Controller commit c8f5b41d9c1f180716cf42c8db7de81f0204ba40. [build-brightdesk-suite-installers]
 
 Retry activated after fixing the absolute smoke-test script path (root cause of exit 127 on Windows/Linux). Controller commit 4892418d0fffc73674f3d4e10628b1d0ba5d3a86. [build-brightdesk-suite-installers]
+
+Retry activated with improved private Linux/Windows install failure classification. Controller commit 3e4a1b800ab9034008ffa33b2f0d840c1943f6eb. [build-brightdesk-suite-installers]
