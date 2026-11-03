@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 run_bounded_launch() {
   local app_pid process_state status attempt
-  BRIGHTDESK_STARTUP_SMOKE_TEST=1 "$@" >/dev/null 2>&1 &
+  BRIGHTDESK_STARTUP_SMOKE_TEST=1 BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 "$@" >/dev/null 2>&1 &
   app_pid=$!
   for attempt in 1 2 3 4 5 6 7 8 9 10; do
     process_state="$(ps -o stat= -p "$app_pid" 2>/dev/null | tr -d '[:space:]' || true)"
@@ -64,6 +64,13 @@ case "$PLATFORM" in
       echo "Installed Linux application executable was not found in the desktop entry or PATH." >&2
       exit 1
     fi
+    APP_REAL_BINARY="$(readlink -f "$APP_BINARY")"
+    APP_ROOT="$(dirname "$APP_REAL_BINARY")"
+    NATIVE_ADDON="$APP_ROOT/resources/app.asar.unpacked/native/brightdesk_engine.node"
+    if [[ ! -f "$NATIVE_ADDON" ]]; then
+      echo "Installed Linux application is missing its unpacked Rust native addon." >&2
+      exit 1
+    fi
     if command -v xvfb-run >/dev/null 2>&1; then
       run_bounded_launch xvfb-run -a "$APP_BINARY" --no-sandbox
     else
@@ -99,6 +106,11 @@ case "$PLATFORM" in
       exit 1
     fi
     ditto "$DMG_APP_SOURCE" "$DMG_APP"
+    DMG_NATIVE_ADDON="$DMG_APP/Contents/Resources/app.asar.unpacked/native/brightdesk_engine.node"
+    if [[ ! -f "$DMG_NATIVE_ADDON" ]]; then
+      echo "The macOS DMG app is missing its unpacked Rust native addon." >&2
+      exit 1
+    fi
     DMG_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$DMG_APP/Contents/Info.plist")"
     run_bounded_launch "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE"
     hdiutil detach "$MOUNT_DIR" -quiet
@@ -106,6 +118,10 @@ case "$PLATFORM" in
     sudo installer -allowUntrusted -pkg "$PKG_FILE" -target / -agreeToLicense
     if [[ ! -d "$APP_PATH" ]]; then
       echo "The macOS PKG completed without installing Brightdesk.app." >&2
+      exit 1
+    fi
+    if [[ ! -f "$APP_PATH/Contents/Resources/app.asar.unpacked/native/brightdesk_engine.node" ]]; then
+      echo "The macOS PKG app is missing its unpacked Rust native addon." >&2
       exit 1
     fi
     APP_EXECUTABLE="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PATH/Contents/Info.plist")"
