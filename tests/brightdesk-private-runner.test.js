@@ -29,33 +29,26 @@ test('controller grants only read access through the default workflow token', ()
   assert.doesNotMatch(source, /contents: write/);
 });
 
-test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
+test('private checkout tokens remain scoped to Contents read-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 3);
-  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
+  assert.equal((source.match(/actions\\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 2);
+  assert.equal((source.match(/repositories: \\$\\{\\{ matrix\\.project \\}\\}/g) || []).length, 2);
   assert.equal((source.match(/permission-contents: read/g) || []).length, 2);
-  assert.equal((source.match(/permission-issues: write/g) || []).length, 1);
-  assert.match(source, /repositories: Brightdesk-suite/);
-  assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
-  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 2);
-  assert.match(source, /vars\.BRIGHTDESK_APP_ID/);
-  assert.match(source, /secrets\.BRIGHTDESK_APP_PRIVATE_KEY/);
+  assert.doesNotMatch(source, /permission-issues:/);
+  assert.doesNotMatch(source, /steps\\.issue-token/);
+  assert.match(source, /vars\\.BRIGHTDESK_APP_ID/);
+  assert.match(source, /secrets\\.BRIGHTDESK_APP_PRIVATE_KEY/);
   assert.match(source, /persist-credentials: false/);
   assert.doesNotMatch(source, /BRIGHTDESK_PRIVATE_REPOSITORIES_READ/);
 });
 
-test('private diagnostic reporter always runs its local guard after a job failure', () => {
+test('private failure summaries are not posted to GitHub issues', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  const reporter = source.split('      - name: Save sanitized failure names to the private Suite issue')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
-  assert.ok(reporter.includes('if: always()'));
-  assert.ok(reporter.includes('BRIGHTDESK_PROJECT'));
-  assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME'));
-  assert.ok(reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_FILE'));
-  assert.ok(!reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_BASE64'));
-  assert.ok(reporter.includes('-n "$GITHUB_TOKEN"'));
-  assert.ok(reporter.includes('BRIGHTDESK_PROJECT" == "Brightdesk-suite"'));
-  assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME" == "failure"'));
+  assert.doesNotMatch(source, /permission-issues:/);
+  assert.doesNotMatch(source, /Create an issue-only token/);
+  assert.doesNotMatch(source, /report-private-test-failure\\.js/);
 });
+
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 2);
