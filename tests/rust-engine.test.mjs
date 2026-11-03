@@ -8,6 +8,8 @@ test("chunks Unicode and analyses source",()=>{const s="🦀".repeat(100),c=chun
 import { readFileSync } from "node:fs";
 const mainProcessSource = readFileSync(new URL("../src/main.js", import.meta.url), "utf8");
 test("registers each native engine import and IPC handler exactly once", () => {
-  assert.equal((mainProcessSource.match(/const nativeEngine = require\\(['"]\\.\\/rust-engine['"]\\);/g) || []).length, 1);
-  assert.equal((mainProcessSource.match(/ipcMain\\.handle\\(['"]native:engine-info['"]/g) || []).length, 1);
+  const importText = "const nativeEngine = require('./rust-engine');";
+  const handlerText = "ipcMain.handle('native:engine-info'";
+  assert.equal(mainProcessSource.split(importText).length - 1, 1);
+  assert.equal(mainProcessSource.split(handlerText).length - 1, 1);
 });
