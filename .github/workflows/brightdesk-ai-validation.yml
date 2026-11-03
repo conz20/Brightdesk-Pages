@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/Brightdesk-AI
-          ref: a142db98f153ea357c675bdbe60960f4b24d6f56
+          ref: 08a503ed3845d36674c6bd29f0b937759bd1311d
           token: ${{ steps.app-token.outputs.token }}
           path: private-ai
           persist-credentials: false
