@@ -63,4 +63,4 @@ Brightdesk is independent and is not affiliated with Microsoft. It uses original
 
 ## Rust native engine
 
-This standalone product includes its own Rust engine source and Node.js JSON Lines bridge, so it can build independently. Run `npm run rust:check` to check formatting, Clippy, tests and a release build. The JavaScript application remains available when the Rust binary is not built. Current lexical vectors are not semantic embeddings; no external model service is enabled. See [Rust engine integration](docs/RUST_ENGINE_INTEGRATION.md).
+This standalone product builds and loads the shared Rust Node-API module from its own source. Rust handles bounded source processing and provider-neutral embedding normalisation, cosine similarity, and ranking for vectors returned by an explicitly configured model provider. It does not create semantic embeddings or call external models. No remote provider, paid API, credential, or remote source upload is enabled. See [Rust Node-API integration](docs/RUST_ENGINE_INTEGRATION.md).
