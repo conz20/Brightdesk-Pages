@@ -36,3 +36,9 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   }
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
+test('private jobs skip safely when the read-only token has not been configured', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  assert.match(source, /id: private-token/);
+  assert.match(source, /available=false/);
+  assert.match(source, /steps\.private-token\.outputs\.available == 'true'/);
+});
