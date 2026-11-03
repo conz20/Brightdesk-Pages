@@ -26,7 +26,8 @@ case "$PLATFORM" in
     }
     trap cleanup_linux EXIT
 
-    printf 'yes\n' | DEBIAN_FRONTEND=noninteractive bash "$INSTALL_HELPER"
+    export DEBIAN_FRONTEND=noninteractive
+    printf 'yes\n' | bash "$INSTALL_HELPER"
     DESKTOP_FILE="$(dpkg-query -L "$PACKAGE_NAME" | grep -E '/usr/share/applications/[^/]+\.desktop$' | head -n 1 || true)"
     if [[ -z "$DESKTOP_FILE" || ! -f "$DESKTOP_FILE" ]]; then
       echo "Installed Linux package did not register a desktop application." >&2
@@ -72,7 +73,7 @@ case "$PLATFORM" in
     "$DMG_APP/Contents/MacOS/$DMG_EXECUTABLE" --version >/dev/null 2>&1
     hdiutil detach "$MOUNT_DIR" -quiet
 
-    sudo installer -pkg "$PKG_FILE" -target /
+    sudo installer -allowUntrusted -pkg "$PKG_FILE" -target / -agreeToLicense
     if [[ ! -d "$APP_PATH" ]]; then
       echo "The macOS PKG completed without installing Brightdesk.app." >&2
       exit 1
