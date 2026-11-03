@@ -100,4 +100,15 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     assert.match(source, /git -C private-ai rev-parse HEAD/);
     assert.match(source, /Source revision:/);
   }
+
+  const controller = fs.readFileSync(workflow, 'utf8');
+  const pullRequestPaths = controller.match(/pull_request:\n([\s\S]*?)\n  push:/)?.[1] ?? '';
+  const pushPaths = controller.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
+  for (const file of [
+    '.github/workflows/brightdesk-ai-validation.yml',
+    '.github/workflows/brightdesk-ai-test-coverage-validation.yml'
+  ]) {
+    assert.ok(pullRequestPaths.includes(file), file + ' must trigger controller validation on pull requests');
+    assert.ok(pushPaths.includes(file), file + ' must trigger controller validation on main');
+  }
 });
