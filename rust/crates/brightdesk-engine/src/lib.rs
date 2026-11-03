@@ -216,6 +216,7 @@ mod tests {
     }
 
 
+    #[test]
     fn ranking_respects_result_limit_and_candidate_bounds() {
         let ranked = rank_embeddings(
             vec![1.0, 0.0],
@@ -227,4 +228,5 @@ mod tests {
 
         let too_many = vec![vec![1.0]; MAX_VECTOR_CANDIDATES + 1];
         assert!(rank_embeddings(vec![1.0], too_many, None).is_err());
-    }}
+    }
+}
