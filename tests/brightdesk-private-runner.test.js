@@ -134,7 +134,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(runner, /installer installation smoke test/);
   assert.match(runner, /verify-private-install\.sh/);
   assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
-  assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
+  assert.ok(runner.indexOf('run_private_command "installer installation smoke test"') > runner.indexOf('run_private_command "installer package verification"'));
   assert.match(runner, /release:prepare/);
   assert.ok(runner.indexOf('release:prepare') > runner.indexOf('installer build'));
   assert.ok(runner.indexOf('release:prepare') < runner.indexOf('installer package verification'));
@@ -182,4 +182,18 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /build-brightdesk-suite-installers/);
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
   assert.match(concurrency, /brightdesk-private-project-maintenance/);
+});
+
+
+test('installer smoke failures report only allowlisted diagnostics and support PowerShell Core', () => {
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+
+  assert.match(runner, /safe smoke-test diagnostics/i);
+  assert.match(runner, /Missing system runtime libraries/);
+  assert.match(runner, /Installed application launch check failed with exit code/);
+  assert.match(runner, /Windows installer smoke test requires PowerShell/);
+  assert.match(install, /command -v pwsh/);
+  assert.match(install, /pwsh -NoProfile/);
+  assert.match(install, /powershell\.exe -NoProfile/);
 });

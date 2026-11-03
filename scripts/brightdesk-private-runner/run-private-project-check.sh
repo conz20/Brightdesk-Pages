@@ -30,6 +30,16 @@ fail_check() {
     echo "- Failed stage: ${STAGE}"
     echo "- Detailed output was kept only on the temporary runner and was not published."
   } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+  if [[ "$STAGE" == "installer installation smoke test" && -f "$LOG_FILE" ]]; then
+    echo "- Safe smoke-test diagnostics (allowlisted messages only):" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+    while IFS= read -r line; do
+      case "$line" in
+        "Installed application launch check failed with exit code "[0-9]*"."|"The Windows installer exited with code "[0-9]*"."|"The Windows uninstaller exited with code "[0-9]*"."|"Missing system runtime libraries: "*|"Windows installer smoke test requires PowerShell."|"The Windows installer did not install Brightdesk.exe."|"The Windows installer did not create its uninstaller."|"The installed Windows application did not launch its version check."|"The macOS PKG completed without installing Brightdesk.app."|"The macOS DMG did not contain Brightdesk.app.")
+          printf '  - %s\\n' "$line" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          ;;
+      esac
+    done < "$LOG_FILE"
+  fi
   echo "::error title=Brightdesk check failed::${PROJECT_NAME} failed at ${STAGE} on ${RUNNER_OS:-unknown}. Private command output was suppressed."
   exit "$status"
 }
