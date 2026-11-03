@@ -109,10 +109,21 @@ run_private_tests() {
   fi
 }
 
+run_rust_checks() {
+  if [[ ! -f "$PROJECT_DIR/rust/Cargo.toml" ]]; then
+    echo "Rust workspace not present; skipping Rust-specific checks."
+    return 0
+  fi
+  run_private_command "Rust formatting check" cargo fmt --manifest-path rust/Cargo.toml --all -- --check
+  run_private_command "Rust Clippy" cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
+  run_private_command "Rust unit tests" cargo test --manifest-path rust/Cargo.toml --workspace
+}
+
 if [[ "$MODE" == "test" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_rust_checks
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_tests
   run_private_command "release readiness check" npm run release:preflight
@@ -124,6 +135,7 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_rust_checks
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_command "release readiness check" npm run release:preflight
   if [[ "$PLATFORM" == "mac" ]]; then
