@@ -70,7 +70,21 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
+      - name: Check whether private repository access is configured
+        id: private-token
+        shell: bash
+        env:
+          ACCESS_TOKEN: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+        run: |
+          if [[ -n "$ACCESS_TOKEN" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Private repository checks are paused until the read-only BRIGHTDESK_PRIVATE_REPOSITORIES_READ Actions secret is added." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Check out the private Brightdesk project
+        if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/${{ matrix.project }}
@@ -78,12 +92,14 @@ jobs:
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
+        if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private project tests without publishing source logs
+        if: steps.private-token.outputs.available == 'true'
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
@@ -192,6 +208,7 @@ jobs:
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Build and verify the selected installer without publishing it
+        if: steps.private-token.outputs.available == 'true'
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
