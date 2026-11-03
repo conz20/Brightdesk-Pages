@@ -149,6 +149,10 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /command -v.*APP_BINARY/);
   assert.match(install, /ldd.*not found/);
   assert.match(install, /Installed application launch check failed/);
+  assert.doesNotMatch(install, /--no-sandbox --version >\\/dev\\/null 2>&1/);
+  assert.doesNotMatch(install, /--version >\\/dev\\/null 2>&1/);
+  const windows = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+  assert.doesNotMatch(windows, /--version \\*> \\$null/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
   assert.match(windows, /--version/);
@@ -333,7 +337,7 @@ test('private installer diagnostics extract safe dynamic-library and command-not
   });
 
   assert.match(linux, /libatk-1\\.0\\.so\\.0/);
-  assert.match(linux, /Missing command: electron/);
+  assert.match(linux, /Missing commands: electron/);
   assert.ok(!linux.includes('/opt/brightdesk'));
   assert.ok(!linux.includes('/home/runner/work'));
   assert.ok(!linux.includes('SECRET_SOURCE_CONTENT'));
