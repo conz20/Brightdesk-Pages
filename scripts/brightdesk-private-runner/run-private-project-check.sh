@@ -68,7 +68,7 @@ run_private_tests() {
       summary="$(node "$(dirname "$0")/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
       printf '%s' "$summary" > "$summary_file"
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        printf 'failure_summary_file=%s\\n' "$summary_file" >> "$GITHUB_OUTPUT"
+        printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
     fi
     fail_check "$status"
