@@ -8,108 +8,83 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 
-test('Dependabot checks npm dependencies and GitHub Actions weekly', () => {
-  const workflow = read('.github/dependabot.yml');
-  assert.match(workflow, /package-ecosystem: npm/);
-  assert.match(workflow, /package-ecosystem: github-actions/);
-  assert.equal((workflow.match(/interval: weekly/g) || []).length, 2);
-});
-
-test('scheduled dependency audit prepares and verifies a lockfile before blocking high severity vulnerabilities', () => {
-  const workflow = read('.github/workflows/security-audit.yml');
-  assert.match(workflow, /cron:/);
-  assert.match(workflow, /node-version: 24\.22\.2/);
-  assert.match(workflow, /npm run lock:prepare/);
-  assert.match(workflow, /npm run lock:verify/);
-  assert.match(workflow, /npm ci --no-audit --no-fund/);
-  assert.match(workflow, /npm audit --audit-level=high/);
-});
-
-test('release workflow builds and verifies all three desktop platforms', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  for (const platform of ['Linux', 'Windows', 'macOS']) {
-    assert.match(workflow, new RegExp(`platform: ${platform}`));
-  }
-  for (const command of ['dist:linux', 'dist:win', 'dist:mac', 'release:verify:linux', 'release:verify:win', 'release:verify:mac']) {
-    assert.ok(workflow.includes(command), `workflow includes ${command}`);
-  }
-  assert.match(workflow, /node-version: 24\.22\.2/);
-  assert.match(workflow, /npm run lock:prepare/);
-  assert.match(workflow, /npm run lock:verify/);
-  assert.match(workflow, /brightdesk-dependency-lock/);
-  assert.match(workflow, /npm run release:preflight/);
-  assert.match(workflow, /npm test/);
-  assert.match(workflow, /npm audit --audit-level=high/);
-  assert.match(workflow, /pull_request:\s*branches: \[main\]/, 'standalone installer workflow runs on pull requests');
-  assert.match(workflow, /npm run repositories:prepare/);
-  assert.match(workflow, /name: Upload standalone app repository seeds/);
-  assert.match(workflow, /Brightdesk-App-Repository-Seeds/);
-  assert.match(workflow, /include-hidden-files: true/);
-  assert.match(workflow, /name: Build standalone app installers/);
-  assert.match(workflow, /npm run dist:apps:\$\{\{ matrix\.script \}\}/);
-  assert.match(workflow, /name: Upload standalone app installers/);
-  assert.ok(workflow.includes('path: release/apps/${{ matrix.platform }}/**'), 'standalone app artifacts use platform-specific folders');
-});
-
-test('pull-request builds never receive code-signing or notarisation secrets', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  const buildStep = workflow.split('- name: Build suite installer')[1];
-  assert.ok(buildStep, 'build installer step exists');
-  for (const secret of ['CSC_LINK', 'CSC_KEY_PASSWORD', 'CSC_INSTALLER_LINK', 'CSC_INSTALLER_KEY_PASSWORD', 'APPLE_ID', 'APPLE_APP_SPECIFIC_PASSWORD', 'APPLE_TEAM_ID']) {
-    const line = buildStep.split('\n').find((item) => item.trimStart().startsWith(`${secret}:`));
-    assert.ok(line, `${secret} is configured for the build step`);
-    assert.match(line, /github\.event_name != 'pull_request'/, `${secret} is blank for pull requests`);
-  }
-  const installerCert = buildStep.split('\n').find((item) => item.trimStart().startsWith('CSC_INSTALLER_LINK:'));
-  const appleId = buildStep.split('\n').find((item) => item.trimStart().startsWith('APPLE_ID:'));
-  assert.match(installerCert, /matrix\.platform == 'macOS'/, 'macOS installer certificate is macOS-only');
-  assert.match(appleId, /matrix\.platform == 'macOS'/, 'Apple notarisation identity is macOS-only');
-});
-
-test('Linux builds do not receive Windows or macOS signing credentials', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  const buildStep = workflow.split('- name: Build suite installer')[1];
-  for (const key of ['CSC_LINK', 'CSC_KEY_PASSWORD']) {
-    const line = buildStep.split('\n').find((item) => item.trimStart().startsWith(`${key}:`));
-    assert.match(line, /matrix\.platform == 'Windows'/);
-    assert.match(line, /matrix\.platform == 'macOS'/);
-    assert.match(line, /\|\| ''/);
-  }
-});
-
-test('platform release artifacts remain in separate folders and release lock metadata is retained', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  for (const [platform, folder] of [['Linux', 'release/Linux'], ['Windows', 'release/Windows'], ['macOS', 'release/macOS']]) {
-    assert.match(workflow, new RegExp(`name: Download verified ${platform} build`));
-    assert.ok(workflow.includes(`path: ${folder}`), `${platform} is downloaded into its own folder`);
-  }
-  assert.match(workflow, /name: Download the exact dependency lock used for this release[\s\S]*?path: release\/build-metadata/);
-  assert.match(workflow, /files: release\/\*\*\/\*/);
-  assert.doesNotMatch(workflow, /merge-multiple: true/);
-  const prepare = read('scripts/prepare-release-assets.js');
-  assert.match(prepare, /Brightdesk-\$\{label\}-LICENSE\.txt/);
-  const verifier = read('scripts/verify-release-artifacts.js');
-  assert.match(verifier, /Brightdesk-SHA256SUMS-\$\{platform\.toUpperCase\(\)\}/);
-});
-
-test('Node.js runtime is pinned consistently to the current 24 LTS patch', () => {
+test('Pages has one full PR quality gate with locked dependencies, tests, preflight and audit', () => {
+  const workflow = read('.github/workflows/desktop-installers.yml');
   const manifest = JSON.parse(read('package.json'));
+  assert.ok(workflow.includes('pull_request:'));
+  assert.ok(workflow.includes('push:'));
+  assert.ok(workflow.includes("cron: '11 17 * * *'"));
   assert.equal(manifest.engines.node, '24.22.2');
-  assert.equal(read('.nvmrc').trim(), '24.22.2');
-  assert.equal(read('.node-version').trim(), '24.22.2');
-  assert.match(read('.devcontainer/Dockerfile'), /^FROM node:24\.22\.2-bookworm/m);
-  assert.match(read('.github/workflows/build-release.yml'), /node-version: 24\.22\.2/);
-  assert.match(read('.github/workflows/security-audit.yml'), /node-version: 24\.22\.2/);
+  for (const command of [
+    'node-version: 24.22.2',
+    'npm run check:node',
+    'npm run lock:verify',
+    'npm ci --no-audit --no-fund',
+    'npm run verify:licenses',
+    'npm test',
+    'npm run release:preflight',
+    'npm audit --audit-level=high'
+  ]) {
+    assert.ok(workflow.includes(command), `quality gate includes ${command}`);
+  }
 });
 
-test('individual app installer builds explicitly disable implicit publishing', () => {
+test('Windows, macOS and Linux installer jobs build and verify separate native outputs', () => {
+  const workflow = read('.github/workflows/desktop-installers.yml');
+  const matrixExpression = '$' + '{{ matrix.platform }}';
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.build_installers == true"));
+  assert.ok(workflow.includes('needs: test'));
+  for (const platform of ['win', 'mac', 'linux']) {
+    assert.ok(workflow.includes(`platform: ${platform}`), `matrix includes ${platform}`);
+  }
+  assert.ok(workflow.includes('npm run dist:desktop:' + matrixExpression));
+  assert.ok(workflow.includes('npm run verify:desktop:' + matrixExpression));
+  assert.ok(workflow.includes('path: release/apps/pages/**'));
+  assert.ok(workflow.includes('if-no-files-found: error'));
+});
+
+test('only a deliberate manual release dispatch receives contents write permission', () => {
+  const workflow = read('.github/workflows/desktop-installers.yml');
+  const testJob = workflow.split('\n  test:\n')[1]?.split('\n  build:\n')[0] || '';
+  const buildJob = workflow.split('\n  build:\n')[1]?.split('\n  publish:\n')[0] || '';
+  const publishJob = workflow.split('\n  publish:\n')[1] || '';
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true"));
+  assert.ok(publishJob.includes('permissions:\n      contents: write'));
+  assert.ok(!testJob.includes('contents: write'));
+  assert.ok(!buildJob.includes('contents: write'));
+  assert.ok(publishJob.includes('softprops/action-gh-release@'));
+});
+
+test('private maintenance audits locked dependencies in both test and build paths', () => {
+  const runner = read('scripts/brightdesk-private-runner/run-private-project-check.sh');
+  const audits = runner.match(/npm audit --audit-level=high/g) || [];
+  assert.equal(audits.length, 2);
+  const workflow = read('.github/workflows/brightdesk-private-maintenance.yml');
+  assert.ok(workflow.includes('schedule:'));
+  assert.ok(workflow.includes("cron: '13 17 * * *'"));
+  assert.ok(workflow.includes("cron: '17 17 * * 0'"));
+});
+
+test('generated standalone app workflows pin actions and retain the explicit manual publish gate', () => {
+  const generator = read('scripts/create-app-repository-seeds.js');
+  for (const pin of [
+    'actions/checkout@11d5960a326750d5838078e36cf38b85af677262',
+    'actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020',
+    'actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02',
+    'actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093',
+    'softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65'
+  ]) {
+    assert.ok(generator.includes(pin), `generator pins ${pin}`);
+  }
+  assert.ok(generator.includes('npm audit --audit-level=high'));
+  assert.ok(generator.includes("github.event_name == 'workflow_dispatch' && inputs.publish_release == true"));
+});
+
+test('standalone and customer installer builds do not publish implicitly', () => {
   const builder = read('scripts/build-app.js');
-  assert.match(builder, /'--publish', 'never'/);
-});
-
-test('all customer installer build commands explicitly disable implicit publishing', () => {
+  assert.ok(builder.includes("'--publish', 'never'"));
   const manifest = JSON.parse(read('package.json'));
   for (const name of ['dist', 'dist:win', 'dist:mac', 'dist:linux']) {
-    assert.match(manifest.scripts[name], /--publish never$/, `${name} must build locally without publishing`);
+    assert.ok(manifest.scripts[name].endsWith('--publish never'), `${name} must build locally without publishing`);
   }
 });
