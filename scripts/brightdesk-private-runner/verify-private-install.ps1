@@ -28,11 +28,17 @@ try {
   if (-not (Test-Path -LiteralPath $appPath -PathType Leaf)) {
     throw 'The Windows installer did not install Brightdesk.exe.'
   }
+  $nativeAddonPath = Join-Path $installDir 'resources\app.asar.unpacked\native\brightdesk_engine.node'
+  if (-not (Test-Path -LiteralPath $nativeAddonPath -PathType Leaf)) {
+    throw 'The Windows installer did not include the unpacked Rust native addon.'
+  }
 
   Write-Output 'Brightdesk Windows smoke test stage: application launch.'
   $previousSmokeTestSetting = $env:BRIGHTDESK_STARTUP_SMOKE_TEST
+  $previousNativeRequirement = $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE
   try {
     $env:BRIGHTDESK_STARTUP_SMOKE_TEST = '1'
+    $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = '1'
     $appProcess = Start-Process -FilePath $appPath -PassThru
     if (-not $appProcess.WaitForExit(15000)) {
       taskkill.exe /PID $appProcess.Id /T /F | Out-Null
@@ -48,6 +54,11 @@ try {
       Remove-Item Env:BRIGHTDESK_STARTUP_SMOKE_TEST -ErrorAction SilentlyContinue
     } else {
       $env:BRIGHTDESK_STARTUP_SMOKE_TEST = $previousSmokeTestSetting
+    }
+    if ($null -eq $previousNativeRequirement) {
+      Remove-Item Env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE -ErrorAction SilentlyContinue
+    } else {
+      $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = $previousNativeRequirement
     }
   }
 
