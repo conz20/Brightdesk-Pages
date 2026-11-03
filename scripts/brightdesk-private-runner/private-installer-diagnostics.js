@@ -40,7 +40,7 @@ function safeMissingLibraries(log) {
     const lddMissing = line.match(/^\s*([A-Za-z0-9][A-Za-z0-9+_.-]{0,79}\.so(?:\.\d+)*)\s*=>\s*not found\s*$/i);
     if (lddMissing) found.add(lddMissing[1]);
 
-    const macLoader = line.match(/Library not loaded:\s*([A-Za-z0-9@][A-Za-z0-9@+_.-]{0,99}\.dylib)(?::|\s|$)/i);
+    const macLoader = line.match(/Library not loaded:\s*(?:@rpath\/|@loader_path\/|@executable_path\/)?([A-Za-z0-9][A-Za-z0-9_.+-]{0,79}\.dylib)(?::|\s|$)/i);
     if (macLoader) found.add(macLoader[1]);
   }
 
