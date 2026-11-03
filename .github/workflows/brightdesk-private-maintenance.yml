@@ -70,25 +70,35 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
-      - name: Check whether private repository access is configured
+      - name: Check whether read-only GitHub App credentials are configured
         id: private-token
         shell: bash
         env:
-          ACCESS_TOKEN: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$ACCESS_TOKEN" ]]; then
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "Private repository checks are paused until the read-only BRIGHTDESK_PRIVATE_REPOSITORIES_READ Actions secret is added." >> "$GITHUB_STEP_SUMMARY"
+            echo "Private project checks are paused until BRIGHTDESK_APP_ID and BRIGHTDESK_APP_PRIVATE_KEY are configured." >> "$GITHUB_STEP_SUMMARY"
           fi
-
+      - name: Create a short-lived read-only token for this project
+        id: app-token
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: connormolloy12
+          repositories: ${{ matrix.project }}
+          permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/${{ matrix.project }}
-          token: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+          token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
@@ -194,11 +204,35 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
+      - name: Check whether read-only GitHub App credentials are configured
+        id: private-token
+        shell: bash
+        env:
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Private project checks are paused until BRIGHTDESK_APP_ID and BRIGHTDESK_APP_PRIVATE_KEY are configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Create a short-lived read-only token for this project
+        id: app-token
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: connormolloy12
+          repositories: ${{ matrix.project }}
+          permission-contents: read
       - name: Check out the private Brightdesk project
+        if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/${{ matrix.project }}
-          token: ${{ secrets.BRIGHTDESK_PRIVATE_REPOSITORIES_READ }}
+          token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
