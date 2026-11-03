@@ -2,3 +2,4 @@ One-time request — activated 3 November 2026: build and verify Brightdesk Offi
 Explicit build trigger reissued after controller correction. Commit-message marker: [build-brightdesk-suite-installers].
 Retry activated after release asset preparation fix. Use updated controller commit 74392309d5847639c8d8ff7f07cf21f75a0d9c67. [build-brightdesk-suite-installers]
 Retry after native smoke-test fixes in controller commit 6e3fa56a6b3c39a85f73797fdcad53b881e5c163. [build-brightdesk-suite-installers]
+Retry activated after bounded smoke-test diagnostics and PowerShell Core fallback. Controller commit 0eb85fe99bc7d192bd06c9bdc20290a30f49b3a0. [build-brightdesk-suite-installers]
