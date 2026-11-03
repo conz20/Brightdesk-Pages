@@ -316,3 +316,54 @@ test('installer failure workflow uses a separate Suite-only Issues token and pos
   assert.match(job, /continue-on-error: true/);
   assert.doesNotMatch(job, /upload-artifact/);
 });
+
+
+test('private installer diagnostics extract safe dynamic-library and command-not-found names', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const linux = diagnostics.formatPrivateInstallerFailure({
+    platform: 'linux',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: [
+      '/opt/brightdesk/brightdesk: error while loading shared libraries: libatk-1.0.so.0: cannot open shared object file',
+      '/bin/sh: 1: electron: not found',
+      'SECRET_SOURCE_CONTENT',
+      'at launchApplication (/home/runner/work/private/source/app.js:19:2)'
+    ].join('\n')
+  });
+
+  assert.match(linux, /libatk-1\\.0\\.so\\.0/);
+  assert.match(linux, /Missing command: electron/);
+  assert.ok(!linux.includes('/opt/brightdesk'));
+  assert.ok(!linux.includes('/home/runner/work'));
+  assert.ok(!linux.includes('SECRET_SOURCE_CONTENT'));
+
+  const mac = diagnostics.formatPrivateInstallerFailure({
+    platform: 'mac',
+    stage: 'installer installation smoke test',
+    exitCode: 1,
+    log: 'dyld: Library not loaded: @rpath/libexample.dylib\nReferenced from: /Applications/Brightdesk.app/Contents/MacOS/Brightdesk'
+  });
+
+  assert.match(mac, /libexample\\.dylib/);
+  assert.ok(!mac.includes('/Applications'));
+});
+
+test('private installer diagnostics extract only safe Windows DLL names and messages', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'win',
+    stage: 'installer installation smoke test',
+    exitCode: 127,
+    log: [
+      'The installed Windows application did not launch its version check.',
+      'VCRUNTIME140.dll was not found',
+      'C:\\\\Users\\\\runner\\\\source\\\\app.js'
+    ].join('\n')
+  });
+
+  assert.match(output, /installed Windows application did not launch its version check/i);
+  assert.match(output, /VCRUNTIME140\\.dll/);
+  assert.ok(!output.includes('C:\\\\Users'));
+  assert.ok(!output.includes('app.js'));
+});
