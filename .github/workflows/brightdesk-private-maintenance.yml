@@ -129,12 +129,23 @@ jobs:
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitized failure names to the private Suite issue
-        if: always() && steps.run-private-check.outcome == 'failure' && steps.issue-token.outcome == 'success'
+        if: always()
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ steps.issue-token.outputs.token }}
+          BRIGHTDESK_PROJECT: ${{ matrix.project }}
+          BRIGHTDESK_TEST_OUTCOME: ${{ steps.run-private-check.outcome }}
           BRIGHTDESK_FAILURE_SUMMARY_BASE64: ${{ steps.run-private-check.outputs.failure_summary_base64 }}
-        run: node controller/scripts/brightdesk-private-runner/report-private-test-failure.js
+        shell: bash
+        run: |
+          if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-suite" &&
+                "$BRIGHTDESK_TEST_OUTCOME" == "failure" &&
+                -n "$GITHUB_TOKEN" &&
+                -n "$BRIGHTDESK_FAILURE_SUMMARY_BASE64" ]]; then
+            node controller/scripts/brightdesk-private-runner/report-private-test-failure.js
+          else
+            echo "No private Suite diagnostic report is required for this job."
+          fi
 
   weekly-private-installer-builds:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}

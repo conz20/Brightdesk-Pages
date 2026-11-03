@@ -43,13 +43,17 @@ test('private checkout tokens remain read-only and diagnostic token is issue-onl
   assert.doesNotMatch(source, /BRIGHTDESK_PRIVATE_REPOSITORIES_READ/);
 });
 
-test('private diagnostic reporter runs only after the Suite test step fails and issue token succeeds', () => {
+test('private diagnostic reporter always runs its local guard after a job failure', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.match(source, /always\(\) && steps\.run-private-check\.outcome == 'failure'/);
-  assert.match(source, /steps\.issue-token\.outcome == 'success'/);
-  assert.match(source, /BRIGHTDESK_FAILURE_SUMMARY_BASE64:/);
+  const reporter = source.split('      - name: Save sanitized failure names to the private Suite issue')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  assert.ok(reporter.includes('if: always()'));
+  assert.ok(reporter.includes('BRIGHTDESK_PROJECT'));
+  assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME'));
+  assert.ok(reporter.includes('BRIGHTDESK_FAILURE_SUMMARY_BASE64'));
+  assert.ok(reporter.includes('-n "$GITHUB_TOKEN"'));
+  assert.ok(reporter.includes('BRIGHTDESK_PROJECT" == "Brightdesk-suite"'));
+  assert.ok(reporter.includes('BRIGHTDESK_TEST_OUTCOME" == "failure"'));
 });
-
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 2);
