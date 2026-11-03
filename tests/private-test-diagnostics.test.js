@@ -122,6 +122,7 @@ test('private diagnostic reporter refuses to send an empty report', async () => 
 });
 
 const fs = require('node:fs');
+const path = require('node:path');
 const os = require('node:os');
 const { spawnSync } = require('node:child_process');
 
