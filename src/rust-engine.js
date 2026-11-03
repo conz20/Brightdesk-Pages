@@ -1,31 +1,5 @@
 'use strict';
-
-const path = require('node:path');
-
-const nativePath = path.resolve(__dirname, '..', 'native', 'brightdesk_engine.node');
-let native;
-try {
-  native = require(nativePath);
-} catch (cause) {
-  const error = new Error(
-    'Brightdesk Rust Native Engine could not be loaded. Run "npm run native:build" with Rust 1.99.1 installed.'
-  );
-  error.code = 'BRIGHTDESK_NATIVE_ENGINE_UNAVAILABLE';
-  error.cause = cause;
-  throw error;
-}
-
-for (const method of ['engineInfo', 'normalizeEmbedding', 'cosineSimilarity', 'rankEmbeddings', 'chunkSource', 'analyzeSource']) {
-  if (typeof native[method] !== 'function') {
-    throw new Error('Brightdesk Rust Native Engine is missing required Node-API export: ' + method);
-  }
-}
-
-module.exports = Object.freeze({
-  engineInfo: native.engineInfo,
-  normalizeEmbedding: native.normalizeEmbedding,
-  cosineSimilarity: native.cosineSimilarity,
-  rankEmbeddings: native.rankEmbeddings,
-  chunkSource: native.chunkSource,
-  analyzeSource: native.analyzeSource
-});
+const path=require('node:path');
+let n;try{n=require(path.resolve(__dirname,'..','native','brightdesk_engine.node'));}catch(cause){const e=new Error('Brightdesk Rust Native Engine is unavailable. Run npm run native:build with Rust 1.99.1.');e.code='BRIGHTDESK_NATIVE_ENGINE_UNAVAILABLE';e.cause=cause;throw e;}
+for(const k of ['engineInfo','normalizeEmbedding','cosineSimilarity','rankEmbeddings','chunkSource','analyzeSource'])if(typeof n[k]!=='function')throw new Error('Missing native export: '+k);
+module.exports=Object.freeze({engineInfo:n.engineInfo,normalizeEmbedding:n.normalizeEmbedding,cosineSimilarity:n.cosineSimilarity,rankEmbeddings:n.rankEmbeddings,chunkSource:n.chunkSource,analyzeSource:n.analyzeSource});

@@ -23,15 +23,9 @@ jobs:
       - uses: actions/setup-node@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           node-version: "24.22.2"
-      - name: Install pinned Rust toolchain
-        run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy && rustup default 1.99.1
-      - name: Check Rust formatting
-        run: cargo fmt --manifest-path rust/Cargo.toml --all -- --check
-      - name: Run Clippy
-        run: cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
-      - name: Run Rust tests
-        run: cargo test --manifest-path rust/Cargo.toml --workspace
-      - name: Build the Node-API addon
-        run: npm run native:build
-      - name: Test Node-API and provider-neutral bridge
-        run: node --test tests/rust-engine.test.mjs tests/embedding-bridge.test.js
+      - run: rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy && rustup default 1.99.1
+      - run: cargo fmt --manifest-path rust/Cargo.toml --all -- --check
+      - run: cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
+      - run: cargo test --manifest-path rust/Cargo.toml --workspace
+      - run: npm run native:build
+      - run: node --test tests/rust-engine.test.mjs tests/embedding-bridge.test.js

@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('brightdesk', {
   version: process.env.npm_package_version || '0.1.0',
   getVersion: () => ipcRenderer.invoke('app:version'),
   getNativeEngineInfo: () => ipcRenderer.invoke('native:engine-info'),
+  getNativeEngineInfo: () => ipcRenderer.invoke('native:engine-info'),
   downloadDesktopInstaller: (productId) => ipcRenderer.invoke('downloads:desktop-installer', productId),
   openFile: () => ipcRenderer.invoke('file:open'),
   exportFile: (payload) => ipcRenderer.invoke('file:export', payload),

@@ -1,9 +1,9 @@
 import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
-const native = require("../src/rust-engine.js");
-export const engineInfo = native.engineInfo;
-export const normalizeEmbedding = native.normalizeEmbedding;
-export const cosineSimilarity = native.cosineSimilarity;
-export const rankEmbeddings = native.rankEmbeddings;
-export const chunkSource = native.chunkSource;
-export const analyzeSource = native.analyzeSource;
+const engine = require("../src/rust-engine.js");
+export const engineInfo = engine.engineInfo;
+export const normalizeEmbedding = engine.normalizeEmbedding;
+export const cosineSimilarity = engine.cosineSimilarity;
+export const rankEmbeddings = engine.rankEmbeddings;
+export const chunkSource = engine.chunkSource;
+export const analyzeSource = engine.analyzeSource;
