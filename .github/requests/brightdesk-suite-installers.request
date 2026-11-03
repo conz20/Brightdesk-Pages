@@ -12,3 +12,5 @@ Retry activated with private installer diagnostics and a safe fallback for uncla
 Retry activated after fixing the absolute smoke-test script path (root cause of exit 127 on Windows/Linux). Controller commit 4892418d0fffc73674f3d4e10628b1d0ba5d3a86. [build-brightdesk-suite-installers]
 
 Retry activated with improved private Linux/Windows install failure classification. Controller commit 3e4a1b800ab9034008ffa33b2f0d840c1943f6eb. [build-brightdesk-suite-installers]
+
+Retry activated after adding a safe Linux package-install failure code to Brightdesk Suite. Suite commit 7409d1fb50c7ce5c82057bf0a77dbcacb1761901. [build-brightdesk-suite-installers]
