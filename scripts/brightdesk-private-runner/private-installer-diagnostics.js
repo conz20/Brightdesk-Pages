@@ -64,8 +64,8 @@ function safeLinuxMessages(log) {
 function safeWindowsStage(log) {
   const allowed = new Set(['installer execution', 'application launch', 'uninstaller execution']);
   let last = null;
-  for (const line of String(log || '').split(/\\r?\\n/)) {
-    const match = line.trim().match(/^Brightdesk Windows smoke test stage: (installer execution|application launch|uninstaller execution)\\.$/);
+  for (const line of String(log || '').split(/\r?\n/)) {
+    const match = line.trim().match(/^Brightdesk Windows smoke test stage: (installer execution|application launch|uninstaller execution)\.$/);
     if (match && allowed.has(match[1])) last = match[1];
   }
   return last;
