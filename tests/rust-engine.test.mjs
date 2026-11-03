@@ -14,7 +14,8 @@ test("registers each native engine import and IPC handler exactly once", () => {
   assert.equal(mainProcessSource.split(handlerText).length - 1, 1);
 });
 
-import { createJavaScriptFallback } from "../src/rust-engine-fallback.js";
+import fallbackModule from "../src/rust-engine-fallback.js";
+const { createJavaScriptFallback } = fallbackModule;
 
 test("JavaScript fallback matches the native engine's core contract", () => {
   const fallback = createJavaScriptFallback();
