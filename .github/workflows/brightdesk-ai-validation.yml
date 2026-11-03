@@ -109,3 +109,93 @@ jobs:
         if: always()
         shell: bash
         run: rm -rf private-ai
+  update-approval-regressions:
+    name: Verify customer update approval in ${{ matrix.project }}
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: Brightdesk-suite
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Pages
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Sheets
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Decks
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Notes
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Database
+            ref: fix/require-explicit-update-approval
+          - project: Brightdesk-Forms
+            ref: fix/require-explicit-update-approval
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the public controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Mint a read-only token for this app repository
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: connormolloy12
+          repositories: ${{ matrix.project }}
+          permission-contents: read
+
+      - name: Check out the update-approval change
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: connormolloy12/${{ matrix.project }}
+          ref: ${{ matrix.ref }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          persist-credentials: false
+
+      - name: Pull the pinned Node.js test image
+        shell: bash
+        run: |
+          if ! docker pull node:24.22.2-bookworm-slim >/dev/null 2>&1; then
+            echo "Could not prepare the Node.js test container for ${{ matrix.project }}." >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Run update policy and UI integration tests in isolation
+        shell: bash
+        run: |
+          set +e
+          docker run --rm \
+            --network none \
+            --read-only \
+            --cap-drop=ALL \
+            --security-opt=no-new-privileges \
+            --pids-limit=128 \
+            --memory=512m \
+            --cpus=1 \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --volume "$GITHUB_WORKSPACE/source:/workspace:ro" \
+            --workdir /workspace \
+            node:24.22.2-bookworm-slim node --test tests/update-policy.test.js \
+            > "$RUNNER_TEMP/brightdesk-update-policy-tests.log" 2>&1
+          result=$?
+          set -e
+          echo "## Customer update approval regression test" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Repository: ${{ matrix.project }}" >> "$GITHUB_STEP_SUMMARY"
+          if [[ "$result" -eq 0 ]]; then
+            echo "- Result: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- Result: **FAILED**. Detailed output was withheld." >> "$GITHUB_STEP_SUMMARY"
+            exit "$result"
+          fi
+
+      - name: Remove the application checkout
+        if: always()
+        shell: bash
+        run: rm -rf source
