@@ -7,6 +7,8 @@ PROJECT_NAME="${3:-unknown}"
 PLATFORM="${4:-}"
 VERIFY_SCRIPT="${5:-}"
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 if [[ -z "$MODE" || -z "$PROJECT_DIR" || ! -d "$PROJECT_DIR" ]]; then
   echo "Brightdesk private project checker received invalid arguments." >&2
   exit 2
@@ -20,7 +22,7 @@ fail_check() {
   status="$1"
   if [[ "$MODE" == "build" && "$PROJECT_NAME" == "Brightdesk-suite" && "$PLATFORM" =~ ^(win|mac|linux)$ ]]; then
     local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-suite-installer-${PLATFORM}-failure-summary.b64"
-    if node "$(dirname "$0")/private-installer-diagnostics.js" "$LOG_FILE" "$PLATFORM" "$STAGE" "$status" > "$summary_file" 2>/dev/null; then
+    if node "$SCRIPT_DIR/private-installer-diagnostics.js" "$LOG_FILE" "$PLATFORM" "$STAGE" "$status" > "$summary_file" 2>/dev/null; then
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
         printf 'installer_failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
@@ -97,7 +99,7 @@ run_private_tests() {
     if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
       local summary
       local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-private-${PROJECT_NAME}-failure-summary.b64"
-      summary="$(node "$(dirname "$0")/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
+      summary="$(node "$SCRIPT_DIR/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
       printf '%s' "$summary" > "$summary_file"
       if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
         printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
@@ -131,7 +133,7 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "release asset preparation" npm run release:prepare -- "$PLATFORM"
   run_private_command "installer package verification" npm run "$VERIFY_SCRIPT"
   if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
-    run_private_command "installer installation smoke test" bash "$(dirname "$0")/verify-private-install.sh" "$PROJECT_DIR" "$PLATFORM"
+    run_private_command "installer installation smoke test" bash "$SCRIPT_DIR/verify-private-install.sh" "$PROJECT_DIR" "$PLATFORM"
   fi
 else
   STAGE="unknown check mode"
