@@ -28,14 +28,13 @@ test('private check script never prints raw build logs', () => {
 test('private project checks run Rust format, Clippy and tests only when a Cargo crate exists', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
   const rustCheck = source.split('run_private_rust_checks() {')[1]?.split('\n}\n')[0] ?? '';
-  assert.match(rustCheck, /rust\\/Cargo\\.toml/);
-  assert.match(rustCheck, /rustup toolchain install 1\\.99\\.1/);
-  assert.match(rustCheck, /cargo fmt --manifest-path rust\\/Cargo\\.toml/);
-  assert.match(rustCheck, /cargo clippy --manifest-path rust\\/Cargo\\.toml --locked/);
-  assert.match(rustCheck, /cargo test --manifest-path rust\\/Cargo\\.toml --locked/);
-  assert.match(source, /run_private_tests\\n  run_private_rust_checks/);
+  assert.match(rustCheck, /rust\/Cargo\.toml/);
+  assert.match(rustCheck, /rustup toolchain install 1\.99\.1/);
+  assert.match(rustCheck, /cargo fmt --manifest-path rust\/Cargo\.toml/);
+  assert.match(rustCheck, /cargo clippy --manifest-path rust\/Cargo\.toml --locked/);
+  assert.match(rustCheck, /cargo test --manifest-path rust\/Cargo\.toml --locked/);
+  assert.match(source, /run_private_tests\n  run_private_rust_checks/);
 });
-
 test('controller grants only read access through the default workflow token', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.match(source, /permissions:\n  contents: read/);
