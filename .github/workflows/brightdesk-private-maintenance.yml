@@ -115,6 +115,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install pinned Rust toolchain for Rust-enabled project
+        if: steps.private-token.outputs.available == 'true' && hashFiles('source/rust/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Run private project tests without publishing source logs
         id: run-private-check
         if: steps.private-token.outputs.available == 'true'
@@ -215,6 +221,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install pinned Rust toolchain for Rust-enabled project
+        if: steps.private-token.outputs.available == 'true' && hashFiles('source/rust/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Build, verify and smoke-test the Suite installer
         id: build-installer
         if: steps.private-token.outputs.available == 'true'
@@ -374,6 +386,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install pinned Rust toolchain for Rust-enabled project
+        if: steps.private-token.outputs.available == 'true' && hashFiles('source/rust/Cargo.toml') != ''
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Build and verify the selected installer without publishing it
         if: steps.private-token.outputs.available == 'true'
         shell: bash
