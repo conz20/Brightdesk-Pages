@@ -26,7 +26,7 @@ jobs:
       contents: read
     steps:
       - name: Check out the public controller
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
 
@@ -56,10 +56,10 @@ jobs:
 
       - name: Check out the pinned private auditor revision
         if: steps.credentials.outputs.available == 'true'
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/Brightdesk-AI
-          ref: 7c00831645d9c741d1b55bc202081214add7ce38
+          ref: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507
           token: ${{ steps.app-token.outputs.token }}
           path: private-ai
           persist-credentials: false
@@ -95,11 +95,11 @@ jobs:
           set -e
           if [[ "$result" -eq 0 ]]; then
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned auditor revision: 7c00831645d9c741d1b55bc202081214add7ce38" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Pinned auditor revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned auditor revision: 7c00831645d9c741d1b55bc202081214add7ce38" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Pinned auditor revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **FAILED**. Detailed output was withheld to keep private source and test output out of public logs." >> "$GITHUB_STEP_SUMMARY"
             exit "$result"
           fi
