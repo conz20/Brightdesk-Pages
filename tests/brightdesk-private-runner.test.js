@@ -45,7 +45,7 @@ test('private checkout tokens remain read-only and diagnostic token is issue-onl
 
 test('private diagnostic reporter runs only after the Suite test step fails and issue token succeeds', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.match(source, /steps\.run-private-check\.outcome == 'failure'/);
+  assert.match(source, /always\(\) && steps\.run-private-check\.outcome == 'failure'/);
   assert.match(source, /steps\.issue-token\.outcome == 'success'/);
   assert.match(source, /BRIGHTDESK_FAILURE_SUMMARY_BASE64:/);
 });
