@@ -152,14 +152,80 @@ jobs:
             echo "No private Suite diagnostic report is required for this job."
           fi
 
+  suite-one-time-installer-smoke-tests:
+    name: Build Brightdesk Suite for ${{ matrix.platform }}
+    if: github.event_name == 'push' && contains(toJSON(github.event.commits), '.github/requests/brightdesk-suite-installers.request')
+    needs: daily-private-tests
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: win
+            runner: windows-latest
+            verify_script: release:verify:win
+          - platform: mac
+            runner: macos-latest
+            verify_script: release:verify:mac
+          - platform: linux
+            runner: ubuntu-latest
+            verify_script: release:verify:linux
+    steps:
+      - name: Check out the public controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: controller
+      - name: Check whether read-only GitHub App credentials are configured
+        id: private-token
+        shell: bash
+        env:
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Private project installer checks are paused until the Brightdesk App credentials are configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Create a short-lived read-only token for Brightdesk Suite
+        id: app-token
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: connormolloy12
+          repositories: Brightdesk-suite
+          permission-contents: read
+      - name: Check out Brightdesk Suite main
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: connormolloy12/Brightdesk-suite
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          persist-credentials: false
+      - name: Set up the required Node.js runtime
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Build, verify and smoke-test the Suite installer
+        if: steps.private-token.outputs.available == 'true'
+        shell: bash
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
+            build source "Brightdesk-suite" "${{ matrix.platform }}" "${{ matrix.verify_script }}"
   weekly-private-installer-builds:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true) ||
-      (github.event_name == 'push' &&
-       matrix.project == 'Brightdesk-suite' &&
-       contains(toJSON(github.event.commits), '.github/requests/brightdesk-suite-installers.request'))
+      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true)
     needs: daily-private-tests
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
