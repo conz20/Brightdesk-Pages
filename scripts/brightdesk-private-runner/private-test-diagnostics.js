@@ -49,4 +49,14 @@ function formatPrivateFailureSummary(project, failedNames) {
   ].join('\n');
 }
 
+if (require.main === module) {
+  const fs = require('node:fs');
+  const logPath = process.argv[2];
+  const project = process.argv[3] || 'unknown project';
+  if (!logPath) process.exit(2);
+  const tapOutput = fs.readFileSync(logPath, 'utf8');
+  const summary = formatPrivateFailureSummary(project, parseTapFailureNames(tapOutput));
+  process.stdout.write(Buffer.from(summary, 'utf8').toString('base64'));
+}
+
 module.exports = { parseTapFailureNames, formatPrivateFailureSummary };
