@@ -60,3 +60,7 @@ The Brightdesk-Pages maintenance controller checks each approved private project
 ## Identity and licence
 
 Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Rust native engine
+
+This standalone product includes its own Rust engine source and Node.js JSON Lines bridge, so it can build independently. Run `npm run rust:check` to check formatting, Clippy, tests and a release build. The JavaScript application remains available when the Rust binary is not built. Current lexical vectors are not semantic embeddings; no external model service is enabled. See [Rust engine integration](docs/RUST_ENGINE_INTEGRATION.md).
