@@ -134,7 +134,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(runner, /installer installation smoke test/);
   assert.match(runner, /verify-private-install\.sh/);
   assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
-  assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
+  assert.ok(runner.indexOf('run_private_command "installer installation smoke test"') > runner.indexOf('run_private_command "installer package verification"'));
   assert.match(runner, /release:prepare/);
   assert.ok(runner.indexOf('release:prepare') > runner.indexOf('installer build'));
   assert.ok(runner.indexOf('release:prepare') < runner.indexOf('installer package verification'));
