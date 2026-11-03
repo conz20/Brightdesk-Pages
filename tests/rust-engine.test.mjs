@@ -60,3 +60,13 @@ test("JavaScript fallback rejects unsafe vector and chunk inputs", () => {
   assert.throws(() => fallback.cosineSimilarity([1], [1, 2]), /matching dimensions/i);
   assert.throws(() => fallback.chunkSource("text", 64), /between 128 and 16000/i);
 });
+
+
+const productBuilderConfig = readFileSync(
+  new URL("../electron-builder.app.config.js", import.meta.url),
+  "utf8"
+);
+test("desktop installer includes and unpacks the native Rust addon", () => {
+  assert.ok(productBuilderConfig.includes("'native/brightdesk_engine.node'"));
+  assert.ok(productBuilderConfig.includes("asarUnpack: ['native/brightdesk_engine.node']"));
+});
