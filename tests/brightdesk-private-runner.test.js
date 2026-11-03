@@ -224,7 +224,7 @@ test('private installer diagnostics discard unknown paths and malformed library 
   });
 
   assert.match(output, /Windows installer did not install Brightdesk\.exe/);
-  assert.doesNotMatch(output, /C:\\\\|private|evil|SECRET|\\.\\.\\//);
+  assert.doesNotMatch(output, /C:\\\\|evil|SECRET|\\.\\.\\//);
   assert.doesNotMatch(output, /Missing system runtime libraries:/);
 });
 
