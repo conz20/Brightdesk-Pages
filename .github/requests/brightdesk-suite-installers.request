@@ -16,3 +16,5 @@ Retry activated with improved private Linux/Windows install failure classificati
 Retry activated after adding a safe Linux package-install failure code to Brightdesk Suite. Suite commit 7409d1fb50c7ce5c82057bf0a77dbcacb1761901. [build-brightdesk-suite-installers]
 
 Retry activated after correcting the Linux release terms filename and adding safe Windows stage diagnostics. Controller commit c4e772d9f4e18be78d23fa554bced75c85e9d830; Suite main includes PR #33. [build-brightdesk-suite-installers]
+
+Retry activated with bounded native app launch checks on Linux, macOS and Windows. Controller commit 6f3d56edbbee3c83634178b7aea220023180f37d. Suite main includes the Linux release terms filename fix. [build-brightdesk-suite-installers]
