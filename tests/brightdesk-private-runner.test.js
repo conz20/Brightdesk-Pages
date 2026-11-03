@@ -35,6 +35,7 @@ test('private project checker runs Rust format, Clippy and Cargo tests when a wo
   const testMode = source.split('if [[ "$MODE" == "test" ]]')[1]?.split('elif [[ "$MODE" == "build" ]]')[0] ?? '';
   assert.ok(testMode.includes('run_private_command "Rust Node-API addon build" npm run native:build'));
   assert.ok(testMode.indexOf('Rust Node-API addon build') < testMode.indexOf('run_private_tests'));
+  assert.ok(testMode.includes('BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 run_private_tests'));
 
 });
 
