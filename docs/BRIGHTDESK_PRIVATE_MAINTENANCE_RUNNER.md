@@ -39,7 +39,7 @@ The workflow creates a short-lived installation token for only the repository be
 
 When Brightdesk-suite tests fail, the runner creates a small summary containing sanitised failing test names only. It does not include assertion messages, source paths, stack traces, raw logs or source code.
 
-To post that summary to the private [Brightdesk-suite issue #27](https://github.com/connormolloy12/Brightdesk-suite/issues/27), the dedicated GitHub App also needs the repository permission **Issues: Read and write**. The workflow requests this through a separate short-lived installation token restricted to the `Brightdesk-suite` repository and used only by the issue-comment step. The normal checkout token remains **Contents: Read-only**. No **Contents: Write**, Actions, Administration, Secrets or signing permission is required.
+To post that summary to the private [Brightdesk-suite issue #27](https://github.com/connormolloy12/Brightdesk-suite/issues/27), the dedicated GitHub App also needs the repository permission **Issues: Read and write**. The workflow requests this through a separate short-lived installation token restricted to the `Brightdesk-suite` repository and used only by the issue-comment step. The app-level Issues permission is available to the repositories selected for that GitHub App installation, but this workflow requests the Issues token for Brightdesk-suite only. The normal checkout token remains **Contents: Read-only**. No **Contents: Write**, Actions, Administration, Secrets or signing permission is required.
 
 To approve the additional permission:
 
