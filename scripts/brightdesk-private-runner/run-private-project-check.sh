@@ -113,6 +113,7 @@ if [[ "$MODE" == "test" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_private_command "high-severity dependency audit" npm audit --audit-level=high
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_tests
   run_private_command "release readiness check" npm run release:preflight
@@ -124,6 +125,7 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_private_command "high-severity dependency audit" npm audit --audit-level=high
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_command "release readiness check" npm run release:preflight
   if [[ "$PLATFORM" == "mac" ]]; then
