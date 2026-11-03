@@ -34,11 +34,26 @@ case "$PLATFORM" in
       exit 1
     fi
     APP_BINARY="$(sed -n 's/^Exec=\([^[:space:]]*\).*/\1/p' "$DESKTOP_FILE" | head -n 1)"
+    if [[ "$APP_BINARY" != /* ]]; then
+      APP_BINARY="$(command -v "$APP_BINARY" || true)"
+    fi
     if [[ -z "$APP_BINARY" || ! -x "$APP_BINARY" ]]; then
-      echo "Installed Linux application executable was not found." >&2
+      echo "Installed Linux application executable was not found in the desktop entry or PATH." >&2
       exit 1
     fi
-    "$APP_BINARY" --no-sandbox --version >/dev/null 2>&1
+    if "$APP_BINARY" --no-sandbox --version >/dev/null 2>&1; then
+      :
+    else
+      launch_status=$?
+      echo "Installed application launch check failed with exit code $launch_status." >&2
+      if command -v ldd >/dev/null 2>&1; then
+        missing_libraries="$(ldd "$APP_BINARY" 2>/dev/null | awk '/not found/ {print $1}' | sort -u)"
+        if [[ -n "$missing_libraries" ]]; then
+          echo "Missing system runtime libraries: $missing_libraries" >&2
+        fi
+      fi
+      exit "$launch_status"
+    fi
     sudo apt-get remove -y "$PACKAGE_NAME"
     trap - EXIT
     ;;
@@ -89,9 +104,7 @@ case "$PLATFORM" in
       echo "Windows installer smoke test requires PowerShell." >&2
       exit 2
     fi
-    PROJECT_DIR_WIN="$(cygpath -w "$PROJECT_DIR")"
-    SCRIPT_WIN="$(cygpath -w "$SCRIPT_DIR/verify-private-install.ps1")"
-    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT_WIN" -ProjectDir "$PROJECT_DIR_WIN"
+    powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$SCRIPT_DIR/verify-private-install.ps1" -ProjectDir "$PROJECT_DIR"
     ;;
   *)
     echo "Unsupported installer smoke-test platform: $PLATFORM" >&2

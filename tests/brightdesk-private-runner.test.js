@@ -143,6 +143,10 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /installer -allowUntrusted -pkg/);
   assert.match(install, /hdiutil attach/);
   assert.match(install, /verify-private-install\.ps1/);
+  assert.doesNotMatch(install, /cygpath/);
+  assert.match(install, /command -v.*APP_BINARY/);
+  assert.match(install, /ldd.*not found/);
+  assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
   assert.match(windows, /--version/);
