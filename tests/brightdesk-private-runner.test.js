@@ -21,7 +21,7 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, /npm test -- --test-reporter=tap/);
   assert.match(source, /failure_summary_file/);
   assert.ok(source.includes('failure-summary.b64'));
-  assert.match(source, /private-installer-diagnostics\\.js/);
+  assert.ok(source.includes('private-installer-diagnostics.js'));
   assert.match(source, /installer_failure_summary_file/);
 });
 
