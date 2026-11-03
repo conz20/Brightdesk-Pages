@@ -27,18 +27,18 @@ test('private check script never prints raw build logs', () => {
 
 test('private project checker runs Rust format, Clippy and Cargo tests when a workspace exists', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
-  assert.match(source, /if \\[\\[ ! -f "\\$PROJECT_DIR\\/rust\\/Cargo\\.toml" \\]\\]/);
-  assert.match(source, /run_private_command "Rust formatting check" cargo fmt --manifest-path rust\\/Cargo\\.toml --all -- --check/);
-  assert.match(source, /run_private_command "Rust Clippy" cargo clippy --manifest-path rust\\/Cargo\\.toml --workspace --all-targets -- -D warnings/);
-  assert.match(source, /run_private_command "Rust unit tests" cargo test --manifest-path rust\\/Cargo\\.toml --workspace/);
+  assert.ok(source.includes("if [[ ! -f \"$PROJECT_DIR/rust/Cargo.toml\" ]]"));
+  assert.ok(source.includes("run_private_command \"Rust formatting check\" cargo fmt --manifest-path rust/Cargo.toml --all -- --check"));
+  assert.ok(source.includes("run_private_command \"Rust Clippy\" cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings"));
+  assert.ok(source.includes("run_private_command \"Rust unit tests\" cargo test --manifest-path rust/Cargo.toml --workspace"));
   assert.equal((source.match(/  run_rust_checks/g) || []).length, 2);
 });
 
 test('private project jobs install the pinned Rust toolchain only for Rust-enabled checkouts', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/dtolnay\\/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8/g) || []).length, 3);
-  assert.equal((source.match(/hashFiles\\('source\\/rust\\/Cargo\\.toml'\\) != ''/g) || []).length, 3);
-  assert.equal((source.match(/toolchain: 1\\.99\\.1/g) || []).length, 3);
+  assert.equal(source.split("dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8").length - 1, 3);
+  assert.equal(source.split("hashFiles('source/rust/Cargo.toml') != ''").length - 1, 3);
+  assert.equal(source.split("toolchain: 1.99.1").length - 1, 3);
   assert.equal((source.match(/components: rustfmt, clippy/g) || []).length, 3);
 });
 
