@@ -45,6 +45,29 @@ ipcMain.handle('native:engine-info', event => {
   if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
   return nativeEngine.engineInfo();
 });
+
+ipcMain.handle('native:chunk-source', (event, source, maxBytes) => {
+  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
+  if (typeof source !== 'string') throw new TypeError('Source text must be a string.');
+  return nativeEngine.chunkSource(source, maxBytes);
+});
+ipcMain.handle('native:analyze-source', (event, source) => {
+  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
+  if (typeof source !== 'string') throw new TypeError('Source text must be a string.');
+  return nativeEngine.analyzeSource(source);
+});
+ipcMain.handle('native:normalize-embedding', (event, values) => {
+  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
+  return nativeEngine.normalizeEmbedding(values);
+});
+ipcMain.handle('native:cosine-similarity', (event, left, right) => {
+  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
+  return nativeEngine.cosineSimilarity(left, right);
+});
+ipcMain.handle('native:rank-embeddings', (event, query, candidates, limit) => {
+  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
+  return nativeEngine.rankEmbeddings(query, candidates, limit);
+});
 ipcMain.handle('native:engine-info', event => {
   if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
   return nativeEngine.engineInfo();
