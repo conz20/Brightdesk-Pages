@@ -31,13 +31,13 @@ test('controller grants only read access through the default workflow token', ()
 
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 3);
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 4);
   assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 2);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 3);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 1);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
-  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 2);
+  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 3);
   assert.match(source, /vars\.BRIGHTDESK_APP_ID/);
   assert.match(source, /secrets\.BRIGHTDESK_APP_PRIVATE_KEY/);
   assert.match(source, /persist-credentials: false/);
@@ -58,9 +58,9 @@ test('private diagnostic reporter always runs its local guard after a job failur
 });
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/id: private-token/g) || []).length, 2);
-  assert.equal((source.match(/available=false/g) || []).length, 2);
-  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 8);
+  assert.equal((source.match(/id: private-token/g) || []).length, 3);
+  assert.equal((source.match(/available=false/g) || []).length, 3);
+  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 12);
 });
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
@@ -135,9 +135,9 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(runner, /verify-private-install\.sh/);
   assert.match(runner, /CSC_IDENTITY_AUTO_DISCOVERY=false/);
   assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
-  assert.match(install, /apt-get install/);
+  assert.ok(install.includes('Brightdesk-Install-Linux.sh'));
   assert.match(install, /apt-get remove/);
-  assert.match(install, /installer -pkg/);
+  assert.match(install, /installer -allowUntrusted -pkg/);
   assert.match(install, /hdiutil attach/);
   assert.match(install, /verify-private-install\.ps1/);
   assert.match(windows, /Brightdesk-Setup-/);
@@ -153,11 +153,16 @@ test('native installer smoke-test shell script has valid Bash syntax', { skip: p
 test('one-time Suite installer request starts only Suite platform builds', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
-  const buildJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  const oneTimeJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
 
   assert.ok(pushTrigger.includes('.github/requests/brightdesk-suite-installers.request'));
-  assert.match(buildJob, /github\.event_name == 'push'/);
-  assert.match(buildJob, /matrix\.project == 'Brightdesk-suite'/);
-  assert.match(buildJob, /toJSON\(github\.event\.commits\)/);
-  assert.match(buildJob, /brightdesk-suite-installers\.request/);
+  assert.match(oneTimeJob, /github\.event_name == 'push'/);
+  assert.match(oneTimeJob, /toJSON\(github\.event\.commits\)/);
+  assert.match(oneTimeJob, /brightdesk-suite-installers\.request/);
+  assert.ok(oneTimeJob.includes('repository: connormolloy12/Brightdesk-suite'));
+  assert.match(oneTimeJob, /ref: main/);
+  for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
+  assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
+  assert.doesNotMatch(oneTimeJob, /actions\/upload-artifact/);
 });
