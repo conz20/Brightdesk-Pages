@@ -1,0 +1,6 @@
+'use strict';
+const assert=require('node:assert/strict');const fs=require('node:fs');const path=require('node:path');const test=require('node:test');
+const {createRustEngine,fallbackAnalyzeText,parseMetricsLine}=require('../src/rust-engine');
+test('validates native engine responses',()=>{assert.deepEqual(parseMetricsLine('7\t7\t2\t1'),{id:7,metrics:{characters:7,words:2,lines:1}});assert.throws(()=>parseMetricsLine('x\t1\t2\t3'));assert.throws(()=>parseMetricsLine('7\t-1\t2\t1'));});
+test('JavaScript fallback preserves Unicode text metrics',()=>{assert.deepEqual(fallbackAnalyzeText('Café 世界\nBrightdesk'),{characters:18,words:3,lines:2});assert.deepEqual(fallbackAnalyzeText(''),{characters:0,words:0,lines:0});});
+test('calls the real Rust process through the Node bridge',async t=>{const exe=process.platform==='win32'?'brightdesk-rust-engine.exe':'brightdesk-rust-engine';const binary=path.join(__dirname,'..','rust','target','release',exe);if(!fs.existsSync(binary)){t.skip('pretest builds the Rust sidecar');return;}const engine=createRustEngine({binaryPath:binary});try{assert.deepEqual(await engine.analyzeText('Café 世界\nBrightdesk'),{characters:18,words:3,lines:2});assert.deepEqual(engine.status(),{engine:'rust-native',available:true});}finally{engine.close();}});
