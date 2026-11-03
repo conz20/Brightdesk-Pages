@@ -55,7 +55,7 @@ async function upsertDiagnosticComment({ token, summary, fetchImpl = fetch, apiU
 if (require.main === module) {
   upsertDiagnosticComment({
     token: process.env.GITHUB_TOKEN,
-    summary: process.env.BRIGHTDESK_FAILURE_SUMMARY,
+    summary: process.env.BRIGHTDESK_FAILURE_SUMMARY || Buffer.from(process.env.BRIGHTDESK_FAILURE_SUMMARY_BASE64 || '', 'base64').toString('utf8'),
     apiUrl: process.env.GITHUB_API_URL || 'https://api.github.com'
   }).then(result => {
     process.stdout.write(`Private diagnostic comment ${result} on Brightdesk-suite issue #27.\n`);
