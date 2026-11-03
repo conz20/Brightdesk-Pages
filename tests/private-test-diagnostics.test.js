@@ -21,7 +21,7 @@ test('private test diagnostics extracts failed test names from TAP output', () =
     '# tests 1',
     '# pass 0',
     '# fail 1'
-  ].join('\\n');
+  ].join('\n');
 
   assert.deepEqual(parseTapFailureNames(tap), ['first feature']);
 });
