@@ -196,6 +196,8 @@ test('installer smoke failures report only allowlisted diagnostics and support P
   assert.match(runner, /Installed application launch check failed with exit code/);
   assert.match(runner, /Windows installer smoke test requires PowerShell/);
   assert.match(runner, /Safe smoke-test diagnostic:/);
+  assert.match(runner, /No allowlisted smoke-test diagnostic matched/);
+  assert.match(runner, /command or executable could not start/);
   assert.match(install, /command -v pwsh/);
   assert.match(install, /pwsh -NoProfile/);
   assert.match(install, /powershell\.exe -NoProfile/);

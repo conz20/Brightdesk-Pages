@@ -42,14 +42,25 @@ fail_check() {
   } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
   if [[ "$STAGE" == "installer installation smoke test" && -f "$LOG_FILE" ]]; then
     echo "- Safe smoke-test diagnostics (allowlisted messages only):" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+    diagnostic_count=0
     while IFS= read -r line; do
       case "$line" in
         "Installed application launch check failed with exit code "[0-9]*"."|"The Windows installer exited with code "[0-9]*"."|"The Windows uninstaller exited with code "[0-9]*"."|"Missing system runtime libraries: "*|"Windows installer smoke test requires PowerShell."|"The Windows installer did not install Brightdesk.exe."|"The Windows installer did not create its uninstaller."|"The installed Windows application did not launch its version check."|"The macOS PKG completed without installing Brightdesk.app."|"The macOS DMG did not contain Brightdesk.app.")
+          diagnostic_count=$((diagnostic_count + 1))
           printf '  - %s\\n' "$line" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
           printf 'Safe smoke-test diagnostic: %s\\n' "$line" >&2
           ;;
       esac
     done < "$LOG_FILE"
+    if [[ "$diagnostic_count" -eq 0 ]]; then
+      if [[ "$status" -eq 127 ]]; then
+        diagnostic="No allowlisted smoke-test diagnostic matched; a command or executable could not start (exit code 127)."
+      else
+        diagnostic="No allowlisted smoke-test diagnostic matched; the smoke-test process exited with code $status."
+      fi
+      echo "- $diagnostic" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+      printf 'Safe smoke-test diagnostic: %s\\n' "$diagnostic" >&2
+    fi
   fi
   echo "::error title=Brightdesk check failed::${PROJECT_NAME} failed at ${STAGE} on ${RUNNER_OS:-unknown}. Private command output was suppressed."
   exit "$status"
