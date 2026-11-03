@@ -120,3 +120,33 @@ test('private diagnostic reporter refuses to send an empty report', async () => 
     /non-empty private diagnostic summary/
   );
 });
+
+const fs = require('node:fs');
+const os = require('node:os');
+const { spawnSync } = require('node:child_process');
+
+test('private diagnostic parser reads real Node.js TAP reporter failure output', () => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'brightdesk-tap-fixture-'));
+  const fixture = path.join(directory, 'failure.test.js');
+
+  try {
+    fs.writeFileSync(
+      fixture,
+      "const test = require('node:test'); test('private fixture failure', () => { throw new Error('PRIVATE_ERROR_DETAIL'); });\\n"
+    );
+
+    const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fixture], {
+      encoding: 'utf8'
+    });
+    assert.notEqual(result.status, 0);
+
+    const names = parseTapFailureNames(result.stdout + result.stderr);
+    assert.deepEqual(names, ['private fixture failure']);
+
+    const summary = formatPrivateFailureSummary('Brightdesk-suite', names);
+    assert.doesNotMatch(summary, /PRIVATE_ERROR_DETAIL/);
+    assert.doesNotMatch(summary, /failure\\.test\\.js/);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
