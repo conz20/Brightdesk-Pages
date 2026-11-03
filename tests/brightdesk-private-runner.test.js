@@ -130,8 +130,10 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   const install = fs.readFileSync(installScript, 'utf8');
   const windows = fs.readFileSync(windowsScript, 'utf8');
 
+  assert.match(runner, /if \[\[ "\$PROJECT_NAME" == "Brightdesk-suite" \]\]/);
   assert.match(runner, /installer installation smoke test/);
   assert.match(runner, /verify-private-install\.sh/);
+  assert.ok(runner.indexOf('installer installation smoke test') > runner.indexOf('installer package verification'));
   assert.match(install, /apt-get install/);
   assert.match(install, /apt-get remove/);
   assert.match(install, /installer -pkg/);
