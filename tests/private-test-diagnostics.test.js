@@ -131,10 +131,12 @@ test('private diagnostic parser reads real Node.js TAP reporter failure output',
   const fixture = path.join(directory, 'failure.test.js');
 
   try {
-    fs.writeFileSync(
-      fixture,
-      "const test = require('node:test'); test('private fixture failure', () => { throw new Error('PRIVATE_ERROR_DETAIL'); });\\n"
-    );
+    fs.writeFileSync(fixture, [
+      "const test = require('node:test');",
+      "test('private fixture failure', () => {",
+      "  throw new Error('PRIVATE_ERROR_DETAIL');",
+      "});"
+    ].join('\\n'));
 
     const result = spawnSync(process.execPath, ['--test', '--test-reporter=tap', fixture], {
       encoding: 'utf8'
