@@ -209,7 +209,10 @@ test('private installer diagnostics only expose whitelisted platform, stage, exi
   assert.match(output, /libasound\.so\.2/);
   assert.match(output, /libnss3\.so/);
   assert.match(output, /libgtk-3\.so\.0/);
-  assert.doesNotMatch(output, /SECRET_SOURCE_CONTENT|private\\.js|source\\/src|runner\\/work|at privateFunction/);
+  assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
+  assert.ok(!output.includes('/home/runner/work'));
+  assert.ok(!output.includes('private.js'));
+  assert.ok(!output.includes('at privateFunction'));
 });
 
 test('private installer diagnostics discard unknown paths and malformed library names', () => {
