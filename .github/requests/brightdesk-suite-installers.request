@@ -1,1 +1,2 @@
 One-time request — activated 3 November 2026: build and verify Brightdesk Office Suite 0.1.0 on Windows, macOS and Linux, including temporary native installation, launch and uninstall smoke tests. Keep private source, raw logs and installer binaries on ephemeral runners. Do not upload installers or publish a release. Controller commit: 6dd985e8a1b1270e10ef5802e03e3fe2ffdcc3c4.
+Explicit build trigger reissued after controller correction. Commit-message marker: [build-brightdesk-suite-installers].
