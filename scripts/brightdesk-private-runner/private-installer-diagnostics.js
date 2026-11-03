@@ -63,7 +63,12 @@ function safeLinuxMessages(log) {
 
 function safeWindowsMessages(log) {
   const lines = new Set(String(log || '').split(/\r?\n/).map(line => line.trim()));
-  return WINDOWS_MESSAGES.filter(message => lines.has(message));
+  const result = WINDOWS_MESSAGES.filter(message => lines.has(message));
+  for (const line of lines) {
+    const match = line.match(/^The Windows (installer|uninstaller) exited with code ([0-9]{1,3})\.$/);
+    if (match) result.push('The Windows ' + match[1] + ' exited with code ' + Number(match[2]) + '.');
+  }
+  return [...new Set(result)].slice(0, 5);
 }
 
 function formatPrivateInstallerFailure({ platform, stage, exitCode, log = '' } = {}) {
