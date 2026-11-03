@@ -152,12 +152,17 @@ test('native installer smoke-test shell script has valid Bash syntax', { skip: p
 
 test('one-time Suite installer request starts only Suite platform builds', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
-  const buildJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  const pushTrigger = source.match(/push:\\n([\\s\\S]*?)\\n  schedule:/)?.[1] ?? '';
+  const oneTimeJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
 
   assert.ok(pushTrigger.includes('.github/requests/brightdesk-suite-installers.request'));
-  assert.match(buildJob, /github\.event_name == 'push'/);
-  assert.match(buildJob, /matrix\.project == 'Brightdesk-suite'/);
-  assert.match(buildJob, /toJSON\(github\.event\.commits\)/);
-  assert.match(buildJob, /brightdesk-suite-installers\.request/);
+  assert.match(oneTimeJob, /github\\.event_name == 'push'/);
+  assert.match(oneTimeJob, /toJSON\\(github\\.event\\.commits\\)/);
+  assert.match(oneTimeJob, /brightdesk-suite-installers\\.request/);
+  assert.match(oneTimeJob, /repository: connormolloy12\\/Brightdesk-suite/);
+  assert.match(oneTimeJob, /ref: main/);
+  for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
+  assert.doesNotMatch(weeklyJob, /github\\.event_name == 'push'/);
+  assert.doesNotMatch(oneTimeJob, /actions\\/upload-artifact/);
 });
