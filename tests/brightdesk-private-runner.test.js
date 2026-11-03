@@ -32,8 +32,9 @@ test('private project checker runs Rust format, Clippy and Cargo tests when a wo
   assert.ok(source.includes("run_private_command \"Rust Clippy\" cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings"));
   assert.ok(source.includes("run_private_command \"Rust unit tests\" cargo test --manifest-path rust/Cargo.toml --workspace"));
   assert.equal((source.match(/  run_rust_checks/g) || []).length, 2);
-  assert.ok(source.includes('run_private_command "Rust Node-API addon build" npm run native:build'));
-  assert.ok(source.indexOf('Rust Node-API addon build') < source.indexOf('run_private_tests'));
+  const testMode = source.split('if [[ "$MODE" == "test" ]]')[1]?.split('elif [[ "$MODE" == "build" ]]')[0] ?? '';
+  assert.ok(testMode.includes('run_private_command "Rust Node-API addon build" npm run native:build'));
+  assert.ok(testMode.indexOf('Rust Node-API addon build') < testMode.indexOf('run_private_tests'));
 
 });
 
