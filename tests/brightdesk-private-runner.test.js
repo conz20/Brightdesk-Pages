@@ -147,11 +147,11 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /verify-private-install\.ps1/);
   assert.doesNotMatch(install, /cygpath/);
   assert.match(install, /command -v.*APP_BINARY/);
-  assert.match(install, /ldd.*not found/);
+  assert.match(install, /run_bounded_launch/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
   assert.match(windows, /Uninstall Brightdesk\.exe/);
-  assert.match(windows, /--version/);
+  assert.doesNotMatch(windows, /--version/);
 });
 
 test('native installer smoke-test shell script has valid Bash syntax', { skip: process.platform === 'win32' }, () => {
@@ -415,4 +415,20 @@ test('Windows installer diagnostics expose only the last bounded smoke-test stag
   assert.match(powershell, /Brightdesk Windows smoke test stage: installer execution/);
   assert.match(powershell, /Brightdesk Windows smoke test stage: application launch/);
   assert.match(powershell, /Brightdesk Windows smoke test stage: uninstaller execution/);
+});
+
+
+test('native installer smoke tests bound application launch time and clean up test processes', () => {
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+  const powershell = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+
+  assert.match(install, /run_bounded_launch/);
+  assert.match(install, /ps -o stat=/);
+  assert.ok(install.includes('kill "$app_pid"'));
+  assert.match(install, /for attempt in 1 2 3 4 5 6 7 8 9 10/);
+  assert.match(install, /xvfb-run -a/);
+  assert.match(powershell, /Start-Sleep -Seconds 5/);
+  assert.ok(powershell.includes("Wait-Process -Id $appProcess.Id"));
+  assert.match(powershell, /taskkill\.exe \/PID/);
+  assert.ok(!powershell.includes("& $appPath --version"));
 });
