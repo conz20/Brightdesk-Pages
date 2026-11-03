@@ -1,7 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog, shell } = require('electron');
 const packageConfig = require('../package.json');
 const nativeEngine = require('./rust-engine');
-const nativeEngine = require('./rust-engine');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
@@ -68,10 +67,7 @@ ipcMain.handle('native:rank-embeddings', (event, query, candidates, limit) => {
   if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
   return nativeEngine.rankEmbeddings(query, candidates, limit);
 });
-ipcMain.handle('native:engine-info', event => {
-  if (!senderIsMain(event)) throw new Error('Unauthorized native engine request.');
-  return nativeEngine.engineInfo();
-});
+
 
 function termsFilePath() { return path.join(app.getAppPath(), 'TERMS_AND_CONDITIONS.txt'); }
 async function readTerms() { return fs.readFile(termsFilePath(), 'utf8'); }
