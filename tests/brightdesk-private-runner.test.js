@@ -151,6 +151,10 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /Installed application launch check failed/);
   assert.doesNotMatch(install, /--no-sandbox --version >\\/dev\\/null 2>&1/);
   assert.doesNotMatch(install, /--version >\\/dev\\/null 2>&1/);
+  const windowsSmoke = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+  assert.doesNotMatch(windowsSmoke, /--version \\*> \\$null/);
+  assert.doesNotMatch(install, /--no-sandbox --version >\\/dev\\/null 2>&1/);
+  assert.doesNotMatch(install, /--version >\\/dev\\/null 2>&1/);
   const windows = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
   assert.doesNotMatch(windows, /--version \\*> \\$null/);
   assert.match(windows, /Brightdesk-Setup-/);
@@ -336,8 +340,8 @@ test('private installer diagnostics extract safe dynamic-library and command-not
     ].join('\n')
   });
 
-  assert.match(linux, /libatk-1\\.0\\.so\\.0/);
-  assert.match(linux, /Missing commands: electron/);
+  assert.ok(linux.includes('libatk-1.0.so.0'));
+  assert.ok(linux.includes('Missing commands: electron'));
   assert.ok(!linux.includes('/opt/brightdesk'));
   assert.ok(!linux.includes('/home/runner/work'));
   assert.ok(!linux.includes('SECRET_SOURCE_CONTENT'));
@@ -349,7 +353,7 @@ test('private installer diagnostics extract safe dynamic-library and command-not
     log: 'dyld: Library not loaded: @rpath/libexample.dylib\nReferenced from: /Applications/Brightdesk.app/Contents/MacOS/Brightdesk'
   });
 
-  assert.match(mac, /libexample\\.dylib/);
+  assert.ok(mac.includes('libexample.dylib'));
   assert.ok(!mac.includes('/Applications'));
 });
 
@@ -367,7 +371,7 @@ test('private installer diagnostics extract only safe Windows DLL names and mess
   });
 
   assert.match(output, /installed Windows application did not launch its version check/i);
-  assert.match(output, /VCRUNTIME140\\.dll/);
+  assert.ok(output.includes('VCRUNTIME140.dll'));
   assert.ok(!output.includes('C:\\\\Users'));
   assert.ok(!output.includes('app.js'));
 });
