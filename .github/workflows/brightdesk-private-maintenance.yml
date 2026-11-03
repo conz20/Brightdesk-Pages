@@ -71,6 +71,9 @@ jobs:
           - Brightdesk-Notes
           - Brightdesk-Database
           - Brightdesk-Forms
+        include:
+          - project: Brightdesk-suite
+            ref: fix/suite-diagnostic-tests
     steps:
       - name: Check out the public controller
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -104,6 +107,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/${{ matrix.project }}
+          ref: ${{ matrix.ref || 'main' }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
