@@ -36,6 +36,7 @@ fail_check() {
       case "$line" in
         "Installed application launch check failed with exit code "[0-9]*"."|"The Windows installer exited with code "[0-9]*"."|"The Windows uninstaller exited with code "[0-9]*"."|"Missing system runtime libraries: "*|"Windows installer smoke test requires PowerShell."|"The Windows installer did not install Brightdesk.exe."|"The Windows installer did not create its uninstaller."|"The installed Windows application did not launch its version check."|"The macOS PKG completed without installing Brightdesk.app."|"The macOS DMG did not contain Brightdesk.app.")
           printf '  - %s\\n' "$line" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+          printf 'Safe smoke-test diagnostic: %s\\n' "$line" >&2
           ;;
       esac
     done < "$LOG_FILE"

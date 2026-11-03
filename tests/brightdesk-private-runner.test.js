@@ -193,6 +193,7 @@ test('installer smoke failures report only allowlisted diagnostics and support P
   assert.match(runner, /Missing system runtime libraries/);
   assert.match(runner, /Installed application launch check failed with exit code/);
   assert.match(runner, /Windows installer smoke test requires PowerShell/);
+  assert.match(runner, /Safe smoke-test diagnostic:/);
   assert.match(install, /command -v pwsh/);
   assert.match(install, /pwsh -NoProfile/);
   assert.match(install, /powershell\.exe -NoProfile/);
