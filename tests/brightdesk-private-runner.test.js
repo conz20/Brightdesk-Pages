@@ -391,7 +391,7 @@ test('private installer diagnostics classify Windows install and uninstall exit 
   });
 
   assert.match(output, /The Windows installer exited with code 1/);
-  assert.ok(!output.includes('C:\\Users'));
+  assert.ok(!output.includes('C:/Users'));
   assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
 });
 
@@ -406,8 +406,8 @@ test('Windows installer diagnostics expose only the last bounded smoke-test stag
     log: [
       'Brightdesk Windows smoke test stage: installer execution.',
       'Brightdesk Windows smoke test stage: application launch.',
-      'C:\\Users\\runner\\private\\source\\src\\main.js'
-    ].join('\\n')
+      'C:/Users/runner/private/source/src/main.js'
+    ].join('\n')
   });
 
   assert.match(output, /Windows smoke test failed during application launch/);
