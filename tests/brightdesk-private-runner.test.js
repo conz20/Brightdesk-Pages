@@ -75,9 +75,9 @@ test('daily private project checkouts use each repository default branch', () =>
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
-  assert.ok(checkout.includes('repository: connormolloy12/\\${{ matrix.project }}'));
-  assert.doesNotMatch(checkout, /^\\s*ref:/m);
-  assert.doesNotMatch(dailyJob, /fix\\/suite-diagnostic-tests/);
+  assert.ok(checkout.includes('repository: connormolloy12/${{ matrix.project }}'));
+  assert.doesNotMatch(checkout, /^\s*ref:/m);
+  assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
 
 test('trusted controller updates trigger daily private checks but never start the installer matrix', () => {
