@@ -15,11 +15,11 @@
     "check:node": "node scripts/check-node24.js",
     "start": "electron .",
     "test": "node --test",
-    "dist": "npm run verify:licenses && electron-builder --publish never",
-    "dist:win": "npm run verify:licenses && electron-builder --win nsis --x64 --publish never",
-    "dist:mac": "npm run verify:licenses && electron-builder --mac dmg pkg zip --universal --publish never",
-    "dist:linux": "npm run verify:licenses && electron-builder --linux AppImage deb --x64 --publish never",
-    "release": "npm run verify:licenses && electron-builder --publish always",
+    "dist": "npm run build:rust-engine && npm run verify:licenses && electron-builder --publish never",
+    "dist:win": "npm run build:rust-engine && npm run verify:licenses && electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "npm run build:rust-engine && npm run verify:licenses && electron-builder --mac dmg pkg zip --universal --publish never",
+    "dist:linux": "npm run build:rust-engine && npm run verify:licenses && electron-builder --linux AppImage deb --x64 --publish never",
+    "release": "npm run build:rust-engine && npm run verify:licenses && electron-builder --publish always",
     "verify:licenses": "node scripts/verify-licenses.js",
     "postinstall": "npm run verify:licenses",
     "release:preflight": "node scripts/release-preflight.js",
@@ -36,7 +36,10 @@
     "dist:desktop:linux": "node scripts/build-app.js pages linux",
     "verify:desktop:win": "node scripts/verify-desktop-installers.js win release/apps pages",
     "verify:desktop:mac": "node scripts/verify-desktop-installers.js mac release/apps pages",
-    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages"
+    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages",
+    "build:rust-engine": "node scripts/build-rust-engine.js",
+    "prestart": "npm run build:rust-engine",
+    "pretest": "npm run build:rust-engine"
   },
   "dependencies": {
     "docx": "9.15.1",
@@ -113,7 +116,16 @@
       "welcome": "installer/mac-welcome.txt",
       "conclusion": "installer/mac-conclusion.txt",
       "installLocation": "/Applications"
-    }
+    },
+    "extraResources": [
+      {
+        "from": "native",
+        "to": "native",
+        "filter": [
+          "brightdesk-rust-engine*"
+        ]
+      }
+    ]
   },
   "brightdeskAppId": "pages"
 }
