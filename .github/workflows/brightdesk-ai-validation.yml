@@ -68,7 +68,7 @@ jobs:
         if: steps.credentials.outputs.available == 'true'
         shell: bash
         run: |
-          if ! docker pull node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c >/dev/null 2>&1; then
+          if ! docker pull node:24.22.2-bookworm-slim >/dev/null 2>&1; then
             echo "Could not prepare the Node.js test container." >> "$GITHUB_STEP_SUMMARY"
             exit 1
           fi
@@ -89,7 +89,7 @@ jobs:
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
             --volume "$GITHUB_WORKSPACE/private-ai:/workspace:ro" \
             --workdir /workspace \
-            node:24.22.2-bookworm-slim@sha256:c86ecead9e55a5210ac1727de38a4ca840bf03dcaf34dc9749addbf383b1920c node --test \
+            node:24.22.2-bookworm-slim node --test \
             > "$RUNNER_TEMP/brightdesk-private-ai-tests.log" 2>&1
           result=$?
           set -e
