@@ -303,9 +303,9 @@ function makePackage(app, target) {
   manifest.scripts['dist:app:win'] = `node scripts/build-app.js ${app.appId} win`;
   manifest.scripts['dist:app:mac'] = `node scripts/build-app.js ${app.appId} mac`;
   manifest.scripts['dist:app:linux'] = `node scripts/build-app.js ${app.appId} linux`;
-  manifest.scripts['verify:app:win'] = `node scripts/verify-standalone-apps.js win release/apps ${app.appId}`;
-  manifest.scripts['verify:app:mac'] = `node scripts/verify-standalone-apps.js mac release/apps ${app.appId}`;
-  manifest.scripts['verify:app:linux'] = `node scripts/verify-standalone-apps.js linux release/apps ${app.appId}`;
+  manifest.scripts['verify:app:win'] = `node scripts/verify-desktop-installers.js win release/apps ${app.appId}`;
+  manifest.scripts['verify:app:mac'] = `node scripts/verify-desktop-installers.js mac release/apps ${app.appId}`;
+  manifest.scripts['verify:app:linux'] = `node scripts/verify-desktop-installers.js linux release/apps ${app.appId}`;
 
   lock.name = app.packageName;
   if (lock.packages && lock.packages['']) {
