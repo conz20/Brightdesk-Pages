@@ -183,3 +183,17 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
   assert.match(concurrency, /brightdesk-private-project-maintenance/);
 });
+
+
+test('installer smoke failures report only allowlisted diagnostics and support PowerShell Core', () => {
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+
+  assert.match(runner, /safe smoke-test diagnostics/i);
+  assert.match(runner, /Missing system runtime libraries/);
+  assert.match(runner, /Installed application launch check failed with exit code/);
+  assert.match(runner, /Windows installer smoke test requires PowerShell/);
+  assert.match(install, /command -v pwsh/);
+  assert.match(install, /pwsh -NoProfile/);
+  assert.match(install, /powershell\.exe -NoProfile/);
+});
