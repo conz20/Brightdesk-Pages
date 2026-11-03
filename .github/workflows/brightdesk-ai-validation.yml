@@ -59,7 +59,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: connormolloy12/Brightdesk-AI
-          ref: c04983cba696a575d19b11037beaf0b7c2fe9a9a
+          ref: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507
           token: ${{ steps.app-token.outputs.token }}
           path: private-ai
           persist-credentials: false
@@ -95,11 +95,11 @@ jobs:
           set -e
           if [[ "$result" -eq 0 ]]; then
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned auditor revision: validated" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Pinned auditor revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **PASSED**" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "## Private Brightdesk-AI validation" >> "$GITHUB_STEP_SUMMARY"
-            echo "- Pinned auditor revision: checked" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Pinned auditor revision: 39e667f773dc5878a4a0d0cf5ab9cdb76997f507" >> "$GITHUB_STEP_SUMMARY"
             echo "- Unit tests: **FAILED**. Detailed output was withheld to keep private source and test output out of public logs." >> "$GITHUB_STEP_SUMMARY"
             exit "$result"
           fi
