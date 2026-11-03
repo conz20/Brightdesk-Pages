@@ -94,6 +94,9 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "release readiness check" npm run release:preflight
   run_private_command "installer build" npm run "dist:${PLATFORM}"
   run_private_command "installer package verification" npm run "$VERIFY_SCRIPT"
+  if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+    run_private_command "installer installation smoke test" bash "$(dirname "$0")/verify-private-install.sh" "$PROJECT_DIR" "$PLATFORM"
+  fi
 else
   STAGE="unknown check mode"
   fail_check 2
