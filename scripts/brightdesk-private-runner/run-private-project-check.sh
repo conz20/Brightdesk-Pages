@@ -127,8 +127,10 @@ if [[ "$MODE" == "test" ]]; then
   run_private_command "third-party licence check" npm run verify:licenses
   if [[ -f "$PROJECT_DIR/rust/Cargo.toml" ]]; then
     run_private_command "Rust Node-API addon build" npm run native:build
+    BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 run_private_tests
+  else
+    run_private_tests
   fi
-  run_private_tests
   run_private_command "release readiness check" npm run release:preflight
 elif [[ "$MODE" == "build" ]]; then
   if [[ -z "$PLATFORM" || -z "$VERIFY_SCRIPT" ]]; then
