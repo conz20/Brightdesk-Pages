@@ -214,4 +214,17 @@ mod tests {
         assert_eq!(stats.lines, 2);
         assert_eq!(stats.token_count, 3);
     }
-}
+
+
+    fn ranking_respects_result_limit_and_candidate_bounds() {
+        let ranked = rank_embeddings(
+            vec![1.0, 0.0],
+            vec![vec![0.0, 1.0], vec![1.0, 0.0], vec![2.0, 0.0]],
+            Some(1),
+        ).unwrap();
+        assert_eq!(ranked.len(), 1);
+        assert_eq!(ranked[0].index, 1);
+
+        let too_many = vec![vec![1.0]; MAX_VECTOR_CANDIDATES + 1];
+        assert!(rank_embeddings(vec![1.0], too_many, None).is_err());
+    }}
