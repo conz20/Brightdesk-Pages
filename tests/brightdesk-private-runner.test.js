@@ -160,7 +160,7 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.match(oneTimeJob, /github\\.event_name == 'push'/);
   assert.match(oneTimeJob, /toJSON\\(github\\.event\\.commits\\)/);
   assert.match(oneTimeJob, /brightdesk-suite-installers\\.request/);
-  assert.match(oneTimeJob, /repository: connormolloy12\\/Brightdesk-suite/);
+  assert.ok(oneTimeJob.includes('repository: connormolloy12/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\\.event_name == 'push'/);
