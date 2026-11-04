@@ -15,7 +15,7 @@ The workflow expects these two repository-level settings in **Brightdesk-Pages**
 - **Actions variable:** `BRIGHTDESK_APP_ID` — the numeric App ID for the dedicated Brightdesk read-only GitHub App.
 - **Actions secret:** `BRIGHTDESK_APP_PRIVATE_KEY` — the private key PEM for that same GitHub App.
 
-Before adding them, confirm the GitHub App is installed for the `connormolloy12` account and can access these six private repositories:
+Before adding them, confirm the GitHub App is installed for the `connormolloy12` account and can access these ten private repositories:
 
 - Brightdesk-suite
 - Brightdesk-Sheets
@@ -23,6 +23,10 @@ Before adding them, confirm the GitHub App is installed for the `connormolloy12`
 - Brightdesk-Notes
 - Brightdesk-Database
 - Brightdesk-Forms
+- Brightdesk-Lists
+- Brightdesk-Planner
+- Brightdesk-To-Do
+- Brightdesk-Workspace
 
 The App must have **Contents: Read-only** permission for those repositories. Do not grant Contents write, Administration, Actions write, Secrets, or signing-related permissions for this maintenance workflow.
 
