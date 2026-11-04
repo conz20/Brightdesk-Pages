@@ -1,0 +1,41 @@
+name: Prepare Brightdesk product repository seeds
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-product-seed-export
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 30
+    steps:
+      - name: Check out the approved source revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: feature/rust-engine-integration
+          persist-credentials: false
+
+      - name: Set up Node.js 24.22.2
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+        with:
+          node-version: "24.22.2"
+
+      - name: Validate the repository seed generator
+        run: node --check scripts/create-app-repository-seeds.js
+
+      - name: Generate all ten product repository folders
+        run: node scripts/create-app-repository-seeds.js
+
+      - name: Upload generated product repository bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: brightdesk-product-repository-seeds
+          path: release/app-repository-seeds/
+          if-no-files-found: error
+          retention-days: 3
