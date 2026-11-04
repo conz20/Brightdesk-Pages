@@ -69,3 +69,7 @@ The Brightdesk-Pages maintenance controller checks each approved private project
 ## Identity and licence
 
 Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Rust integration
+
+Brightdesk-Pages includes the shared Rust foundation in `rust/`, pinned to Rust 1.99.1. The maintenance controller checks its own Rust crate and runs Rust formatting, Clippy and Cargo tests for the suite and private app repositories when their Rust crate is present. The separate private AI validation also runs its Rust tests in a network-isolated container. This stage does not change the Electron/Node runtime, product version, npm dependencies, installer configuration or customer-visible behavior. The Rust core is connected to the Electron main process through a local sidecar and isolated IPC API. The sidecar provides Unicode-aware text metrics, is built for the target OS during packaging, and has a JavaScript fallback so existing workflows remain usable if the native process cannot start. See [the Rust integration standard](docs/RUST-INTEGRATION.md) and the [official Rust getting-started guide](https://rust-lang.org/learn/get-started/).

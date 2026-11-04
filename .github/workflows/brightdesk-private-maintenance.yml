@@ -10,6 +10,9 @@ on:
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
       - 'tests/private-test-diagnostics.test.js'
+      - 'rust/**'
+      - 'rust-toolchain.toml'
+      - 'docs/RUST-INTEGRATION.md'
   push:
     branches: [main]
     paths:
@@ -20,6 +23,9 @@ on:
       - 'scripts/brightdesk-private-runner/**'
       - 'tests/brightdesk-private-runner.test.js'
       - 'tests/private-test-diagnostics.test.js'
+      - 'rust/**'
+      - 'rust-toolchain.toml'
+      - 'docs/RUST-INTEGRATION.md'
   schedule:
     - cron: '13 17 * * *'
     - cron: '17 17 * * 0'
@@ -56,6 +62,13 @@ jobs:
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
           node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
+      - name: Verify the Pages Rust foundation
+        shell: bash
+        run: |
+          rustup toolchain install 1.99.1 --profile minimal --component rustfmt --component clippy
+          cargo fmt --manifest-path rust/Cargo.toml --all -- --check
+          cargo clippy --manifest-path rust/Cargo.toml --locked --all-targets -- -D warnings
+          cargo test --manifest-path rust/Cargo.toml --locked
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
@@ -115,6 +128,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install the pinned Rust toolchain for the private project
+        if: steps.private-token.outputs.available == 'true'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Run private project tests without publishing source logs
         id: run-private-check
         if: steps.private-token.outputs.available == 'true'
@@ -215,6 +234,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install the pinned Rust toolchain for the private project
+        if: steps.private-token.outputs.available == 'true'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Build, verify and smoke-test the Suite installer
         id: build-installer
         if: steps.private-token.outputs.available == 'true'
@@ -374,6 +399,12 @@ jobs:
           node-version: 24.22.2
           cache: npm
           cache-dependency-path: source/package-lock.json
+      - name: Install the pinned Rust toolchain for the private project
+        if: steps.private-token.outputs.available == 'true'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
       - name: Build and verify the selected installer without publishing it
         if: steps.private-token.outputs.available == 'true'
         shell: bash
