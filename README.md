@@ -67,3 +67,26 @@ The Brightdesk-Pages maintenance controller checks each approved private project
 ## Identity and licence
 
 Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Professional workspace examples and acceptance
+
+Pages must feel like a focused, polished document editor—not a generic form or a static mockup. Its core example should demonstrate a realistic letter or report from creation through formatting and page setup.
+
+### Example workflow
+
+1. Create a new document and choose A4, US Letter or US Legal.
+2. Set portrait or landscape orientation and adjust readable page margins.
+3. Add a clear title, headings, body paragraphs and a simple table.
+4. Apply consistent typography and paragraph spacing, then review the page layout.
+5. Save, close and reopen the document to verify the content is retained.
+
+The workspace should make the document canvas the visual focus, with a restrained toolbar, clear formatting controls, useful page navigation and predictable selection feedback. Empty, unsaved, saved and modified states must be visually distinct. Do not show controls as functional until their behaviour is implemented and tested.
+
+Follow the shared [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md). Use original Brightdesk styling; product references are inspiration, not templates to copy.
+
+### Acceptance checks
+
+- Page size and orientation choices are visible and applied to the document layout.
+- Formatting controls have clear labels, focus states and observable outcomes.
+- A realistic sample document is used in screenshots; concept art is never presented as a running build.
+- Save/reopen, keyboard navigation, validation and supported export paths are tested before being described as complete.
