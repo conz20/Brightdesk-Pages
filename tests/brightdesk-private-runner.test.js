@@ -437,3 +437,40 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));
 });
+
+
+test('daily private tests cover all ten private Brightdesk projects', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const privateProjects = [
+    'Brightdesk-suite',
+    'Brightdesk-Sheets',
+    'Brightdesk-Decks',
+    'Brightdesk-Notes',
+    'Brightdesk-Database',
+    'Brightdesk-Forms',
+    'Brightdesk-Lists',
+    'Brightdesk-Planner',
+    'Brightdesk-To-Do',
+    'Brightdesk-Workspace'
+  ];
+
+  for (const project of privateProjects) {
+    assert.ok(dailyJob.includes('- ' + project), project + ' is missing from daily private tests');
+  }
+});
+
+test('new private products have Windows, macOS and Linux installer verification entries', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  const projects = ['Brightdesk-Lists', 'Brightdesk-Planner', 'Brightdesk-To-Do', 'Brightdesk-Workspace'];
+
+  for (const project of projects) {
+    for (const platform of ['win', 'mac', 'linux']) {
+      const entry = weeklyJob.split(/\\n          - project: /).find(block => block.startsWith(project + '\\n'));
+      assert.ok(entry, project + ' is missing from the weekly installer matrix');
+      assert.ok(entry.includes('platform: ' + platform), project + ' is missing ' + platform);
+      assert.ok(entry.includes('verify_script: verify:desktop:' + platform), project + ' has the wrong ' + platform + ' verification command');
+    }
+  }
+});
