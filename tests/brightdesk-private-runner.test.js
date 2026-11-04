@@ -25,6 +25,28 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, /installer_failure_summary_file/);
 });
 
+test('private project checker runs Rust format, Clippy and Cargo tests when a workspace exists', () => {
+  const source = fs.readFileSync(runnerScript, 'utf8');
+  assert.ok(source.includes("if [[ ! -f \"$PROJECT_DIR/rust/Cargo.toml\" ]]"));
+  assert.ok(source.includes("run_private_command \"Rust formatting check\" cargo fmt --manifest-path rust/Cargo.toml --all -- --check"));
+  assert.ok(source.includes("run_private_command \"Rust Clippy\" cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings"));
+  assert.ok(source.includes("run_private_command \"Rust unit tests\" cargo test --manifest-path rust/Cargo.toml --workspace"));
+  assert.equal((source.match(/  run_rust_checks/g) || []).length, 2);
+  const testMode = source.split('if [[ "$MODE" == "test" ]]')[1]?.split('elif [[ "$MODE" == "build" ]]')[0] ?? '';
+  assert.ok(testMode.includes('run_private_command "Rust Node-API addon build" npm run native:build'));
+  assert.ok(testMode.indexOf('Rust Node-API addon build') < testMode.indexOf('run_private_tests'));
+  assert.ok(testMode.includes('BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 run_private_tests'));
+
+});
+
+test('private project jobs install the pinned Rust toolchain only for Rust-enabled checkouts', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  assert.equal(source.split("dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8").length - 1, 3);
+  assert.equal(source.split("hashFiles('source/rust/Cargo.toml') != ''").length - 1, 3);
+  assert.equal(source.split("toolchain: 1.99.1").length - 1, 3);
+  assert.equal((source.match(/components: rustfmt, clippy/g) || []).length, 3);
+});
+
 test('controller grants only read access through the default workflow token', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.match(source, /permissions:\n  contents: read/);
@@ -149,6 +171,11 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /command -v.*APP_BINARY/);
   assert.match(install, /run_bounded_launch/);
   assert.match(install, /BRIGHTDESK_STARTUP_SMOKE_TEST=1/);
+  assert.match(install, /BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1/);
+  assert.ok(install.includes("Contents/Resources/app.asar.unpacked/native/brightdesk_engine.node"));
+  assert.ok(install.includes("resources/app.asar.unpacked/native/brightdesk_engine.node"));
+  assert.ok(windows.includes("resources\\app.asar.unpacked\\native\\brightdesk_engine.node"));
+  assert.ok(windows.includes("$env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = '1'"));
   assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /Brightdesk-Setup-/);
