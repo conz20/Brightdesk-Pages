@@ -2,6 +2,9 @@ name: Prepare Brightdesk product repository seeds
 
 on:
   workflow_dispatch:
+  push:
+    branches: [feature/rust-engine-integration]
+    paths: [".github/workflows/prepare-product-repository-seeds.yml"]
 
 permissions:
   contents: read
