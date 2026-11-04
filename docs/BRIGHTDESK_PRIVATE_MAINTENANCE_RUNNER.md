@@ -4,7 +4,7 @@
 
 GitHub-hosted jobs in the private Brightdesk repositories have repeatedly failed before their first step starts. Brightdesk Pages is public and its standard hosted runner jobs have succeeded.
 
-This controller runs from the public Brightdesk Pages repository and checks out the six private Brightdesk source repositories onto a temporary GitHub-hosted runner. It does not copy private source files into Brightdesk Pages, publish them as artifacts, or print raw test/build logs.
+This controller runs from the public Brightdesk Pages repository and checks out all ten private Brightdesk source repositories onto a temporary GitHub-hosted runner. It does not copy private source files into Brightdesk Pages, publish them as artifacts, or print raw test/build logs.
 
 ## Private repository access (one-time setup)
 
@@ -27,6 +27,8 @@ Before adding them, confirm the GitHub App is installed for the `connormolloy12`
 - Brightdesk-Planner
 - Brightdesk-To-Do
 - Brightdesk-Workspace
+
+For a selected-repository installation, add Lists, Planner, To Do and Workspace to the installation's repository access list. Keep the permission scope at **Contents: Read-only**; no broader repository permissions are needed for checkout and tests.
 
 The App must have **Contents: Read-only** permission for those repositories. Do not grant Contents write, Administration, Actions write, Secrets, or signing-related permissions for this maintenance workflow.
 
@@ -61,9 +63,9 @@ If these two settings are already present and the App installation has the requi
 1. Open [Brightdesk-Pages Actions](https://github.com/connormolloy12/Brightdesk-Pages/actions/workflows/brightdesk-private-maintenance.yml).
 2. Select **Run workflow**.
 3. Leave **Build and verify all private project installers on Windows, macOS and Linux** unchecked for the ordinary daily test run.
-4. Start the workflow and inspect the six private-project test jobs.
+4. Start the workflow and inspect the ten private-project test jobs.
 
-The workflow also runs daily. A trusted push to the controller on `main` triggers the same six-repository daily checks, while pull-request events only validate the public controller and never check out private projects. Its weekly schedule builds and verifies the configured Windows, macOS and Linux packages after the daily checks pass. The manual cross-platform option starts the full 18-project/platform build matrix.
+The workflow also runs daily. A trusted push to the controller on `main` triggers the same ten-repository daily checks, while pull-request events only validate the public controller and never check out private projects. Its weekly schedule builds and verifies the configured Windows, macOS and Linux packages after the daily checks pass. The manual cross-platform option starts the full 30-project/platform build matrix.
 
 All build commands use the existing non-publishing scripts. The controller does not upload artifacts or publish a release.
 
@@ -75,7 +77,7 @@ This is still a public workflow, so changes to the controller must be reviewed b
 
 ## Limits
 
-- The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to the six private repositories.
+- The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to all ten private repositories.
 - It checks code, dependencies, release readiness and whether the existing package build/verification scripts succeed. It does not install each package into a real Windows, macOS or Linux machine, launch the installed app, or verify uninstall cleanup yet.
 - This first controller does not write code, create update pull requests, respond to `/ai` comments in private repositories or publish user releases.
 - macOS `macos-latest` uses the current GitHub-hosted Apple-silicon runner image. Brightdesk's universal macOS build is intended to include Intel support, but the controller still needs a real Intel Mac installation test.
