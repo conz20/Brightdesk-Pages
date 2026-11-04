@@ -1,12 +1,15 @@
 # Brightdesk Pages
 
-![Brightdesk Pages preview](assets/social-preview.svg)
+<p align="center"><img src="assets/brand/brightdesk-logo.svg" alt="Brightdesk Office Suite" width="420"></p>
+<p align="center"><img src="assets/icons/pages.svg" alt="Brightdesk Pages application icon" width="112" height="112"></p>
 
-![Brightdesk Pages document preview](assets/brightdesk-pages.svg)
+<p align="center"><strong>Create letters, reports and formatted documents.</strong></p>
 
-Create letters, reports and formatted documents.
+<p align="center"><img src="assets/previews/pages-workspace.svg" alt="Brightdesk Pages workspace design preview" width="100%"></p>
 
-**Brightdesk Pages** is a desktop document editor for writing and formatting your work. It is delivered through a desktop installer for your computer.
+> **Visual example:** This is an original Brightdesk design preview showing the intended desktop workspace. It is an illustrative concept, not a screenshot of a completed release build.
+
+Brightdesk Pages is a dedicated desktop application within the independent Brightdesk Office Suite. It uses the shared Brightdesk design language and opens directly into Pages.
 
 ## What you can do
 
