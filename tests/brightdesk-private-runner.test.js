@@ -465,9 +465,9 @@ test('new private products have Windows, macOS and Linux installer verification 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
   const projects = ['Brightdesk-Lists', 'Brightdesk-Planner', 'Brightdesk-To-Do', 'Brightdesk-Workspace'];
 
-  const entries = weeklyJob.split(/\\n          - project: /).filter(block => projects.some(project => block.startsWith(project + '\\n')));
+  const entries = weeklyJob.split(/\n          - project: /).filter(block => projects.some(project => block.startsWith(project + '\n')));
   for (const project of projects) {
-    const projectEntries = entries.filter(block => block.startsWith(project + '\\n'));
+    const projectEntries = entries.filter(block => block.startsWith(project + '\n'));
     assert.equal(projectEntries.length, 3, project + ' must have exactly three platform build entries');
     for (const platform of ['win', 'mac', 'linux']) {
       const entry = projectEntries.find(block => block.includes('platform: ' + platform));
