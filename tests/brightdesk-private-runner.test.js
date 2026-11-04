@@ -67,7 +67,7 @@ test('both private jobs safely skip when App credentials are missing', () => {
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  for (const project of ['Brightdesk-suite', 'Brightdesk-Sheets', 'Brightdesk-Decks', 'Brightdesk-Notes', 'Brightdesk-Database', 'Brightdesk-Forms']) {
+  for (const project of ['Brightdesk-suite', 'Brightdesk-Sheets', 'Brightdesk-Decks', 'Brightdesk-Notes', 'Brightdesk-Database', 'Brightdesk-Forms', 'Brightdesk-Lists', 'Brightdesk-Planner', 'Brightdesk-To-Do', 'Brightdesk-Workspace']) {
     assert.ok(source.includes('project: ' + project), project + ' is missing from the build matrix');
   }
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
