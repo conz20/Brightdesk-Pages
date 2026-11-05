@@ -48,8 +48,8 @@ test('desktop installer workflow requires explicit build and release approval', 
   const workflow = read('.github/workflows/desktop-installers.yml');
   assert.match(workflow, /node-version: 24\\.22\\.2/);
   assert.match(workflow, /npm ci --no-audit --no-fund/);
-  assert.match(workflow, /npm run dist:desktop:\$\\{\\{ matrix\\.platform \\}\\}/);
-  assert.match(workflow, /npm run verify:desktop:\$\\{\\{ matrix\\.platform \\}\\}/);
+  assert.ok(workflow.includes('npm run dist:desktop:${{ matrix.platform }}'));
+  assert.ok(workflow.includes('npm run verify:desktop:${{ matrix.platform }}'));
   assert.match(workflow, /build_installers:[\\s\\S]*?default: false/);
   assert.match(workflow, /publish_release:[\\s\\S]*?default: false/);
   assert.match(workflow, /inputs\\.build_installers == true/);
