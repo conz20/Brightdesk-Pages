@@ -366,3 +366,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{
   outline:2px solid var(--bd-accent);
   outline-offset:2px;
 }
+
+/* Approved Brightdesk product palette v1.0.0 — final token values. */
+:root {
+  --bd-accent: #5966C9;
+  --bd-accent-strong: #414DA9;
+  --bd-accent-soft: #EEF0FC;
+  --bd-product-tint: #EEF0FC;
+  --bd-focus: #5966C9;
+}
