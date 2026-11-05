@@ -46,14 +46,13 @@ npm ci
 npm start
 ```
 
-To build and verify an installer on its native operating system:
+Build and verify each installer on its matching native operating system:
 
-```sh
-npm run dist:desktop:mac
-npm run verify:desktop:mac
-```
-
-Use `win` on Windows or `linux` on Linux instead of `mac`.
+| Platform | Build command | Verification command |
+| --- | --- | --- |
+| Windows | `npm run dist:desktop:win` | `npm run verify:desktop:win` |
+| macOS | `npm run dist:desktop:mac` | `npm run verify:desktop:mac` |
+| Linux | `npm run dist:desktop:linux` | `npm run verify:desktop:linux` |
 
 ## Project files
 
