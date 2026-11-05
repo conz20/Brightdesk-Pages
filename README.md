@@ -9,7 +9,7 @@
 
 <p align="center"><sub>Select the preview to open the full-size artwork.</sub></p>
 
-> **Visual example:** This is an original Brightdesk design preview showing the intended desktop workspace. It is an illustrative concept, not a screenshot of a completed release build.
+> **Concept artwork — not a screenshot.** The preview above is original Brightdesk design artwork, not a capture from the running desktop build. A genuine screenshot will be added only after the current product window has been launched and its primary workflow checked.
 
 Brightdesk Pages is a dedicated desktop application within the independent Brightdesk Office Suite. It uses the shared Brightdesk design language and opens directly into Pages.
 
@@ -17,10 +17,14 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 
 This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
 
-## What you can do
+## Current first-use workflows
 
-Create letters, reports and formatted documents with familiar editing and page-layout tools.
+- Create and edit letters, reports and other text documents.
+- Apply basic text formatting, headings, paragraph alignment, lists and simple tables.
+- Set paper size to A4, US Letter or US Legal, choose portrait or landscape, and select margin presets.
+- Save and reopen Brightdesk project data; use the supported document import and export options, including PDF export.
 
+**Known boundaries:** Pages is an early document-editor foundation, not complete Word feature parity. Advanced page-layout tools, macros, collaboration and perfect round-trip conversion are not promised.
 ## Desktop installers
 
 Choose the installer for your computer:
