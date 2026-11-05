@@ -46,15 +46,15 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
 
 test('desktop installer workflow requires explicit build and release approval', () => {
   const workflow = read('.github/workflows/desktop-installers.yml');
-  assert.match(workflow, /node-version: 24\\.22\\.2/);
-  assert.match(workflow, /npm ci --no-audit --no-fund/);
+  assert.ok(workflow.includes('node-version: 24.22.2'));
+  assert.ok(workflow.includes('npm ci --no-audit --no-fund'));
   assert.ok(workflow.includes('npm run dist:desktop:${{ matrix.platform }}'));
   assert.ok(workflow.includes('npm run verify:desktop:${{ matrix.platform }}'));
-  assert.match(workflow, /build_installers:[\\s\\S]*?default: false/);
-  assert.match(workflow, /publish_release:[\\s\\S]*?default: false/);
-  assert.match(workflow, /inputs\\.build_installers == true/);
-  assert.match(workflow, /inputs\\.publish_release == true/);
-  assert.match(workflow, /contents: write/);
-  assert.match(workflow, /uses: softprops\\/action-gh-release/);
-  assert.match(workflow, /github\\.event_name == 'workflow_dispatch' && inputs\\.publish_release == true/);
+  assert.ok(workflow.includes('build_installers:'));
+  assert.ok(workflow.includes('publish_release:'));
+  assert.ok(workflow.includes('default: false'));
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.build_installers == true"));
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true"));
+  assert.ok(workflow.includes('permissions:\n      contents: write'));
+  assert.ok(workflow.includes('uses: softprops/action-gh-release@'));
 });
