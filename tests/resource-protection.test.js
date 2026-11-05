@@ -44,19 +44,17 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
   assert.equal(pkg.build.nsis.createStartMenuShortcut, true);
 });
 
-test('release workflow has working install and release permissions', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  assert.match(workflow, /node-version: 24\.22\.2/);
-  assert.match(workflow, /run: npm ci/);
-  assert.match(workflow, /npm run verify:licenses/);
-  assert.match(workflow, /npm run release:preflight/);
-  assert.match(workflow, /npm run release:verify:win/);
-  assert.match(workflow, /npm run release:verify:mac/);
-  assert.match(workflow, /WIN_CSC_LINK/);
-  assert.match(workflow, /MAC_INSTALLER_CSC_LINK/);
-  assert.match(workflow, /APPLE_APP_SPECIFIC_PASSWORD/);
-  assert.match(workflow, /npm run release:verify:linux/);
-  assert.match(workflow, /npm run dist:apps:\$\{\{ matrix\.script \}\}/);
-  assert.match(workflow, /npm run release:verify:apps:\$\{\{ matrix\.script \}\}/);
-  assert.match(workflow, /publish-release:[\s\S]*?permissions:\s*contents: write/);
+test('desktop installer workflow requires explicit build and release approval', () => {
+  const workflow = read('.github/workflows/desktop-installers.yml');
+  assert.match(workflow, /node-version: 24\\.22\\.2/);
+  assert.match(workflow, /npm ci --no-audit --no-fund/);
+  assert.match(workflow, /npm run dist:desktop:\$\\{\\{ matrix\\.platform \\}\\}/);
+  assert.match(workflow, /npm run verify:desktop:\$\\{\\{ matrix\\.platform \\}\\}/);
+  assert.match(workflow, /build_installers:[\\s\\S]*?default: false/);
+  assert.match(workflow, /publish_release:[\\s\\S]*?default: false/);
+  assert.match(workflow, /inputs\\.build_installers == true/);
+  assert.match(workflow, /inputs\\.publish_release == true/);
+  assert.match(workflow, /contents: write/);
+  assert.match(workflow, /uses: softprops\\/action-gh-release/);
+  assert.match(workflow, /github\\.event_name == 'workflow_dispatch' && inputs\\.publish_release == true/);
 });
