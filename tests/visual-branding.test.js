@@ -29,3 +29,18 @@ test(product + ' uses the approved Brightdesk visual contract and its original i
   assert.ok(brief.includes('BRIGHTDESK_VISUAL_STANDARD.md'), 'local brief must point to the canonical suite standard');
   assert.ok(brief.includes(accent), 'local brief must retain this product accent');
 });
+
+test('final stylesheet tokens match the exact approved Pages palette', () => {
+  const css = fs.readFileSync(path.join(root, 'src', 'design-system.css'), 'utf8');
+  const lastHex = (token) => {
+    const values = [...css.matchAll(new RegExp(token + String.raw`\s*:\s*(#[0-9a-f]{6})`, 'gi'))];
+    return values.at(-1)?.[1].toUpperCase();
+  };
+
+  assert.equal(lastHex('--bd-accent'), '#5966C9');
+  assert.equal(lastHex('--bd-accent-strong'), '#414DA9');
+  assert.equal(lastHex('--bd-accent-soft'), '#EEF0FC');
+  assert.equal(lastHex('--bd-product-tint'), '#EEF0FC');
+  assert.equal(lastHex('--bd-canvas'), '#F3F6FA');
+  assert.equal(lastHex('--bd-ink'), '#202B3C');
+});
