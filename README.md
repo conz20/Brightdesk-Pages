@@ -16,9 +16,6 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 ## Shared Brightdesk design standard
 This product follows the local [approved design brief](docs/BRIGHTDESK_DESIGN.md) and the canonical [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md). Its approved accent is `#5966C9`; the shared shell, original SVG identity, accessibility rules and screenshot evidence requirements remain consistent across the suite.
 
-
-This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
-
 ## Current first-use workflows
 
 - Create and edit letters, reports and other text documents.
@@ -27,18 +24,19 @@ This product follows the [Brightdesk visual and interaction standard](https://gi
 - Save and reopen Brightdesk project data; use the supported document import and export options, including PDF export.
 
 **Known boundaries:** Pages is an early document-editor foundation, not complete Word feature parity. Advanced page-layout tools, macros, collaboration and perfect round-trip conversion are not promised.
-## Desktop installers
+## Cross-platform desktop packages
 
-Choose the installer for your computer:
+All supported desktop editions use the same approved Brightdesk interface and product scope. Each product keeps its approved icon and accent on Windows, macOS and Linux. Only operating-system integrations such as window chrome, native dialogs, keyboard conventions, permissions and packaging may vary.
 
-| Computer | Installer |
+| Platform | Configured package target |
 | --- | --- |
-| Windows | Windows x64 installer (.exe) |
-| macOS | Universal installer (.dmg), package (.pkg) or archive (.zip) |
-| Linux | Portable Linux package or Debian package (.deb) |
+| Windows | x64 NSIS installer (.exe) |
+| macOS | Universal disk image (.dmg), package installer (.pkg) and archive (.zip) |
+| Linux | x64 AppImage (.AppImage) and Debian package (.deb) |
 
-Installers are published here after the release checks have passed and a release has been approved.
+These are configured build targets, not confirmation that installers are published or have passed native verification. Build and verify each package on its target operating system before describing it as available. Release checks must cover installation, first launch, upgrade, launch after upgrade and removal. Removing Brightdesk must not silently delete local project data.
 
+The customer-facing release version and release approval are managed centrally by Brightdesk Office Suite. Publishing remains a separate manual action.
 ## Run from source
 
 Use Node.js **24.22.2**.
