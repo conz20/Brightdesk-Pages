@@ -40,7 +40,7 @@ concurrency:
 
 jobs:
   validate-controller:
-    name: Validate the public maintenance controller
+    name: Validate the Brightdesk maintenance controller
     if: github.event_name == 'pull_request' || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -72,8 +72,12 @@ jobs:
           - Brightdesk-Notes
           - Brightdesk-Database
           - Brightdesk-Forms
+          - Brightdesk-Lists
+          - Brightdesk-Planner
+          - Brightdesk-To-Do
+          - Brightdesk-Workspace
     steps:
-      - name: Check out the public controller
+      - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
@@ -172,7 +176,7 @@ jobs:
             runner: ubuntu-latest
             verify_script: release:verify:linux
     steps:
-      - name: Check out the public controller
+      - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
@@ -331,8 +335,56 @@ jobs:
             platform: linux
             runner: ubuntu-latest
             verify_script: verify:product:linux
+          - project: Brightdesk-Lists
+            platform: win
+            runner: windows-latest
+            verify_script: verify:desktop:win
+          - project: Brightdesk-Lists
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:desktop:mac
+          - project: Brightdesk-Lists
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:desktop:linux
+          - project: Brightdesk-Planner
+            platform: win
+            runner: windows-latest
+            verify_script: verify:desktop:win
+          - project: Brightdesk-Planner
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:desktop:mac
+          - project: Brightdesk-Planner
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:desktop:linux
+          - project: Brightdesk-To-Do
+            platform: win
+            runner: windows-latest
+            verify_script: verify:desktop:win
+          - project: Brightdesk-To-Do
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:desktop:mac
+          - project: Brightdesk-To-Do
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:desktop:linux
+          - project: Brightdesk-Workspace
+            platform: win
+            runner: windows-latest
+            verify_script: verify:desktop:win
+          - project: Brightdesk-Workspace
+            platform: mac
+            runner: macos-latest
+            verify_script: verify:desktop:mac
+          - project: Brightdesk-Workspace
+            platform: linux
+            runner: ubuntu-latest
+            verify_script: verify:desktop:linux
     steps:
-      - name: Check out the public controller
+      - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller

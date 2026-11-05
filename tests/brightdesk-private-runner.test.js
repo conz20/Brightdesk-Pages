@@ -67,7 +67,7 @@ test('both private jobs safely skip when App credentials are missing', () => {
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  for (const project of ['Brightdesk-suite', 'Brightdesk-Sheets', 'Brightdesk-Decks', 'Brightdesk-Notes', 'Brightdesk-Database', 'Brightdesk-Forms']) {
+  for (const project of ['Brightdesk-suite', 'Brightdesk-Sheets', 'Brightdesk-Decks', 'Brightdesk-Notes', 'Brightdesk-Database', 'Brightdesk-Forms', 'Brightdesk-Lists', 'Brightdesk-Planner', 'Brightdesk-To-Do', 'Brightdesk-Workspace']) {
     assert.ok(source.includes('project: ' + project), project + ' is missing from the build matrix');
   }
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
@@ -436,4 +436,43 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.doesNotMatch(powershell, /Start-Sleep -Seconds 5/);
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));
+});
+
+
+test('daily private tests cover all ten private Brightdesk projects', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const privateProjects = [
+    'Brightdesk-suite',
+    'Brightdesk-Sheets',
+    'Brightdesk-Decks',
+    'Brightdesk-Notes',
+    'Brightdesk-Database',
+    'Brightdesk-Forms',
+    'Brightdesk-Lists',
+    'Brightdesk-Planner',
+    'Brightdesk-To-Do',
+    'Brightdesk-Workspace'
+  ];
+
+  for (const project of privateProjects) {
+    assert.ok(dailyJob.includes('- ' + project), project + ' is missing from daily private tests');
+  }
+});
+
+test('new private products have Windows, macOS and Linux installer verification entries', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  const projects = ['Brightdesk-Lists', 'Brightdesk-Planner', 'Brightdesk-To-Do', 'Brightdesk-Workspace'];
+
+  const entries = weeklyJob.split(/\n          - project: /).filter(block => projects.some(project => block.startsWith(project + '\n')));
+  for (const project of projects) {
+    const projectEntries = entries.filter(block => block.startsWith(project + '\n'));
+    assert.equal(projectEntries.length, 3, project + ' must have exactly three platform build entries');
+    for (const platform of ['win', 'mac', 'linux']) {
+      const entry = projectEntries.find(block => block.includes('platform: ' + platform));
+      assert.ok(entry, project + ' is missing ' + platform);
+      assert.ok(entry.includes('verify_script: verify:desktop:' + platform), project + ' has the wrong ' + platform + ' verification command');
+    }
+  }
 });
