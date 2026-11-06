@@ -75,7 +75,7 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 - `src/` — the Brightdesk Pages editor and supporting desktop code.
 - `assets/icons/pages.svg` — original Brightdesk Pages application icon.
-- `assets/previews/pages-workspace.svg` — workspace concept preview.
+- `assets/previews/pages-workspace.svg` — workspace interface design.
 - `scripts/` — build and release verification tools.
 - `tests/` — automated checks.
 
