@@ -5,11 +5,11 @@
 
 <p align="center"><strong>Create letters, reports and formatted documents.</strong></p>
 
-<p align="center"><a href="https://raw.githubusercontent.com/connormolloy12/Brightdesk-Pages/main/assets/previews/pages-workspace.svg"><img src="assets/previews/pages-workspace.svg" alt="Brightdesk Pages workspace design preview" width="100%"></a></p>
+<p align="center"><a href="https://raw.githubusercontent.com/connormolloy12/Brightdesk-Pages/main/assets/previews/pages-workspace.svg"><img src="assets/previews/pages-workspace.svg" alt="Brightdesk Pages interface design" width="100%"></a></p>
 
-<p align="center"><sub>Select the preview to open the full-size artwork.</sub></p>
+<p align="center"><sub>Select the interface image to open the full-size design.</sub></p>
 
-> **Concept artwork — not a screenshot.** The preview above is original Brightdesk design artwork, not a capture from the running desktop build. A genuine screenshot will be added only after the current product window has been launched and its primary workflow checked.
+> **Interface design artwork — not a screenshot.** This image shows the intended Brightdesk interface. It is not a capture from the running desktop build. A genuine product screenshot will be added after the current desktop build has been launched and its primary workflow verified.
 
 Brightdesk Pages is a dedicated desktop application within the independent Brightdesk Office Suite. It uses the shared Brightdesk design language and opens directly into Pages.
 
