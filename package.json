@@ -103,10 +103,10 @@
         "deb"
       ],
       "category": "Office",
-      "artifactName": "brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "brightdesk-pages-${version}-${arch}.${ext}"
     },
     "appImage": {
-      "artifactName": "Brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "brightdesk-pages-${version}-${arch}.${ext}"
     },
     "pkg": {
       "license": "TERMS_AND_CONDITIONS.txt",
