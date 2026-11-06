@@ -5,6 +5,8 @@ on:
     branches: [main]
   push:
     branches: [main]
+  schedule:
+    - cron: '37 4 * * *'
   workflow_dispatch:
     inputs:
       build_installers:
@@ -26,18 +28,29 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: brightdesk-pages-quality-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     name: Check Brightdesk Pages
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 24.22.2
           cache: npm
+      - run: npm run lock:prepare
+      - run: npm run lock:verify
       - run: npm ci --no-audit --no-fund
-      - run: node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js
+      - run: npm run verify:licenses
+      - name: Test Pages, page layout and product downloads
+        run: node --test tests/pages-desktop.test.js tests/page-layout.test.js tests/desktop-downloads.test.js
+      - run: npm run release:preflight
+      - run: npm audit --audit-level=high
 
   build:
     name: Build ${{ matrix.platform }} desktop installer
