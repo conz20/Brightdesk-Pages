@@ -18,7 +18,12 @@ test('renderer exposes language selection and a browse-only dictionary catalogue
   assert.doesNotMatch(app, /installCatalogueDictionary/);
   for (const forbidden of ['import-language-pack', 'import-spelling-dictionary']) assert.doesNotMatch(html, new RegExp(forbidden));
   for (const forbidden of ['importLanguagePack', 'removeLanguagePack', 'importDictionary', 'removeDictionary']) assert.doesNotMatch(preload, new RegExp(forbidden));
-  for (const forbidden of ["ipcMain.handle('languages:import'", "ipcMain.handle('languages:remove'", "ipcMain.handle('dictionaries:import'", "ipcMain.handle('dictionaries:remove'"]) {
+  for (const forbidden of [
+    /ipcMain\\.handle\\('languages:import'/,
+    /ipcMain\\.handle\\('languages:remove'/,
+    /ipcMain\\.handle\\('dictionaries:import'/,
+    /ipcMain\\.handle\\('dictionaries:remove'/
+  ]) {
     assert.doesNotMatch(main, forbidden);
   }
   assert.doesNotMatch(main, /dictionaries:install-catalog/);
