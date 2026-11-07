@@ -658,8 +658,8 @@ function renderDictionaryManager() {
   }
   select.value = state.selectedDictionary;
   $('dictionary-status').textContent = state.installedDictionaries.length
-    ? `${state.installedDictionaries.length} spelling dictionary/dictionaries installed. The built-in OS spell checker remains available too.`
-    : 'No separate dictionaries installed yet. Install one from the catalogue or import a compatible .bddict bundle.';
+    ? `${state.installedDictionaries.length} spelling dictionary/dictionaries installed and available offline. The built-in OS spell checker remains available too.`
+    : 'No additional dictionaries are installed. The built-in OS spell checker remains available; additional dictionary files are supplied only through official Brightdesk updates.';
   renderAvailableDictionaryCatalogue();
   renderToolbar();
 }
