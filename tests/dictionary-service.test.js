@@ -171,6 +171,26 @@ test('catalogue installation rejects unknown IDs before making a network request
 });
 
 
+test('catalogue entries not bundled with Brightdesk never trigger a live network request', async () => {
+  const userData = await fs.mkdtemp(path.join(os.tmpdir(), 'brightdesk-dictionary-offline-catalogue-'));
+  let networkCalls = 0;
+  const service = new DictionaryService(userData, {
+    fetch: async () => {
+      networkCalls += 1;
+      throw new Error('unexpected live network request');
+    }
+  });
+  try {
+    await assert.rejects(
+      () => service.installCatalogueEntry('en-au'),
+      /not included in this Brightdesk build/
+    );
+    assert.equal(networkCalls, 0);
+  } finally {
+    await fs.rm(userData, { recursive: true, force: true });
+  }
+});
+
 test('pinned catalogue downloader rejects URLs outside its fixed upstream repository', async () => {
   let networkCalls = 0;
   const service = new DictionaryService('/tmp/brightdesk-dictionary-url-test', {
