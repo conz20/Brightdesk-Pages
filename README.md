@@ -94,3 +94,7 @@ Brightdesk is independent and is not affiliated with Microsoft. It uses original
 ## Documentation freshness
 
 The root README is maintained alongside the product, not as an end-of-project task. Every pull request that changes application code, tests, UI, design assets, screenshots, icons, configuration, dependencies, packaging, or build/release workflows must also update this README in the same pull request. Keep feature status, screenshots and visual references, application icons, setup/build instructions, platform compatibility, and repository links aligned with the latest verified implementation. Describe planned or untested functionality as planned, never as completed. The **README freshness** GitHub Actions check requires a root `README.md` update whenever a pull request or direct push to `main` changes a non-Markdown file; a passing check confirms inclusion, while reviewers remain responsible for checking factual accuracy and current visuals.
+
+## Spelling dictionaries
+
+Brightdesk performs spelling checks locally using installed dictionary files. Installed dictionaries remain available offline. The catalogue provides language and source information; entries marked **Not included in this build** are reference information, not downloadable files. Additional dictionary packs can be delivered only as part of a verified official Brightdesk update. Product runtime code does not fetch dictionary files from third-party hosts, and document text is not sent to a remote spelling service.
