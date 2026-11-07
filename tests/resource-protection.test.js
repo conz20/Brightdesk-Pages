@@ -14,6 +14,7 @@ test('renderer exposes language selection and a browse-only dictionary catalogue
   assert.match(html, /id="display-language"/);
   assert.match(html, /id="proofing-language"/);
   assert.match(html, /id="proofing-dictionary"/);
+  assert.match(html, /No additional dictionaries are installed/);
   assert.match(app, /Not included in this build/);
   assert.doesNotMatch(app, /installCatalogueDictionary/);
   for (const forbidden of ['import-language-pack', 'import-spelling-dictionary']) assert.doesNotMatch(html, new RegExp(forbidden));
