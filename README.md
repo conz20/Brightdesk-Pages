@@ -98,4 +98,4 @@ The root README is maintained alongside the product, not as an end-of-project ta
 
 ## Customer network policy
 
-Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
+Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product. Installed spelling dictionaries are used offline; catalogue entries are reference-only unless their files are included in a verified official Brightdesk update. No third-party dictionary download occurs at runtime.
