@@ -9,6 +9,7 @@ test('product navigation adapts between expanded, compact and minimal states', (
   const html = read('src/index.html');
   const js = read('src/app.js');
   const css = read('src/styles.css');
+  const shellCss = read('src/product-window.css');
   assert.ok(html.includes('id="sidebar-toggle"'));
   assert.ok(html.includes('aria-controls="sidebar-nav"'));
   assert.ok(html.includes('aria-label="Brightdesk Pages" title="Brightdesk Pages"'));
@@ -22,4 +23,6 @@ test('product navigation adapts between expanded, compact and minimal states', (
   assert.ok(css.includes('.sidebar.is-minimal'));
   assert.ok(css.includes('.sidebar.is-open-mobile'));
   assert.ok(css.includes('@media (prefers-reduced-motion: reduce)'));
+  assert.ok(shellCss.includes('html.is-product-window .sidebar.is-open-mobile'));
+  assert.ok(shellCss.includes('position:fixed;inset:0 auto 0 0'));
 });
