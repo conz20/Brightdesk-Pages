@@ -789,10 +789,10 @@ function render() {
     const eyebrow = document.querySelector('.topbar .eyebrow');
     if (eyebrow) eyebrow.textContent = 'PRODUCT WORKSPACE';
     const title = $('app-title');
-    const sourceIcon = document.querySelector(`.sidebar .nav[data-app="${launchAppId}"] .app-icon-image`);
-    if (title && sourceIcon && !title.querySelector('.product-title-icon')) {
-      const icon = sourceIcon.cloneNode();
+    if (title && !title.querySelector('.product-title-icon')) {
+      const icon = document.createElement('img');
       icon.className = 'product-title-icon';
+      icon.src = 'assets/icons/pages.svg';
       icon.alt = '';
       icon.setAttribute('aria-hidden', 'true');
       title.prepend(icon);
