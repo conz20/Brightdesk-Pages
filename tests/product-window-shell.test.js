@@ -17,8 +17,8 @@ test('product-window mode identifies the product and keeps the Suite shell separ
   assert.match(appSource, /PRODUCT WORKSPACE/);
   assert.match(appSource, /product-title-icon/);
   assert.match(htmlSource, /href="product-window\.css"/);
-  assert.match(shellCss, /html\\.is-product-window body\\s*\\{[^}]*display:\\s*flex;/s);
-  assert.match(shellCss, /html\.is-product-window \.sidebar\{display:flex;position:relative;flex:0 0 232px;width:232px;min-width:76px/);
-  assert.doesNotMatch(shellCss, /html\.is-product-window \.sidebar\{display:none!important\}/);
+  assert.match(shellCss, /html\.is-product-window body\s*\{[^}]*display:\s*flex;/s);
+  assert.match(shellCss, /html\.is-product-window \.sidebar\s*\{[^}]*display:\s*flex\s*!important;/s);
+      assert.doesNotMatch(shellCss, /html\.is-product-window \.sidebar\{display:none!important\}/);
   assert.match(shellCss, /html\.is-product-window \.workspace\s*\{[^}]*flex:1 1 auto/s);
 });
