@@ -198,3 +198,51 @@ body.sidebar-mobile-open::before { content: ""; position: fixed; inset: 0; z-ind
   .sidebar, .sidebar.is-compact { width: 0; min-width: 0; height: 0; padding: 0; border: 0; overflow: visible; }
 }
 @media (prefers-reduced-motion: reduce) { .sidebar, .sidebar-toggle svg { transition: none !important; } }
+
+
+/* Product navigation remains compact without hiding its labels. */
+.sidebar {
+  width: 192px;
+  min-width: 192px;
+  flex: 0 0 192px;
+}
+.sidebar.is-compact {
+  width: 192px;
+  min-width: 192px;
+  flex-basis: 192px;
+}
+.sidebar.is-compact .brand > div,
+.sidebar.is-compact .section-label,
+.sidebar.is-compact .nav > span,
+.sidebar.is-compact .sidebar-divider,
+.sidebar.is-compact .sidebar-bottom {
+  display: initial !important;
+}
+.sidebar.is-compact .nav {
+  justify-content: flex-start;
+  gap: 10px;
+  padding-inline: 10px;
+}
+.sidebar-toggle { display: none; }
+.sidebar.is-open-mobile {
+  width: 192px;
+  min-width: 192px;
+}
+@media (max-width: 640px) {
+  .sidebar,
+  .sidebar.is-compact {
+    width: 0;
+    min-width: 0;
+    flex-basis: 0;
+    height: 0;
+    padding: 0;
+    border: 0;
+    overflow: visible;
+  }
+  .sidebar-toggle { display: grid; }
+  .sidebar.is-open-mobile {
+    width: 192px;
+    min-width: 192px;
+    flex-basis: 192px;
+  }
+}
