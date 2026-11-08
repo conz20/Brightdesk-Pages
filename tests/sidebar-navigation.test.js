@@ -14,6 +14,8 @@ test('product navigation can collapse to an icon rail and expand accessibly', ()
   assert.match(html, /<svg class="app-icon manager-icon"[^>]*viewBox="0 0 24 24"/);
   assert.match(js, /function setSidebarCompact\(compact\)/);
   assert.match(js, /sidebarPreference/);
+  assert.match(js, /window\\.innerWidth <= 640/);
+  assert.match(js, /window\\.innerWidth <= 1007/);
   assert.match(js, /aria-expanded/);
   assert.match(css, /\.sidebar\.is-compact\s*\{[^}]*width:\s*76px/s);
   assert.match(css, /\.sidebar\.is-compact \.brand > div/);
