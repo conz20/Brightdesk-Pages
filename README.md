@@ -107,6 +107,6 @@ The root README is maintained alongside the product, not as an end-of-project ta
 
 ## Individual product window
 
-When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's product-management sidebar and generic welcome banner are removed from this window. The product identity and file actions remain in the top bar, with the document name, editing ribbon and page canvas arranged above and below one another. The document page stays centred in the available editing area.
+When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's generic product-management view and welcome banner are removed from this window; the product's own left navigation remains available, with an optional compact icon rail and accessible labels. The product identity and file actions remain in the top bar, with the document name, editing ribbon and page canvas arranged above and below one another. The document page stays centred in the available editing area.
 
 The interface preview is design artwork showing the intended workspace arrangement; it is not a screenshot from a verified running build.
