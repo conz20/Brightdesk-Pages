@@ -94,3 +94,10 @@ Brightdesk is independent and is not affiliated with Microsoft. It uses original
 ## Documentation freshness
 
 The root README is maintained alongside the product, not as an end-of-project task. Every pull request that changes application code, tests, UI, design assets, screenshots, icons, configuration, dependencies, packaging, or build/release workflows must also update this README in the same pull request. Keep feature status, screenshots and visual references, application icons, setup/build instructions, platform compatibility, and repository links aligned with the latest verified implementation. Describe planned or untested functionality as planned, never as completed. The **README freshness** GitHub Actions check requires a root `README.md` update whenever a pull request or direct push to `main` changes a non-Markdown file; a passing check confirms inclusion, while reviewers remain responsible for checking factual accuracy and current visuals.
+
+
+## Individual product window
+
+When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's product-management sidebar and generic welcome banner are removed from this window. The product identity and file actions remain in the top bar, with the document name, editing ribbon and page canvas arranged above and below one another. The document page stays centred in the available editing area.
+
+The interface preview is design artwork showing the intended workspace arrangement; it is not a screenshot from a verified running build.
