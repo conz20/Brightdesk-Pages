@@ -973,36 +973,6 @@ document.addEventListener('keydown', event => {
 });
 window.addEventListener('resize', syncSidebarDensity);
 syncSidebarDensity();
-    if (mobileSidebarOpen) productSidebar.querySelector('.nav')?.focus();
-    else productSidebarToggle.focus();
-  } else {
-    sidebarPreference = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
-    syncSidebarDensity();
-  }
-});
-productSidebar?.querySelectorAll('.nav').forEach(item => item.addEventListener('click', () => {
-  if (window.innerWidth <= 640 && mobileSidebarOpen) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
-}));
-document.addEventListener('click', event => {
-  if (window.innerWidth <= 640 && mobileSidebarOpen && !productSidebar.contains(event.target)) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && window.innerWidth <= 640 && mobileSidebarOpen) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
-});
-window.addEventListener('resize', syncSidebarDensity);
-syncSidebarDensity();
 
 loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platform}`;
 (async()=>{
