@@ -17,9 +17,9 @@ html.is-product-window body {
 }
 html.is-product-window .sidebar {
   display: flex !important;
-  flex: 0 0 var(--bd-product-navigation-expanded-width, 232px);
-  width: var(--bd-product-navigation-expanded-width, 232px);
-  min-width: var(--bd-product-navigation-compact-width, 76px);
+  flex: 0 0 var(--bd-product-navigation-expanded-width, 192px);
+  width: var(--bd-product-navigation-expanded-width, 192px);
+  min-width: var(--bd-product-navigation-compact-width, 192px);
   height: 100vh;
   min-height: 0;
   position: relative;
@@ -30,9 +30,9 @@ html.is-product-window .sidebar {
   border-right: 1px solid var(--bd-ui-line, #e1e7ef);
 }
 html.is-product-window .sidebar.is-compact {
-  flex-basis: var(--bd-product-navigation-compact-width, 76px);
-  width: var(--bd-product-navigation-compact-width, 76px);
-  min-width: var(--bd-product-navigation-compact-width, 76px);
+  flex-basis: var(--bd-product-navigation-compact-width, 192px);
+  width: var(--bd-product-navigation-compact-width, 192px);
+  min-width: var(--bd-product-navigation-compact-width, 192px);
   padding-left: 10px;
   padding-right: 10px;
 }
@@ -66,9 +66,9 @@ html.is-product-window .sidebar.is-minimal .sidebar-bottom { display: none !impo
 html.is-product-window .sidebar.is-open-mobile {
   position: fixed;
   inset: 0 auto 0 0;
-  flex-basis: var(--bd-product-navigation-expanded-width, 232px);
-  width: var(--bd-product-navigation-expanded-width, 232px);
-  min-width: var(--bd-product-navigation-expanded-width, 232px);
+  flex-basis: var(--bd-product-navigation-expanded-width, 192px);
+  width: var(--bd-product-navigation-expanded-width, 192px);
+  min-width: var(--bd-product-navigation-expanded-width, 192px);
   height: 100vh;
   padding: 27px 17px;
   z-index: 1001;
