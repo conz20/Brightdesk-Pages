@@ -23,6 +23,5 @@ test('product navigation adapts between expanded, compact and minimal states', (
   assert.ok(css.includes('.sidebar.is-minimal'));
   assert.ok(css.includes('.sidebar.is-open-mobile'));
   assert.ok(css.includes('@media (prefers-reduced-motion: reduce)'));
-  assert.ok(shellCss.includes('html.is-product-window .sidebar.is-open-mobile'));
-  assert.ok(shellCss.includes('position:fixed;inset:0 auto 0 0'));
+  assert.match(shellCss, /html\\.is-product-window \\\.sidebar\\.is-open-mobile\\s*\\{[^}]*position:\\s*fixed;[^}]*inset:\\s*0 auto 0 0;/s);
 });
