@@ -155,6 +155,7 @@
 /* Responsive product navigation: full labels when open, original SVG icons when compact. */
 .sidebar {
   position: relative;
+  width: 232px;
   min-width: 76px;
   transition: width .18s ease, min-width .18s ease;
 }
@@ -228,6 +229,7 @@
   stroke-linejoin: round;
 }
 @media (max-width: 760px) {
+  .sidebar, .sidebar.is-compact { width: 100%; min-width: 0; padding: 12px; }
   .sidebar-toggle { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
