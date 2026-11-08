@@ -919,6 +919,7 @@ $('updates-button').addEventListener('click',async()=>{const msg=$('update-messa
 window.brightdesk.onUpdateState?.(updateState=>{const msg=$('update-message');msg.hidden=false;msg.textContent=updateState.message;if(updateState.status==='available'){msg.textContent=updateState.message;}if(updateState.status==='downloaded'){const button=document.createElement('button');button.className='text-button';button.textContent=t('common.restartInstall');button.onclick=()=>window.brightdesk.installUpdate();msg.append(' ',button);}});
 
 
+
 const productSidebar = document.querySelector('.sidebar');
 const productSidebarToggle = $('sidebar-toggle');
 let sidebarPreference = null;
@@ -935,26 +936,42 @@ function setSidebarState(state) {
   productSidebarToggle.title = label;
 }
 function syncSidebarDensity() {
+  if (window.innerWidth > 640) mobileSidebarOpen = false;
   if (window.innerWidth <= 640) setSidebarState(mobileSidebarOpen ? 'open-mobile' : 'minimal');
   else if (sidebarPreference) setSidebarState(sidebarPreference);
   else if (window.innerWidth <= 1007) setSidebarState('compact');
   else setSidebarState('expanded');
 }
 productSidebarToggle?.addEventListener('click', () => {
-  if (window.innerWidth <= 640) mobileSidebarOpen = !mobileSidebarOpen;
-  else sidebarPreference = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
-  syncSidebarDensity();
+  if (window.innerWidth <= 640) {
+    mobileSidebarOpen = !mobileSidebarOpen;
+    syncSidebarDensity();
+    if (mobileSidebarOpen) productSidebar.querySelector('.nav')?.focus();
+    else productSidebarToggle.focus();
+  } else {
+    sidebarPreference = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
+    syncSidebarDensity();
+  }
 });
+productSidebar?.querySelectorAll('.nav').forEach(item => item.addEventListener('click', () => {
+  if (window.innerWidth <= 640 && mobileSidebarOpen) {
+    mobileSidebarOpen = false;
+    syncSidebarDensity();
+    productSidebarToggle.focus();
+  }
+}));
 document.addEventListener('click', event => {
   if (window.innerWidth <= 640 && mobileSidebarOpen && !productSidebar.contains(event.target)) {
     mobileSidebarOpen = false;
     syncSidebarDensity();
+    productSidebarToggle.focus();
   }
 });
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && window.innerWidth <= 640 && mobileSidebarOpen) {
     mobileSidebarOpen = false;
     syncSidebarDensity();
+    productSidebarToggle.focus();
   }
 });
 window.addEventListener('resize', syncSidebarDensity);
