@@ -20,10 +20,11 @@ test('product navigation stays slim while keeping every icon and text label visi
   assert.ok(js.includes('window.innerWidth <= 640'));
   assert.doesNotMatch(js, /window\.innerWidth\s*<=\s*1007/);
   assert.doesNotMatch(js, /setSidebarState\('compact'\)/);
-  assert.ok(css.includes('width: 192px;'));
-  assert.ok(css.includes('min-width: 192px;'));
+  assert.ok(css.includes('width: 232px;'));
+  assert.ok(css.includes('width: 76px;'));
   assert.ok(css.includes('.sidebar.is-open-mobile'));
   assert.ok(css.includes('@media (prefers-reduced-motion: reduce)'));
-  assert.ok(shellCss.includes('var(--bd-product-navigation-expanded-width, 192px)'));
+  assert.ok(shellCss.includes('var(--bd-product-navigation-expanded-width, 232px)'));
+  assert.ok(shellCss.includes('var(--bd-product-navigation-compact-width, 76px)'));
   assert.match(shellCss, /html\.is-product-window \.sidebar\.is-open-mobile\s*\{[^}]*position:\s*fixed;[^}]*inset:\s*0 auto 0 0;/s);
 });
