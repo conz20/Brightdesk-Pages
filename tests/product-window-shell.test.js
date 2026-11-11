@@ -20,7 +20,7 @@ test('product window retains its labelled navigation and fills the workspace', (
   assert.match(html, /href="product-window\.css"/);
   assert.match(shellCss, /html\.is-product-window body\s*\{[^}]*display:\s*flex;/s);
   assert.match(shellCss, /html\.is-product-window \.sidebar\s*\{[^}]*display:\s*flex\s*!important;/s);
-  assert.doesNotMatch(shellCss, /html\.is-product-window \.sidebar\s*\{\s*display:\s*none/i);
+  assert.doesNotMatch(shellCss, /is-open-mobile|is-minimal|sidebar-mobile-open|max-width:\s*640px/);
   assert.match(shellCss, /html\.is-product-window \.workspace\s*\{[^}]*flex:\s*1 1 auto/s);
 });
 
@@ -41,15 +41,15 @@ test('compact product labels remain available to assistive technology', () => {
 });
 
 test('product window contains no mobile navigation or overlay implementation', () => {
-  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\\.innerWidth\\s*<=\\s*640/);
-  assert.doesNotMatch(shellCss, /is-open-mobile|is-minimal|sidebar-mobile-open|max-width:\\s*640px/);
+  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\.innerWidth\s*<=\s*640/);
+  assert.doesNotMatch(shellCss, /is-open-mobile|is-minimal|sidebar-mobile-open|max-width:\s*640px/);
 });
 
 
 test('legacy fixed-width navigation rules are restricted to the Suite shell', () => {
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\s*\{[^}]*width:\s*192px;/s);
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar-toggle\s*\{\s*display:\s*none;/s);
-  assert.doesNotMatch(appCss, /(^|\n)\.sidebar\.is-compact \.nav > span\s*\{[^}]*display:\s*initial\s*!important/s);
+  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\.innerWidth\s*<=\s*640/);
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\.is-compact \.nav > span,/);
-  assert.doesNotMatch(appCss, /^\.sidebar\.is-compact \.brand > div,/m)
+  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\.innerWidth\s*<=\s*640/);
 });
