@@ -24,6 +24,8 @@ This product follows the [Brightdesk visual and interaction standard](https://gi
 
 The left navigation is 232 px wide when expanded. It can be collapsed to a slim 76 px icon rail and expanded again with the navigation control. In the compact state, the original SVG icons remain visible and each item keeps its full accessible name and tooltip. At 641–1007 px the rail starts compact to preserve workspace room. At 640 px and below it becomes a menu button that opens the navigation over the workspace; at 1008 px and above it starts expanded. This control exists in individual product windows only. The Suite keeps its fixed 192 px labelled sidebar and has no expand/collapse option.
 
+The Pages product-window stylesheet mirrors the canonical `Brightdesk-Design-System/css/product-window.css` shell. Regression tests protect the 232/76 px widths, screen-reader-accessible compact labels, product-scoped mobile overlay and separation from the Suite's fixed 192 px navigation. Keep the product copy aligned with the canonical file; do not add a runtime network dependency on the Design-System repository.
+
 The interface preview above remains design artwork, not a captured product screenshot. A real screenshot will replace or supplement it only after the running desktop window has been launched and visually checked.
 
 ## Cross-platform consistency
