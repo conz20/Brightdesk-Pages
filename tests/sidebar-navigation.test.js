@@ -16,7 +16,7 @@ test('individual Pages navigation supports expanded and compact desktop states',
   assert.match(js, /window\.innerWidth\s*<=\s*1007/);
   assert.ok(js.includes("setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded')"));
   assert.doesNotMatch(js, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\.innerWidth\s*<=\s*640/);
-  assert.match(js, /classList\.toggle\('is-compact', sidebarState === 'compact'\)/);
+  assert.match(js, /classList\.toggle\('is-compact', compact\)/);
   assert.match(shellCss, /--bd-product-navigation-expanded-width, 232px/);
   assert.match(shellCss, /--bd-product-navigation-compact-width, 76px/);
 });
