@@ -152,7 +152,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /build\.win\.artifactName/);
-  assert.match(windows, /Uninstall Brightdesk\.exe/);
+  assert.match(windows, /Get-ChildItem -LiteralPath \\$installDir -File -Filter 'Uninstall\\*\\.exe'/);
   assert.doesNotMatch(windows, /--version/);
 });
 
@@ -247,7 +247,7 @@ test('private installer diagnostics discard unknown paths and malformed library 
     ].join('\n')
   });
 
-  assert.match(output, /Windows installer did not install Brightdesk\.exe/);
+  assert.match(output, /Windows installer did not install the product executable/);
   assert.ok(!output.includes('evil.dll'));
   assert.ok(!output.includes('SECRET'));
   assert.ok(!output.includes('../private.dll'));
