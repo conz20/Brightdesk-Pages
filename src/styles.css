@@ -181,7 +181,7 @@
 .sidebar-toggle:focus-visible { outline: 2px solid var(--bd-accent, #315fce); outline-offset: 3px; }
 .sidebar.is-compact { width: 76px; min-width: 76px; padding-left: 10px; padding-right: 10px; }
 .sidebar.is-compact .brand { justify-content: center; gap: 0; padding: 34px 0 22px; }
-.sidebar.is-compact .brand > div, .sidebar.is-compact .section-label, .sidebar.is-compact .nav > span, .sidebar.is-compact .sidebar-divider, .sidebar.is-compact .sidebar-bottom { display: none !important; }
+html:not(.is-product-window) .sidebar.is-compact .brand > div, html:not(.is-product-window) .sidebar.is-compact .section-label, html:not(.is-product-window) .sidebar.is-compact .nav > span, html:not(.is-product-window) .sidebar.is-compact .sidebar-divider, html:not(.is-product-window) .sidebar.is-compact .sidebar-bottom { display: none !important; }
 .sidebar.is-compact .nav { justify-content: center; gap: 0; padding-left: 0; padding-right: 0; }
 .sidebar.is-compact .app-icon-image, .sidebar.is-compact .manager-icon { width: 34px; height: 34px; flex: 0 0 34px; }
 .sidebar.is-compact .sidebar-toggle { top: 10px; right: calc(50% - 15px); }
