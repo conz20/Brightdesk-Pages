@@ -77,7 +77,7 @@ test('daily private project checkouts use each repository default branch', () =>
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
-  assert.ok(checkout.includes('repository: connormolloy12/${{ matrix.project }}'));
+  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
   assert.doesNotMatch(checkout, /^\s*ref:/m);
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
@@ -171,7 +171,7 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.match(oneTimeJob, /github\.event_name == 'push'/);
   assert.match(oneTimeJob, /github\.event\.head_commit\.message/);
   assert.match(oneTimeJob, /\[build-brightdesk-suite-installers\]/);
-  assert.ok(oneTimeJob.includes('repository: connormolloy12/Brightdesk-suite'));
+  assert.ok(oneTimeJob.includes('repository: conz20/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
@@ -538,4 +538,23 @@ test('macOS installer diagnostics expose only safe bundle and receipt messages',
   assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
   assert.match(runner, /A Brightdesk installer receipt already exists; refusing to modify or forget it/);
   assert.doesNotMatch(runner, /Brightdesk\\.app/);
+});
+
+test('private maintenance validation uses the Mac runner and all installer jobs avoid paid hosted runners', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const validateJob = source.split('  validate-controller:')[1]?.split('  daily-private-tests:')[0] ?? '';
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const suiteInstallerJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const weeklyInstallerJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+
+  assert.match(validateJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(dailyJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  for (const job of [suiteInstallerJob, weeklyInstallerJob]) {
+    assert.match(job, /runs-on: \$\{\{ matrix\.runner \}\}/);
+    assert.match(job, /runner: \["self-hosted", "Windows", "X64"\]/);
+    assert.match(job, /runner: \["self-hosted", "macOS", "ARM64"\]/);
+    assert.match(job, /runner: \["self-hosted", "Linux", "X64"\]/);
+  }
+  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+  assert.doesNotMatch(source, /connormolloy12/);
 });
