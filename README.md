@@ -17,6 +17,12 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 
 This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
 
+## Product navigation
+
+Individual Pages windows use the canonical [Brightdesk Design System product-window shell](https://github.com/conz20/Brightdesk-Design-System/blob/main/css/product-window.css). Navigation expands to 232 px at 1008 px and wider, starts compact at 76 px between 641 px and 1007 px, and becomes a menu button at 640 px and below. Compact labels remain available to assistive technology. The Suite keeps its fixed 192 px labelled rail and does not receive the individual-product window class.
+
+The product stylesheet is mirrored into the Pages source so the installed product works offline. It does not load the Design System over the network at runtime. Keep `src/product-window.css` aligned with the canonical Design System file.
+
 ## Cross-platform consistency
 
 The Windows, macOS and Linux editions use the same approved Brightdesk interface and supported product scope. Shared layout, typography, spacing, component states and navigation follow the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md). This product's original icon and approved accent remain the same on every operating system. Only operating-system integrations such as window controls, native file dialogs, keyboard conventions and package formats may adapt to platform conventions.
@@ -105,3 +111,10 @@ The checked-in copy is loaded locally before the renderer. It is not fetched fro
 ## Customer network policy
 
 Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
+
+
+## Individual product window
+
+When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's generic product-management view and welcome banner are removed from this window. The Pages identity and file actions remain in the top bar; the document name, editing ribbon and page canvas stay within the focused workspace.
+
+The interface preview is design artwork showing the intended workspace arrangement. It is not a screenshot from a verified running build.

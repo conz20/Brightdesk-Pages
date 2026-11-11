@@ -27,6 +27,7 @@ const configs = {
 const genericConfigs = Object.fromEntries((window.BrightdeskAppCatalog || []).filter(item => !['pages','sheets','slides','notes'].includes(item.id)).map(item => [item.id, { title: item.name, heading: item.name, desc: item.description }]));
 const fullCatalog = window.BrightdeskAppCatalog || [];
 const launchAppId = window.brightdesk.launchAppId || null;
+if (launchAppId) document.documentElement.classList.add('is-product-window');
 const catalog = fullCatalog;
 const installableCatalog = catalog.filter(item => item.availability === 'available');
 const state = {
@@ -754,8 +755,22 @@ function render() {
   const manager = state.view === 'manager';
   const languages = state.view === 'languages';
   $('app-manager').hidden = !manager; $('language-manager').hidden = !languages;
-  $('workspace').hidden = manager || languages; $('welcome').hidden = manager || languages || ['todo','lists','forms','planner','database','loop'].includes(state.app);
+  $('workspace').hidden = manager || languages; $('welcome').hidden = manager || languages || Boolean(launchAppId) || ['todo','lists','forms','planner','database','loop'].includes(state.app);
   $('app-title').textContent = manager ? t('sidebar.getApps') : (languages ? t('language.title') : (catalog.find(item => item.id === state.app)?.name || state.app));
+
+  if (launchAppId) {
+    const eyebrow = document.querySelector('.topbar .eyebrow');
+    if (eyebrow) eyebrow.textContent = 'PRODUCT WORKSPACE';
+    const title = $('app-title');
+    if (title && !title.querySelector('.product-title-icon')) {
+      const icon = document.createElement('img');
+      icon.className = 'product-title-icon';
+      icon.src = 'assets/icons/pages.svg';
+      icon.alt = '';
+      icon.setAttribute('aria-hidden', 'true');
+      title.prepend(icon);
+    }
+  }
   $('top-actions').hidden = manager || languages;
   if (manager) {
     $('save-status').textContent = t('manager.manageTitle'); renderAppManager();
@@ -875,6 +890,69 @@ $('lists-column-type').addEventListener('change',()=>{$('lists-column-options-wr
 $('export-button').addEventListener('click',exportCurrent);$('open-button').addEventListener('click',openFile);$('save-project').addEventListener('click',saveProject);
 $('updates-button').addEventListener('click',async()=>{const msg=$('update-message');msg.hidden=false;msg.textContent=t('common.updateChecking');try{const r=await window.brightdesk.checkForUpdates();if(!r?.ok)msg.textContent=r?.message||'Update checks are not configured yet.';}catch(e){msg.textContent=`Update check failed: ${e.message}`;}});
 window.brightdesk.onUpdateState?.(updateState=>{const msg=$('update-message');msg.hidden=false;msg.textContent=updateState.message;if(updateState.status==='available'){msg.textContent=updateState.message;}if(updateState.status==='downloaded'){const button=document.createElement('button');button.className='text-button';button.textContent=t('common.restartInstall');button.onclick=()=>window.brightdesk.installUpdate();msg.append(' ',button);}});
+
+const productSidebar = document.querySelector('.sidebar');
+const productSidebarToggle = $('sidebar-toggle');
+let mobileSidebarOpen = false;
+function setSidebarState(sidebarState) {
+  if (!productSidebar || !productSidebarToggle) return;
+  productSidebar.classList.toggle('is-compact', sidebarState === 'compact');
+  productSidebar.classList.toggle('is-minimal', sidebarState === 'minimal');
+  productSidebar.classList.toggle('is-open-mobile', sidebarState === 'open-mobile');
+  document.body.classList.toggle('sidebar-mobile-open', sidebarState === 'open-mobile');
+  const labels = {
+    expanded: 'Collapse navigation',
+    compact: 'Expand navigation',
+    minimal: 'Open navigation',
+    'open-mobile': 'Close navigation'
+  };
+  productSidebarToggle.setAttribute('aria-expanded', String(sidebarState === 'expanded' || sidebarState === 'open-mobile'));
+  productSidebarToggle.setAttribute('aria-label', labels[sidebarState]);
+  productSidebarToggle.title = labels[sidebarState];
+}
+function syncSidebarDensity() {
+  if (window.innerWidth <= 640) {
+    setSidebarState(mobileSidebarOpen ? 'open-mobile' : 'minimal');
+  } else {
+    mobileSidebarOpen = false;
+    setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded');
+  }
+}
+productSidebarToggle?.addEventListener('click', () => {
+  if (window.innerWidth <= 640) {
+    mobileSidebarOpen = !mobileSidebarOpen;
+    syncSidebarDensity();
+    if (mobileSidebarOpen) productSidebar.querySelector('.nav')?.focus();
+    else productSidebarToggle.focus();
+  } else if (launchAppId) {
+    const nextState = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
+    setSidebarState(nextState);
+  }
+});
+productSidebar?.querySelectorAll('.nav').forEach(item => item.addEventListener('click', () => {
+  if (window.innerWidth <= 640 && mobileSidebarOpen) {
+    mobileSidebarOpen = false;
+    syncSidebarDensity();
+    productSidebarToggle.focus();
+  }
+}));
+document.addEventListener('click', event => {
+  if (window.innerWidth <= 640 && mobileSidebarOpen && !productSidebar.contains(event.target)) {
+    mobileSidebarOpen = false;
+    syncSidebarDensity();
+    productSidebarToggle.focus();
+  }
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && window.innerWidth <= 640 && mobileSidebarOpen) {
+    mobileSidebarOpen = false;
+    syncSidebarDensity();
+    productSidebarToggle.focus();
+  }
+});
+window.addEventListener('resize', syncSidebarDensity);
+syncSidebarDensity();
+
 loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platform}`;
 (async()=>{
   try {
