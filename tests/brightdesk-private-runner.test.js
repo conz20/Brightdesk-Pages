@@ -558,3 +558,16 @@ test('private maintenance validation uses the Mac runner and all installer jobs 
   assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
   assert.doesNotMatch(source, /connormolloy12/);
 });
+
+
+test('Pages installer workflow uses private runners for build, verification and release jobs', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
+  const build = source.split('  build:')[1]?.split('  publish:')[0] ?? '';
+  const publish = source.split('  publish:')[1] ?? '';
+
+  assert.match(build, /runner: \["self-hosted", "Windows", "X64"\]/);
+  assert.match(build, /runner: \["self-hosted", "macOS", "ARM64"\]/);
+  assert.match(build, /runner: \["self-hosted", "Linux", "X64"\]/);
+  assert.match(publish, /runs-on: \[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
+  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+});
