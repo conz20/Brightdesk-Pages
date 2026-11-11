@@ -152,7 +152,7 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
   assert.match(windows, /build\.win\.artifactName/);
-  assert.match(windows, /Get-ChildItem -LiteralPath \\$installDir -File -Filter 'Uninstall\\*\\.exe'/);
+  assert.match(windows, /Get-ChildItem -LiteralPath \$installDir -File -Filter 'Uninstall\*\.exe'/);
   assert.doesNotMatch(windows, /--version/);
 });
 
