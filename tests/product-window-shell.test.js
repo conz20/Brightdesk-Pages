@@ -40,9 +40,9 @@ test('compact product labels remain available to assistive technology', () => {
   assert.doesNotMatch(compactLabelRule[1], /display:\s*none/i);
 });
 
-test('mobile navigation overlay is scoped to an individual product window', () => {
-  assert.match(shellCss, /html\.is-product-window\s+body\.sidebar-mobile-open::before\s*\{/);
-  assert.doesNotMatch(shellCss, /(^|\n)body\.sidebar-mobile-open::before\s*\{/);
+test('product window contains no mobile navigation or overlay implementation', () => {
+  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\\.innerWidth\\s*<=\\s*640/);
+  assert.doesNotMatch(shellCss, /is-open-mobile|is-minimal|sidebar-mobile-open|max-width:\\s*640px/);
 });
 
 
