@@ -50,4 +50,6 @@ test('legacy fixed-width navigation rules are restricted to the Suite shell', ()
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\s*\{[^}]*width:\s*192px;/s);
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar-toggle\s*\{\s*display:\s*none;/s);
   assert.doesNotMatch(appCss, /(^|\n)\.sidebar\.is-compact \.nav > span\s*\{[^}]*display:\s*initial\s*!important/s);
+  assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\.is-compact \.nav > span,/);
+  assert.doesNotMatch(appCss, /^\.sidebar\.is-compact \.brand > div,/m)
 });
