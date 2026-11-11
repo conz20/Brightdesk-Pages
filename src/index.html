@@ -12,7 +12,8 @@
   <link rel="stylesheet" href="product-window.css" />
 </head>
 <body>
-  <aside class="sidebar" id="sidebar-nav">\n    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-controls="sidebar-nav" aria-label="Collapse navigation" title="Collapse navigation" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 9l-3 3 3 3"></path></svg></button>
+  <aside class="sidebar" id="sidebar-nav">
+    <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-controls="sidebar-nav" aria-label="Collapse navigation" title="Collapse navigation" aria-expanded="true"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M9 4v16M15 9l-3 3 3 3"></path></svg></button>
     <div class="brand"><img class="brand-mark-image" src="assets/brand/brightdesk-mark.svg" alt="" aria-hidden="true"><div><b>brightdesk</b><small data-i18n="sidebar.workspace">YOUR WORKSPACE</small></div></div>
     <div class="section-label" data-i18n="sidebar.yourApps">YOUR APPS</div>
     <button class="nav active" data-app="pages" aria-label="Brightdesk Pages" title="Brightdesk Pages"><img class="app-icon-image" src="assets/icons/pages.svg" alt="" aria-hidden="true"><span><b>Brightdesk Pages</b><small>Documents and writing</small></span></button>
@@ -85,16 +86,16 @@
       <div class="manager-grid" id="available-language-grid"></div>
       <section class="dictionary-centre" aria-labelledby="dictionary-centre-title">
         <h3 class="language-section-title" id="dictionary-centre-title">Spelling dictionaries</h3>
-        <p class="dictionary-intro">Protected resources: you can install and select a language, but dictionary words, licences, source details and author credits cannot be edited, replaced or removed inside Brightdesk. Changes to these resources must come from an official Brightdesk release.</p>
-        <p class="dictionary-intro">Choose from the protected Brightdesk dictionary catalogue. Dictionary contents, original licence terms and attribution records cannot be edited or replaced by users.</p>
+        <p class="dictionary-intro">Installed dictionary resources are protected. Brightdesk keeps installed dictionaries on this device and does not download dictionary files from third-party hosts at runtime.</p>
+        <p class="dictionary-intro">Use installed dictionaries offline. Additional dictionary files can become available only when included in a verified official Brightdesk update.</p>
         <article class="language-setting-card dictionary-check-card">
           <h3>Check the current document</h3>
           <p>Choose an installed dictionary, then run a spelling check on the open Brightdesk Pages, Sheets, Decks or Notes document.</p>
           <div class="dictionary-check-controls"><select id="proofing-dictionary" aria-label="Spelling dictionary"></select><button class="primary" id="check-current-document">Check spelling</button></div>
-          <small class="language-help" id="dictionary-status" role="status">No separate dictionaries installed yet.</small>
+          <small class="language-help" id="dictionary-status" role="status">No separate dictionaries installed. Additional dictionary files are supplied only through official Brightdesk updates.</small>
         </article>
-        <h3 class="language-section-title">Available spelling dictionaries</h3>
-        <p class="dictionary-intro">Browse the 92 language and regional variants in the built-in catalogue. Search by language, region or locale code. Installing adds the original read-only dictionary; it does not change its words, source or licence. The spelling engine supports a subset of Hunspell features, so some dictionaries may not work fully.</p>
+        <h3 class="language-section-title">Dictionary catalogue</h3>
+        <p class="dictionary-intro">Browse the language and regional catalogue. Entries not included in this build are reference information only; additional dictionary files are distributed through official Brightdesk updates.</p>
         <label class="dictionary-search-label" for="dictionary-search">Find a language</label>
         <input id="dictionary-search" class="dictionary-search" type="search" placeholder="Search languages, regions or codes (for example, English Australia)" autocomplete="off">
         <small id="dictionary-catalogue-count" class="language-help" role="status"></small>
@@ -121,6 +122,7 @@
   <script src="workspace-service.js"></script>
   <script src="workspace-editor.js"></script>
   <script src="i18n.js"></script>
+  <script src="vendor/brightdesk-common-libs/json-storage.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

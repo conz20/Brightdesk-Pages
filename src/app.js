@@ -42,19 +42,24 @@ const state = {
 };
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
+const commonJsonStorage = window.BrightdeskCommonLibs;
+if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
 
-function clone(value) { return JSON.parse(JSON.stringify(value)); }
+function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
 function setStatus(message) { $('save-status').textContent = message; }
 function persist() {
-  try { localStorage.setItem('brightdesk-docs-v3', JSON.stringify(state.docs)); setStatus('Saved on this device'); }
+  try { commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-docs-v3', state.docs); setStatus('Saved on this device'); }
   catch (error) { setStatus('Could not save locally'); console.error(error); }
 }
 function loadLocal() {
   try {
-    const stored = JSON.parse(localStorage.getItem('brightdesk-docs-v3') || localStorage.getItem('brightdesk-docs-v2') || 'null');
+    const stored = commonJsonStorage.readJsonValue(localStorage, 'brightdesk-docs-v3', {
+      fallbackKeys: ['brightdesk-docs-v2'],
+      fallbackValue: null
+    });
     if (stored && typeof stored === 'object') state.docs = { ...clone(defaults), ...stored };
-    const appSetup = JSON.parse(localStorage.getItem('brightdesk-app-setup-v1') || 'null');
+    const appSetup = commonJsonStorage.readJsonValue(localStorage, 'brightdesk-app-setup-v1', { fallbackValue: null });
     if (appSetup && Array.isArray(appSetup.installedApps)) {
       state.installedApps = launchAppId ? [launchAppId] : appSetup.installedApps.filter(id => installableCatalog.some(item => item.id === id));
       state.setupComplete = launchAppId ? true : appSetup.setupComplete === true && state.installedApps.length > 0;
@@ -73,7 +78,7 @@ function loadLocal() {
   } catch (error) { console.warn('Local project or app settings could not be read.', error); state.view = 'manager'; }
 }
 function saveAppSetup() {
-  localStorage.setItem('brightdesk-app-setup-v1', JSON.stringify({ installedApps: state.installedApps, setupComplete: state.setupComplete }));
+  commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-app-setup-v1', { installedApps: state.installedApps, setupComplete: state.setupComplete });
 }
 function installedApp(id) { return state.installedApps.includes(id) || ['todo','lists','forms','planner','database','loop'].includes(id); }
 function appLabel(id) { return catalog.find(item => item.id === id)?.name || id; }
@@ -509,22 +514,7 @@ function renderAppManager() {
       const stateTag = document.createElement('span'); stateTag.className = isInstalled ? 'app-state installed' : 'app-state'; stateTag.textContent = isInstalled ? t('manager.inWorkspace') : t('manager.notInstalled');
       footer.append(stateTag);
     }
-    const downloadButton = document.createElement('button');
-    downloadButton.className = 'text-button small-action';
-    downloadButton.textContent = 'Download desktop installer';
-    downloadButton.setAttribute('aria-label', `Download the ${item.name} desktop installer`);
-    downloadButton.title = 'Open the latest verified desktop installer for this operating system.';
-    downloadButton.addEventListener('click', async () => {
-      downloadButton.disabled = true;
-      try {
-        await window.brightdesk.downloadDesktopInstaller(item.id);
-      } catch (error) {
-        alert(`Could not open the ${item.name} download: ${error.message}`);
-      } finally {
-        downloadButton.disabled = false;
-      }
-    });
-    footer.append(downloadButton);
+
     card.append(preview, header, description, footer); grid.append(card);
   });
 }
@@ -659,8 +649,8 @@ function renderDictionaryManager() {
   }
   select.value = state.selectedDictionary;
   $('dictionary-status').textContent = state.installedDictionaries.length
-    ? `${state.installedDictionaries.length} spelling dictionary/dictionaries installed. The built-in OS spell checker remains available too.`
-    : 'No separate dictionaries installed yet. Install one from the catalogue or import a compatible .bddict bundle.';
+    ? `${state.installedDictionaries.length} spelling dictionary/dictionaries installed and available offline. The built-in OS spell checker remains available too.`
+    : 'No additional dictionaries are installed. The built-in OS spell checker remains available; additional dictionary files are supplied only through official Brightdesk updates.';
   renderAvailableDictionaryCatalogue();
   renderToolbar();
 }
@@ -677,8 +667,8 @@ function renderAvailableDictionaryCatalogue() {
   const visible = query ? matching.slice(0, 30) : matching.slice(0, 18);
   grid.innerHTML = '';
   count.textContent = query
-    ? `${matching.length} matching dictionaries${matching.length > visible.length ? ` · showing first ${visible.length}` : ''}`
-    : `Showing ${visible.length} of ${matching.length} dictionaries. Search to find more.`;
+    ? `${matching.length} matching catalogue entries${matching.length > visible.length ? ` · showing first ${visible.length}` : ''}`
+    : `Showing ${visible.length} of ${matching.length} catalogue entries. Search to find more.`;
 
   for (const item of visible) {
     const card = document.createElement('article'); card.className = 'app-card language-card';
@@ -692,10 +682,7 @@ function renderAvailableDictionaryCatalogue() {
     const source = document.createElement('small'); source.className = 'dictionary-source'; source.textContent = `Source: ${item.upstream} · revision ${item.upstreamRevision.slice(0, 8)}`;
     const footer = document.createElement('div'); footer.className = 'app-card-footer';
     const status = document.createElement('span'); status.className = item.installed ? 'app-state installed' : 'app-state';
-    status.textContent = item.installed ? 'Installed' : 'Available'; footer.append(status);
-    const install = document.createElement('button'); install.className = item.installed ? 'secondary small-action' : 'primary small-action';
-    install.textContent = item.installed ? 'Installed' : 'Install'; install.disabled = item.installed; install.dataset.dictionaryId = item.id;
-    install.addEventListener('click', () => installCatalogueDictionary(item.id)); footer.append(install);
+    status.textContent = item.installed ? 'Installed' : 'Not included in this build'; footer.append(status);
     card.append(header, description, source, footer); grid.append(card);
   }
   if (!visible.length) {
@@ -703,21 +690,6 @@ function renderAvailableDictionaryCatalogue() {
   }
 }
 
-async function installCatalogueDictionary(id) {
-  const item = state.dictionaryCatalogue.find(entry => entry.id === id);
-  if (!item) { $('dictionary-status').textContent = 'That dictionary is not available in the catalogue.'; return; }
-  const button = [...document.querySelectorAll('#available-dictionary-grid button')].find(element => element.dataset.dictionaryId === id);
-  if (button) { button.disabled = true; button.textContent = 'Installing…'; }
-  $('dictionary-status').textContent = `Downloading ${item.name} (${item.locale}) from its pinned open-source source…`;
-  try {
-    const result = await window.brightdesk.installCatalogueDictionary(id);
-    await refreshDictionaries(); render();
-    $('dictionary-status').textContent = `${result.name} (${result.locale}) installed. Original licence retained: ${result.license}.`;
-  } catch (error) {
-    if (button) { button.disabled = false; button.textContent = 'Install'; }
-    $('dictionary-status').textContent = `Could not install ${item.locale}: ${error.message}`;
-  }
-}
 function currentDocumentText() {
   if (state.app === 'pages') return editor.innerText || '';
   if (state.app === 'notes') return $('notes-editor').value || '';
@@ -785,6 +757,7 @@ function render() {
   $('app-manager').hidden = !manager; $('language-manager').hidden = !languages;
   $('workspace').hidden = manager || languages; $('welcome').hidden = manager || languages || Boolean(launchAppId) || ['todo','lists','forms','planner','database','loop'].includes(state.app);
   $('app-title').textContent = manager ? t('sidebar.getApps') : (languages ? t('language.title') : (catalog.find(item => item.id === state.app)?.name || state.app));
+
   if (launchAppId) {
     const eyebrow = document.querySelector('.topbar .eyebrow');
     if (eyebrow) eyebrow.textContent = 'PRODUCT WORKSPACE';
@@ -918,28 +891,31 @@ $('export-button').addEventListener('click',exportCurrent);$('open-button').addE
 $('updates-button').addEventListener('click',async()=>{const msg=$('update-message');msg.hidden=false;msg.textContent=t('common.updateChecking');try{const r=await window.brightdesk.checkForUpdates();if(!r?.ok)msg.textContent=r?.message||'Update checks are not configured yet.';}catch(e){msg.textContent=`Update check failed: ${e.message}`;}});
 window.brightdesk.onUpdateState?.(updateState=>{const msg=$('update-message');msg.hidden=false;msg.textContent=updateState.message;if(updateState.status==='available'){msg.textContent=updateState.message;}if(updateState.status==='downloaded'){const button=document.createElement('button');button.className='text-button';button.textContent=t('common.restartInstall');button.onclick=()=>window.brightdesk.installUpdate();msg.append(' ',button);}});
 
-
-
 const productSidebar = document.querySelector('.sidebar');
 const productSidebarToggle = $('sidebar-toggle');
 let mobileSidebarOpen = false;
-function setSidebarState(state) {
+function setSidebarState(sidebarState) {
   if (!productSidebar || !productSidebarToggle) return;
-  productSidebar.classList.remove('is-compact');
-  productSidebar.classList.toggle('is-minimal', state === 'minimal');
-  productSidebar.classList.toggle('is-open-mobile', state === 'open-mobile');
-  document.body.classList.toggle('sidebar-mobile-open', state === 'open-mobile');
-  const label = state === 'open-mobile' ? 'Close navigation' : 'Open navigation';
-  productSidebarToggle.setAttribute('aria-expanded', String(state === 'open-mobile'));
-  productSidebarToggle.setAttribute('aria-label', label);
-  productSidebarToggle.title = label;
+  productSidebar.classList.toggle('is-compact', sidebarState === 'compact');
+  productSidebar.classList.toggle('is-minimal', sidebarState === 'minimal');
+  productSidebar.classList.toggle('is-open-mobile', sidebarState === 'open-mobile');
+  document.body.classList.toggle('sidebar-mobile-open', sidebarState === 'open-mobile');
+  const labels = {
+    expanded: 'Collapse navigation',
+    compact: 'Expand navigation',
+    minimal: 'Open navigation',
+    'open-mobile': 'Close navigation'
+  };
+  productSidebarToggle.setAttribute('aria-expanded', String(sidebarState === 'expanded' || sidebarState === 'open-mobile'));
+  productSidebarToggle.setAttribute('aria-label', labels[sidebarState]);
+  productSidebarToggle.title = labels[sidebarState];
 }
 function syncSidebarDensity() {
   if (window.innerWidth <= 640) {
     setSidebarState(mobileSidebarOpen ? 'open-mobile' : 'minimal');
   } else {
     mobileSidebarOpen = false;
-    setSidebarState('expanded');
+    setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded');
   }
 }
 productSidebarToggle?.addEventListener('click', () => {
@@ -948,6 +924,9 @@ productSidebarToggle?.addEventListener('click', () => {
     syncSidebarDensity();
     if (mobileSidebarOpen) productSidebar.querySelector('.nav')?.focus();
     else productSidebarToggle.focus();
+  } else if (launchAppId) {
+    const nextState = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
+    setSidebarState(nextState);
   }
 });
 productSidebar?.querySelectorAll('.nav').forEach(item => item.addEventListener('click', () => {

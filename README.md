@@ -17,16 +17,11 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 
 This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
 
-
-<p align="center"><img src="https://raw.githubusercontent.com/connormolloy12/Brightdesk-Design-System/design/product-window-system-2026-11-08/assets/navigation-states.svg" alt="Brightdesk navigation reference showing the fixed labelled Suite sidebar and optional compact product navigation" width="100%"></p>
-
 ## Product navigation
 
-The left navigation is 232 px wide when expanded. It can be collapsed to a slim 76 px icon rail and expanded again with the navigation control. In the compact state, the original SVG icons remain visible and each item keeps its full accessible name and tooltip. At 641–1007 px the rail starts compact to preserve workspace room. At 640 px and below it becomes a menu button that opens the navigation over the workspace; at 1008 px and above it starts expanded. This control exists in individual product windows only. The Suite keeps its fixed 192 px labelled sidebar and has no expand/collapse option.
+Individual Pages windows use the canonical [Brightdesk Design System product-window shell](https://github.com/conz20/Brightdesk-Design-System/blob/main/css/product-window.css). Navigation expands to 232 px at 1008 px and wider, starts compact at 76 px between 641 px and 1007 px, and becomes a menu button at 640 px and below. Compact labels remain available to assistive technology. The Suite keeps its fixed 192 px labelled rail and does not receive the individual-product window class.
 
-The Pages product-window stylesheet mirrors the canonical `Brightdesk-Design-System/css/product-window.css` shell. Regression tests protect the 232/76 px widths, screen-reader-accessible compact labels, product-scoped mobile overlay and separation from the Suite's fixed 192 px navigation. Keep the product copy aligned with the canonical file; do not add a runtime network dependency on the Design-System repository.
-
-The interface preview above remains design artwork, not a captured product screenshot. A real screenshot will replace or supplement it only after the running desktop window has been launched and visually checked.
+The product stylesheet is mirrored into the Pages source so the installed product works offline. It does not load the Design System over the network at runtime. Keep `src/product-window.css` aligned with the canonical Design System file.
 
 ## Cross-platform consistency
 
@@ -107,8 +102,19 @@ Brightdesk is independent and is not affiliated with Microsoft. It uses original
 The root README is maintained alongside the product, not as an end-of-project task. Every pull request that changes application code, tests, UI, design assets, screenshots, icons, configuration, dependencies, packaging, or build/release workflows must also update this README in the same pull request. Keep feature status, screenshots and visual references, application icons, setup/build instructions, platform compatibility, and repository links aligned with the latest verified implementation. Describe planned or untested functionality as planned, never as completed. The **README freshness** GitHub Actions check requires a root `README.md` update whenever a pull request or direct push to `main` changes a non-Markdown file; a passing check confirms inclusion, while reviewers remain responsible for checking factual accuracy and current visuals.
 
 
+## Shared local storage foundation
+
+This product vendors the browser-compatible JSON storage helper from [Brightdesk Common Libraries](https://github.com/conz20/Brightdesk-Common-Libs/blob/0f1bd6bc1c4d88466dea4bd35f89f69660ad7d3c/src/browser/json-storage.js). The upstream commit is `0f1bd6bc1c4d88466dea4bd35f89f69660ad7d3c`; the source Git blob is pinned to `c32eed522d283bcf24aeda25729c79f655b37497`.
+
+The checked-in copy is loaded locally before the renderer. It is not fetched from a package registry or any remote service at runtime. Existing document keys are preserved: current documents continue to save under `brightdesk-docs-v3`, legacy `brightdesk-docs-v2` data remains readable, and setup preferences remain under `brightdesk-app-setup-v1`. Document content and settings remain on this device.
+
+## Customer network policy
+
+Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
+
+
 ## Individual product window
 
-When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's generic product-management view and welcome banner are removed from this window; the product's own left navigation remains available, with an optional compact icon rail and accessible labels. The product identity and file actions remain in the top bar, with the document name, editing ribbon and page canvas arranged above and below one another. The document page stays centred in the available editing area.
+When opened by itself, Brightdesk Pages goes straight to its document workspace. The Suite's generic product-management view and welcome banner are removed from this window. The Pages identity and file actions remain in the top bar; the document name, editing ribbon and page canvas stay within the focused workspace.
 
-The interface preview is design artwork showing the intended workspace arrangement; it is not a screenshot from a verified running build.
+The interface preview is design artwork showing the intended workspace arrangement. It is not a screenshot from a verified running build.
