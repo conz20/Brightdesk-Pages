@@ -19,7 +19,7 @@ This product follows the [Brightdesk visual and interaction standard](https://gi
 
 ## Product navigation
 
-Individual Pages windows use the canonical [Brightdesk Design System product-window shell](https://github.com/conz20/Brightdesk-Design-System/blob/main/css/product-window.css). Navigation expands to 232 px at 1008 px and wider, starts compact at 76 px between 641 px and 1007 px, and becomes a menu button at 640 px and below. Compact labels remain available to assistive technology. The Suite keeps its fixed 192 px labelled rail and does not receive the individual-product window class.
+Individual Pages windows use the canonical [Brightdesk Design System product-window shell](https://github.com/conz20/Brightdesk-Design-System/blob/main/css/product-window.css). Navigation expands to 232 px at 1008 px and wider, and starts compact at 76 px between 641 px and 1007 px. Compact labels remain available to assistive technology. Brightdesk is desktop-only for Windows, macOS and Linux; no mobile application, mobile edition or mobile navigation mode is built or supported. The Suite keeps its fixed 192 px labelled rail and does not receive the individual-product window class.
 
 The product stylesheet is mirrored into the Pages source so the installed product works offline. It does not load the Design System over the network at runtime. Keep `src/product-window.css` aligned with the canonical Design System file.
 

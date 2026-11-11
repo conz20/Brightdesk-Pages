@@ -24,8 +24,7 @@ test('product window retains its labelled navigation and fills the workspace', (
   assert.match(shellCss, /html\.is-product-window \.workspace\s*\{[^}]*flex:\s*1 1 auto/s);
 });
 
-
-test('Pages matches the canonical shared adaptive navigation widths', () => {
+test('Pages matches the canonical shared adaptive desktop navigation widths', () => {
   assert.match(shellCss, /--bd-product-navigation-expanded-width, 232px/);
   assert.match(shellCss, /--bd-product-navigation-compact-width, 76px/);
   assert.match(shellCss, /--bd-product-navigation-expanded-width, 232px\)[^}]*min-width:/s);
@@ -40,16 +39,15 @@ test('compact product labels remain available to assistive technology', () => {
   assert.doesNotMatch(compactLabelRule[1], /display:\s*none/i);
 });
 
-test('mobile navigation overlay is scoped to an individual product window', () => {
-  assert.match(shellCss, /html\.is-product-window\s+body\.sidebar-mobile-open::before\s*\{/);
-  assert.doesNotMatch(shellCss, /(^|\n)body\.sidebar-mobile-open::before\s*\{/);
+test('product window contains no mobile-only navigation or overlay implementation', () => {
+  assert.doesNotMatch(app, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\.innerWidth\s*<=\s*640/);
+  assert.doesNotMatch(shellCss, /is-open-mobile|is-minimal|sidebar-mobile-open|max-width:\s*640px/);
 });
-
 
 test('legacy fixed-width navigation rules are restricted to the Suite shell', () => {
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\s*\{[^}]*width:\s*192px;/s);
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar-toggle\s*\{\s*display:\s*none;/s);
   assert.doesNotMatch(appCss, /(^|\n)\.sidebar\.is-compact \.nav > span\s*\{[^}]*display:\s*initial\s*!important/s);
   assert.match(appCss, /html:not\(\.is-product-window\) \.sidebar\.is-compact \.nav > span,/);
-  assert.doesNotMatch(appCss, /^\.sidebar\.is-compact \.brand > div,/m)
+  assert.doesNotMatch(appCss, /^\.sidebar\.is-compact \.brand > div,/m);
 });
