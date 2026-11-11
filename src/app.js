@@ -893,62 +893,21 @@ window.brightdesk.onUpdateState?.(updateState=>{const msg=$('update-message');ms
 
 const productSidebar = document.querySelector('.sidebar');
 const productSidebarToggle = $('sidebar-toggle');
-let mobileSidebarOpen = false;
 function setSidebarState(sidebarState) {
   if (!productSidebar || !productSidebarToggle) return;
-  productSidebar.classList.toggle('is-compact', sidebarState === 'compact');
-  productSidebar.classList.toggle('is-minimal', sidebarState === 'minimal');
-  productSidebar.classList.toggle('is-open-mobile', sidebarState === 'open-mobile');
-  document.body.classList.toggle('sidebar-mobile-open', sidebarState === 'open-mobile');
-  const labels = {
-    expanded: 'Collapse navigation',
-    compact: 'Expand navigation',
-    minimal: 'Open navigation',
-    'open-mobile': 'Close navigation'
-  };
-  productSidebarToggle.setAttribute('aria-expanded', String(sidebarState === 'expanded' || sidebarState === 'open-mobile'));
-  productSidebarToggle.setAttribute('aria-label', labels[sidebarState]);
-  productSidebarToggle.title = labels[sidebarState];
+  const compact = sidebarState === 'compact';
+  productSidebar.classList.toggle('is-compact', compact);
+  const label = compact ? 'Expand navigation' : 'Collapse navigation';
+  productSidebarToggle.setAttribute('aria-expanded', String(!compact));
+  productSidebarToggle.setAttribute('aria-label', label);
+  productSidebarToggle.title = label;
 }
 function syncSidebarDensity() {
-  if (window.innerWidth <= 640) {
-    setSidebarState(mobileSidebarOpen ? 'open-mobile' : 'minimal');
-  } else {
-    mobileSidebarOpen = false;
-    setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded');
-  }
+  setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded');
 }
 productSidebarToggle?.addEventListener('click', () => {
-  if (window.innerWidth <= 640) {
-    mobileSidebarOpen = !mobileSidebarOpen;
-    syncSidebarDensity();
-    if (mobileSidebarOpen) productSidebar.querySelector('.nav')?.focus();
-    else productSidebarToggle.focus();
-  } else if (launchAppId) {
-    const nextState = productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact';
-    setSidebarState(nextState);
-  }
-});
-productSidebar?.querySelectorAll('.nav').forEach(item => item.addEventListener('click', () => {
-  if (window.innerWidth <= 640 && mobileSidebarOpen) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
-}));
-document.addEventListener('click', event => {
-  if (window.innerWidth <= 640 && mobileSidebarOpen && !productSidebar.contains(event.target)) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
-});
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && window.innerWidth <= 640 && mobileSidebarOpen) {
-    mobileSidebarOpen = false;
-    syncSidebarDensity();
-    productSidebarToggle.focus();
-  }
+  if (!launchAppId) return;
+  setSidebarState(productSidebar.classList.contains('is-compact') ? 'expanded' : 'compact');
 });
 window.addEventListener('resize', syncSidebarDensity);
 syncSidebarDensity();
