@@ -47,7 +47,7 @@ fail_check() {
     diagnostic_count=0
     while IFS= read -r line; do
       case "$line" in
-        "Installed application launch check failed with exit code "[0-9]*"."|"The Windows installer exited with code "[0-9]*"."|"The Windows uninstaller exited with code "[0-9]*"."|"Missing system runtime libraries: "*|"Windows installer smoke test requires PowerShell."|"The Windows installer did not install Brightdesk.exe."|"The Windows installer did not create its uninstaller."|"The installed Windows application did not launch its version check."|"The installed Windows application did not complete its startup check."|"The macOS PKG completed without installing Brightdesk.app."|"The macOS DMG did not contain Brightdesk.app.")
+        "Installed application launch check failed with exit code "[0-9]*"."|"The Windows installer exited with code "[0-9]*"."|"The Windows uninstaller exited with code "[0-9]*"."|"Missing system runtime libraries: "*|"Windows installer smoke test requires PowerShell."|"The Windows installer did not install the product executable."|"The Windows installer did not create its uninstaller."|"The installed Windows application did not launch its version check."|"The installed Windows application did not complete its startup check."|"The macOS PKG completed without installing the expected product bundle."|"The macOS DMG did not contain the expected product bundle."|"A Brightdesk installation already exists; refusing to overwrite or remove it."|"A Brightdesk installer receipt already exists; refusing to modify or forget it."|"A previous macOS smoke-test temporary path already exists; refusing to reuse or remove it."|"The Brightdesk Linux package has pre-existing package state; refusing to replace or remove it.")
           diagnostic_count=$((diagnostic_count + 1))
           printf '  - %s\\n' "$line" >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
           printf 'Safe smoke-test diagnostic: %s\\n' "$line" >&2
@@ -109,12 +109,28 @@ run_private_tests() {
   fi
 }
 
+run_rust_checks() {
+  if [[ ! -f "$PROJECT_DIR/rust/Cargo.toml" ]]; then
+    echo "Rust workspace not present; skipping Rust-specific checks."
+    return 0
+  fi
+  run_private_command "Rust formatting check" cargo fmt --manifest-path rust/Cargo.toml --all -- --check
+  run_private_command "Rust Clippy" cargo clippy --manifest-path rust/Cargo.toml --workspace --all-targets -- -D warnings
+  run_private_command "Rust unit tests" cargo test --manifest-path rust/Cargo.toml --workspace
+}
+
 if [[ "$MODE" == "test" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_rust_checks
   run_private_command "third-party licence check" npm run verify:licenses
-  run_private_tests
+  if [[ -f "$PROJECT_DIR/rust/Cargo.toml" ]]; then
+    run_private_command "Rust Node-API addon build" npm run native:build
+    BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 run_private_tests
+  else
+    run_private_tests
+  fi
   run_private_command "release readiness check" npm run release:preflight
 elif [[ "$MODE" == "build" ]]; then
   if [[ -z "$PLATFORM" || -z "$VERIFY_SCRIPT" ]]; then
@@ -124,6 +140,7 @@ elif [[ "$MODE" == "build" ]]; then
   run_private_command "Node.js version check" npm run check:node
   run_private_command "dependency lock check" npm run lock:verify
   run_private_command "locked dependency installation" npm ci --no-audit --no-fund
+  run_rust_checks
   run_private_command "third-party licence check" npm run verify:licenses
   run_private_command "release readiness check" npm run release:preflight
   if [[ "$PLATFORM" == "mac" ]]; then

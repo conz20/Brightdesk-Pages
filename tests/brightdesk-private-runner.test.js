@@ -77,7 +77,7 @@ test('daily private project checkouts use each repository default branch', () =>
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
-  assert.ok(checkout.includes('repository: connormolloy12/${{ matrix.project }}'));
+  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
   assert.doesNotMatch(checkout, /^\s*ref:/m);
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
@@ -151,8 +151,8 @@ test('Suite cross-platform builds perform native install and launch smoke tests'
   assert.match(install, /BRIGHTDESK_STARTUP_SMOKE_TEST=1/);
   assert.match(install, /launch check failed with exit code 124/);
   assert.match(install, /Installed application launch check failed/);
-  assert.match(windows, /Brightdesk-Setup-/);
-  assert.match(windows, /Uninstall Brightdesk\.exe/);
+  assert.match(windows, /build\.win\.artifactName/);
+  assert.match(windows, /Get-ChildItem -LiteralPath \$installDir -File -Filter 'Uninstall\*\.exe'/);
   assert.doesNotMatch(windows, /--version/);
 });
 
@@ -171,7 +171,7 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.match(oneTimeJob, /github\.event_name == 'push'/);
   assert.match(oneTimeJob, /github\.event\.head_commit\.message/);
   assert.match(oneTimeJob, /\[build-brightdesk-suite-installers\]/);
-  assert.ok(oneTimeJob.includes('repository: connormolloy12/Brightdesk-suite'));
+  assert.ok(oneTimeJob.includes('repository: conz20/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
@@ -241,13 +241,13 @@ test('private installer diagnostics discard unknown paths and malformed library 
     stage: 'installer installation smoke test',
     exitCode: 127,
     log: [
-      'The Windows installer did not install Brightdesk.exe.',
+      'The Windows installer did not install the product executable.',
       'Missing system runtime libraries: C:\\private\\evil.dll, libvalid.so.1;SECRET, ../private.dll',
       'C:\\Users\\runner\\source\\app.js'
     ].join('\n')
   });
 
-  assert.match(output, /Windows installer did not install Brightdesk\.exe/);
+  assert.match(output, /Windows installer did not install the product executable/);
   assert.ok(!output.includes('evil.dll'));
   assert.ok(!output.includes('SECRET'));
   assert.ok(!output.includes('../private.dll'));
@@ -475,4 +475,99 @@ test('new private products have Windows, macOS and Linux installer verification 
       assert.ok(entry.includes('verify_script: verify:desktop:' + platform), project + ' has the wrong ' + platform + ' verification command');
     }
   }
+});
+
+
+test('Windows installer smoke test derives names from the checked-out product manifest and uses a unique temporary directory', () => {
+  const windows = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.ps1'), 'utf8');
+  assert.match(windows, /build\.win\.artifactName/);
+  assert.match(windows, /\.Replace\('\$\{version\}'/);
+  assert.match(windows, /\.Replace\('\$\{arch\}'/);
+  assert.match(windows, /\.Replace\('\$\{ext\}'/);
+  assert.match(windows, /build\.productName/);
+  assert.match(windows, /Get-ChildItem -LiteralPath \$installDir -File -Filter 'Uninstall\*\.exe'/);
+  assert.match(windows, /\[guid\]::NewGuid\(\)/);
+  assert.doesNotMatch(windows, /Brightdesk-Setup-\$\(\$package\.version\)-x64\.exe/);
+  assert.doesNotMatch(windows, /Join-Path \$env:RUNNER_TEMP 'brightdesk-install-smoke'/);
+});
+
+test('macOS installer smoke test derives the app bundle name and refuses to overwrite an existing installation', () => {
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+  assert.match(install, /PRODUCT_NAME=.*package\.json/);
+  assert.match(install, /APP_BUNDLE_NAME="\$\{PRODUCT_NAME\}\.app"/);
+  assert.match(install, /PACKAGE_ID=.*build\?\.appId/);
+  assert.match(install, /pkgutil --pkg-info "\$PACKAGE_ID"/);
+  assert.match(install, /pkgutil --forget "\$PACKAGE_ID"/);
+  assert.match(install, /WORK_DIR="\$\(mktemp -d "\$TEMP_BASE\/brightdesk-installer-smoke\.XXXXXX"\)"/);
+  assert.match(install, /MOUNT_DIR="\$WORK_DIR\/mount"/);
+  assert.match(install, /DMG_APP="\$WORK_DIR\/\$APP_BUNDLE_NAME"/);
+  assert.match(install, /trap cleanup_macos EXIT/);
+  assert.match(install, /if \[\[ -e "\$APP_PATH" \|\| -L "\$APP_PATH" \]\]/);
+  assert.match(install, /INSTALL_ATTEMPTED=0/);
+  assert.match(install, /if \[\[ "\$INSTALL_ATTEMPTED" -eq 1 \]\]/);
+  assert.doesNotMatch(install, /APP_PATH="\/Applications\/Brightdesk\.app"/);
+  assert.doesNotMatch(install, /-name 'Brightdesk\.app'/);
+});
+
+test('Linux installer smoke test refuses to remove a package that was already installed', () => {
+  const install = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'verify-private-install.sh'), 'utf8');
+  assert.match(install, /dpkg-query -W -f='\$\{db:Status-Status\}' "\$PACKAGE_NAME"/);
+  assert.match(install, /pre-existing package state; refusing to replace or remove it/);
+  assert.match(install, /case "\$INSTALLED_STATUS" in/);
+  assert.match(install, /INSTALL_ATTEMPTED=0/);
+  assert.match(install, /if \[\[ "\$INSTALL_ATTEMPTED" -eq 1 \]\]/);
+});
+
+
+test('macOS installer diagnostics expose only safe bundle and receipt messages', () => {
+  const diagnostics = require('../scripts/brightdesk-private-runner/private-installer-diagnostics');
+  const output = diagnostics.formatPrivateInstallerFailure({
+    platform: 'mac',
+    stage: 'installer installation smoke test',
+    exitCode: 3,
+    log: [
+      'A Brightdesk installer receipt already exists; refusing to modify or forget it.',
+      '/Applications/Brightdesk Office Suite.app',
+      'SECRET_SOURCE_CONTENT'
+    ].join('\n')
+  });
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+
+  assert.match(output, /A Brightdesk installer receipt already exists/);
+  assert.ok(!output.includes('/Applications/'));
+  assert.ok(!output.includes('SECRET_SOURCE_CONTENT'));
+  assert.match(runner, /A Brightdesk installer receipt already exists; refusing to modify or forget it/);
+  assert.doesNotMatch(runner, /Brightdesk\\.app/);
+});
+
+test('private maintenance validation uses the Mac runner and all installer jobs avoid paid hosted runners', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const validateJob = source.split('  validate-controller:')[1]?.split('  daily-private-tests:')[0] ?? '';
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const suiteInstallerJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const weeklyInstallerJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+
+  assert.match(validateJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(dailyJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  for (const job of [suiteInstallerJob, weeklyInstallerJob]) {
+    assert.match(job, /runs-on: \$\{\{ matrix\.runner \}\}/);
+    assert.match(job, /runner: \["self-hosted", "Windows", "X64"\]/);
+    assert.match(job, /runner: \["self-hosted", "macOS", "ARM64"\]/);
+    assert.match(job, /runner: \["self-hosted", "Linux", "X64"\]/);
+  }
+  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+  assert.doesNotMatch(source, /connormolloy12/);
+});
+
+
+test('Pages installer workflow uses private runners for build, verification and release jobs', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
+  const build = source.split('  build:')[1]?.split('  publish:')[0] ?? '';
+  const publish = source.split('  publish:')[1] ?? '';
+
+  assert.match(build, /runner: \["self-hosted", "Windows", "X64"\]/);
+  assert.match(build, /runner: \["self-hosted", "macOS", "ARM64"\]/);
+  assert.match(build, /runner: \["self-hosted", "Linux", "X64"\]/);
+  assert.match(publish, /runs-on: \[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
+  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
 });
