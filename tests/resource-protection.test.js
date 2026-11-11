@@ -56,19 +56,15 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
   assert.equal(pkg.build.nsis.createStartMenuShortcut, true);
 });
 
-test('release workflow has working install and release permissions', () => {
-  const workflow = read('.github/workflows/build-release.yml');
-  assert.match(workflow, /node-version: 24\.22\.2/);
-  assert.match(workflow, /run: npm ci/);
-  assert.match(workflow, /npm run verify:licenses/);
-  assert.match(workflow, /npm run release:preflight/);
-  assert.match(workflow, /npm run release:verify:win/);
-  assert.match(workflow, /npm run release:verify:mac/);
-  assert.match(workflow, /WIN_CSC_LINK/);
-  assert.match(workflow, /MAC_INSTALLER_CSC_LINK/);
-  assert.match(workflow, /APPLE_APP_SPECIFIC_PASSWORD/);
-  assert.match(workflow, /npm run release:verify:linux/);
-  assert.match(workflow, /npm run dist:apps:\$\{\{ matrix\.script \}\}/);
-  assert.match(workflow, /npm run release:verify:apps:\$\{\{ matrix\.script \}\}/);
-  assert.match(workflow, /publish-release:[\s\S]*?permissions:\s*contents: write/);
+test('desktop installer workflow verifies native products and keeps release publishing opt-in', () => {
+  const workflow = read('.github/workflows/desktop-installers.yml');
+  assert.ok(workflow.includes('node-version: 24.22.2'));
+  assert.ok(workflow.includes('run: npm ci --no-audit --no-fund'));
+  assert.ok(workflow.includes('run: npm test'));
+  assert.ok(workflow.includes('npm run dist:desktop:'));
+  assert.ok(workflow.includes('npm run verify:desktop:'));
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.build_installers == true"));
+  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true"));
+  assert.ok(workflow.includes('contents: write'));
+  assert.ok(workflow.includes('default: false'));
 });
