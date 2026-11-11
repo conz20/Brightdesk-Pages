@@ -192,7 +192,7 @@
 .sidebar.is-open-mobile { position: fixed; inset: 0 auto 0 0; width: 232px; min-width: 232px; height: 100vh; padding: 27px 17px; z-index: 1001; overflow-y: auto; box-shadow: 12px 0 30px rgba(16, 30, 54, .22); }
 .sidebar.is-open-mobile .sidebar-toggle { position: absolute; top: 15px; left: auto; right: 12px; }
 .sidebar.is-open-mobile .sidebar-toggle svg { transform: rotate(180deg); }
-body.sidebar-mobile-open::before { content: ""; position: fixed; inset: 0; z-index: 1000; background: rgba(12, 23, 40, .36); }
+html:not(.is-product-window) body.sidebar-mobile-open::before { content: ""; position: fixed; inset: 0; z-index: 1000; background: rgba(12, 23, 40, .36); }
 .sidebar .manager-icon { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 @media (max-width: 640px) {
   .sidebar, .sidebar.is-compact { width: 0; min-width: 0; height: 0; padding: 0; border: 0; overflow: visible; }
@@ -200,37 +200,38 @@ body.sidebar-mobile-open::before { content: ""; position: fixed; inset: 0; z-ind
 @media (prefers-reduced-motion: reduce) { .sidebar, .sidebar-toggle svg { transition: none !important; } }
 
 
-/* Product navigation remains compact without hiding its labels. */
-.sidebar {
+/* The Suite keeps its fixed labelled rail. Individual product-window
+   navigation is owned by the canonical src/product-window.css contract. */
+html:not(.is-product-window) .sidebar {
   width: 192px;
   min-width: 192px;
   flex: 0 0 192px;
 }
-.sidebar.is-compact {
+html:not(.is-product-window) .sidebar.is-compact {
   width: 192px;
   min-width: 192px;
   flex-basis: 192px;
 }
-.sidebar.is-compact .brand > div,
-.sidebar.is-compact .section-label,
-.sidebar.is-compact .nav > span,
-.sidebar.is-compact .sidebar-divider,
-.sidebar.is-compact .sidebar-bottom {
+html:not(.is-product-window) .sidebar.is-compact .brand > div,
+html:not(.is-product-window) .sidebar.is-compact .section-label,
+html:not(.is-product-window) .sidebar.is-compact .nav > span,
+html:not(.is-product-window) .sidebar.is-compact .sidebar-divider,
+html:not(.is-product-window) .sidebar.is-compact .sidebar-bottom {
   display: initial !important;
 }
-.sidebar.is-compact .nav {
+html:not(.is-product-window) .sidebar.is-compact .nav {
   justify-content: flex-start;
   gap: 10px;
   padding-inline: 10px;
 }
-.sidebar-toggle { display: none; }
-.sidebar.is-open-mobile {
+html:not(.is-product-window) .sidebar-toggle { display: none; }
+html:not(.is-product-window) .sidebar.is-open-mobile {
   width: 192px;
   min-width: 192px;
 }
 @media (max-width: 640px) {
-  .sidebar,
-  .sidebar.is-compact {
+  html:not(.is-product-window) .sidebar,
+  html:not(.is-product-window) .sidebar.is-compact {
     width: 0;
     min-width: 0;
     flex-basis: 0;
@@ -239,8 +240,8 @@ body.sidebar-mobile-open::before { content: ""; position: fixed; inset: 0; z-ind
     border: 0;
     overflow: visible;
   }
-  .sidebar-toggle { display: grid; }
-  .sidebar.is-open-mobile {
+  html:not(.is-product-window) .sidebar-toggle { display: grid; }
+  html:not(.is-product-window) .sidebar.is-open-mobile {
     width: 192px;
     min-width: 192px;
     flex-basis: 192px;
