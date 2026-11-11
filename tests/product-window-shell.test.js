@@ -22,3 +22,24 @@ test('product window retains its labelled navigation and fills the workspace', (
   assert.doesNotMatch(shellCss, /html\.is-product-window \.sidebar\s*\{\s*display:\s*none/i);
   assert.match(shellCss, /html\.is-product-window \.workspace\s*\{[^}]*flex:\s*1 1 auto/s);
 });
+
+
+test('Pages matches the canonical shared adaptive navigation widths', () => {
+  assert.match(shellCss, /--bd-product-navigation-expanded-width, 232px/);
+  assert.match(shellCss, /--bd-product-navigation-compact-width, 76px/);
+  assert.match(shellCss, /--bd-product-navigation-expanded-width, 232px\)[^}]*min-width:/s);
+  assert.match(shellCss, /html\\.is-product-window \\.sidebar\\.is-compact \\.nav > span\\s*\\{[^}]*clip:\\s*rect\\(/s);
+});
+
+test('compact product labels remain available to assistive technology', () => {
+  const compactLabelRule = shellCss.match(/html\\.is-product-window \\.sidebar\\.is-compact \\.nav > span\\s*\\{([^}]*)\\}/);
+  assert.ok(compactLabelRule, 'compact navigation labels must have a screen-reader-only rule');
+  assert.match(compactLabelRule[1], /position:\\s*absolute/i);
+  assert.match(compactLabelRule[1], /clip:\\s*rect\\(/i);
+  assert.doesNotMatch(compactLabelRule[1], /display:\\s*none/i);
+});
+
+test('mobile navigation overlay is scoped to an individual product window', () => {
+  assert.match(shellCss, /html\\.is-product-window\\s+body\\.sidebar-mobile-open::before\\s*\\{/);
+  assert.doesNotMatch(shellCss, /(^|\\n)body\\.sidebar-mobile-open::before\\s*\\{/);
+});
