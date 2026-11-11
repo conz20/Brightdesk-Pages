@@ -13,7 +13,6 @@ test('individual Pages navigation supports expanded and compact desktop states',
   assert.ok(html.includes('id="sidebar-toggle"'));
   assert.ok(html.includes('aria-controls="sidebar-nav"'));
   assert.ok(html.includes('aria-label="Brightdesk Pages"'));
-  assert.match(js, /window\.innerWidth\s*<=\s*640/);
   assert.match(js, /window\.innerWidth\s*<=\s*1007/);
   assert.ok(js.includes("setSidebarState(launchAppId && window.innerWidth <= 1007 ? 'compact' : 'expanded')"));
   assert.doesNotMatch(js, /mobileSidebarOpen|open-mobile|sidebar-mobile-open|window\\.innerWidth\\s*<=\\s*640/);
