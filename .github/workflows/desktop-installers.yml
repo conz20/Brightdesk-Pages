@@ -47,11 +47,11 @@ jobs:
       matrix:
         include:
           - platform: win
-            runner: windows-latest
+            runner: ["self-hosted", "Windows", "X64"]
           - platform: mac
-            runner: macos-latest
+            runner: ["self-hosted", "macOS", "ARM64"]
           - platform: linux
-            runner: ubuntu-latest
+            runner: ["self-hosted", "Linux", "X64"]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -73,7 +73,7 @@ jobs:
     name: Publish approved Brightdesk Pages release
     if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
     permissions:
       contents: write
     steps:
