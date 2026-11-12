@@ -1,0 +1,31 @@
+name: Desktop visual smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Capture rendered Brightdesk Pages workspace
+    runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      - run: npm run visual:smoke
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Brightdesk-Pages-visual-${{ github.run_id }}
+          path: artifacts/visual-smoke/
+          if-no-files-found: error
+          retention-days: 7
