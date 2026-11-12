@@ -56,6 +56,22 @@ function createReadinessScript(productName) {
   })()`;
 }
 
+function createSidebarInteractionScript() {
+  return `(async () => {
+    const button = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar-nav');
+    if (!button || !sidebar) return { available: false };
+    button.click();
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    return {
+      available: true,
+      compact: sidebar.classList.contains('is-compact'),
+      ariaExpanded: button.getAttribute('aria-expanded'),
+      sidebarWidth: Math.round(sidebar.getBoundingClientRect().width)
+    };
+  })()`;
+}
+
 async function runStartupVisualSmoke({ window, productName, screenshotDir = null, fsImpl = fs }) {
   const webContents = window?.webContents;
   if (!webContents || typeof webContents.executeJavaScript !== 'function') {
@@ -88,7 +104,42 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
     };
     await fsImpl.writeFile(path.join(screenshotDir, 'workspace.png'), png);
     await fsImpl.writeFile(path.join(screenshotDir, 'workspace.json'), `${JSON.stringify(metadata, null, 2)}\n`);
-    screenshot = { file: 'workspace.png', width: size.width, height: size.height, bytes: png.length };
+
+    const interaction = await webContents.executeJavaScript(createSidebarInteractionScript());
+    if (!interaction.available || !interaction.compact || interaction.ariaExpanded !== 'false' || interaction.sidebarWidth < 1) {
+      throw new Error('The product navigation collapse interaction did not reach its compact state.');
+    }
+    await new Promise(resolve => setTimeout(resolve, 220));
+    const compactImage = await webContents.capturePage();
+    const compactSize = compactImage.getSize();
+    const compactPng = compactImage.toPNG();
+    if (!compactSize || compactSize.width < 980 || compactSize.height < 600 ||
+        compactPng.length < 1000 || compactPng[0] !== 0x89 || compactPng[1] !== 0x50 ||
+        compactPng[2] !== 0x4e || compactPng[3] !== 0x47) {
+      throw new Error('Electron did not produce a valid screenshot of the collapsed navigation state.');
+    }
+    const interactionMetadata = {
+      product: productName,
+      state: 'navigation-collapsed',
+      interaction: 'click #sidebar-toggle',
+      ariaExpanded: interaction.ariaExpanded,
+      sidebarWidth: interaction.sidebarWidth,
+      viewport: snapshot.viewport,
+      reducedMotion: snapshot.reducedMotion,
+      capturedAt: new Date().toISOString()
+    };
+    await fsImpl.writeFile(path.join(screenshotDir, 'navigation-collapsed.png'), compactPng);
+    await fsImpl.writeFile(path.join(screenshotDir, 'navigation-collapsed.json'), `${JSON.stringify(interactionMetadata, null, 2)}\n`);
+    screenshot = {
+      workspace: { file: 'workspace.png', width: size.width, height: size.height, bytes: png.length },
+      navigationCollapsed: {
+        file: 'navigation-collapsed.png',
+        width: compactSize.width,
+        height: compactSize.height,
+        bytes: compactPng.length,
+        sidebarWidth: interaction.sidebarWidth
+      }
+    };
   }
 
   return { product: productName, renderer: snapshot, screenshot };
@@ -127,6 +178,7 @@ function attachStartupVisualSmoke({ app, window, productName, screenshotDir = nu
 module.exports = {
   assertRendererReady,
   createReadinessScript,
+  createSidebarInteractionScript,
   runStartupVisualSmoke,
   attachStartupVisualSmoke
 };
