@@ -87,9 +87,11 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
     const image = await webContents.capturePage();
     const size = image.getSize();
     const png = image.toPNG();
-    if (!size || size.width < 980 || size.height < 600 || png.length < 1000 ||
-        png[0] !== 0x89 || png[1] !== 0x50 || png[2] !== 0x4e || png[3] !== 0x47) {
-      throw new Error('Electron did not produce a valid full-size PNG screenshot.');
+    if (!size || size.width < 980 || size.height < 600 || png.length < 33 ||
+        png[0] !== 0x89 || png[1] !== 0x50 || png[2] !== 0x4e || png[3] !== 0x47 ||
+        png.toString('ascii', 12, 16) !== 'IHDR' ||
+        png.readUInt32BE(16) !== size.width || png.readUInt32BE(20) !== size.height) {
+      throw new Error('Electron did not produce a valid full-size PNG screenshot with matching dimensions.');
     }
 
     const metadata = {
@@ -97,6 +99,7 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
       state: 'workspace',
       screenshot: 'workspace.png',
       viewport: snapshot.viewport,
+      imageSize: { width: size.width, height: size.height },
       reducedMotion: snapshot.reducedMotion,
       workspaceAnimationName: snapshot.workspaceAnimationName,
       workspaceAnimationDuration: snapshot.workspaceAnimationDuration,
@@ -114,8 +117,11 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
     const compactSize = compactImage.getSize();
     const compactPng = compactImage.toPNG();
     if (!compactSize || compactSize.width < 980 || compactSize.height < 600 ||
-        compactPng.length < 1000 || compactPng[0] !== 0x89 || compactPng[1] !== 0x50 ||
-        compactPng[2] !== 0x4e || compactPng[3] !== 0x47) {
+        compactPng.length < 33 || compactPng[0] !== 0x89 || compactPng[1] !== 0x50 ||
+        compactPng[2] !== 0x4e || compactPng[3] !== 0x47 ||
+        compactPng.toString('ascii', 12, 16) !== 'IHDR' ||
+        compactPng.readUInt32BE(16) !== compactSize.width ||
+        compactPng.readUInt32BE(20) !== compactSize.height) {
       throw new Error('Electron did not produce a valid screenshot of the collapsed navigation state.');
     }
     const interactionMetadata = {
