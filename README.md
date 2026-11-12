@@ -149,7 +149,7 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 ## Desktop visual smoke capture
 
-The **Desktop visual smoke** workflow launches the actual Electron desktop window on the private macOS runner. It verifies that the expected product title and workspace render, then captures a PNG of the rendered workspace with a small metadata file (viewport size, product identity, animation state and reduced-motion preference).
+The **Desktop visual smoke** workflow launches the actual Electron desktop window on the private macOS runner. It verifies that the expected product title and workspace render, then captures two PNGs from the live Electron window: the initial workspace and the workspace after clicking the actual navigation-collapse control. Each image has a metadata file recording the viewport, product identity, UI state, animation or navigation state, and reduced-motion preference.
 
 The capture uses a temporary user-data directory and a terms-acceptance record whose SHA-256 digest is calculated from the current packaged terms file. It does not reuse a developer's profile, capture customer documents, or bypass the terms gate. Screenshots are retained as private GitHub Actions artifacts for seven days; they are not committed to the repository and are not uploaded to an external visual-testing service.
 
