@@ -113,6 +113,40 @@ test('navigation interaction waits for the real sidebar width transition before 
   assert.match(source, /animation\.finished/);
 });
 
+test('navigation interaction rejects a compact class that does not reduce the actual sidebar width', async () => {
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'brightdesk-navigation-width-test-'));
+  try {
+    const png = Buffer.alloc(1200);
+    Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]).copy(png, 0);
+    png.writeUInt32BE(13, 8);
+    png.write('IHDR', 12, 'ascii');
+    png.writeUInt32BE(1440, 16);
+    png.writeUInt32BE(900, 20);
+
+    await assert.rejects(() => runStartupVisualSmoke({
+      window: {
+        webContents: {
+          executeJavaScript: async script => script.includes('button.click()')
+            ? { available: true, compact: true, ariaExpanded: 'false', expandedWidth: 232, sidebarWidth: 232 }
+            : {
+                appTitle: 'Brightdesk Pages', hasMain: true, hasWorkspace: true,
+                workspaceVisible: true, bodyTextLength: 120, visibleBrokenImages: 0,
+                productWindow: true, welcomeHidden: true, ribbonTabCount: 5,
+                launchAppId: 'pages', productEyebrow: 'PRODUCT WORKSPACE',
+                viewport: { width: 1440, height: 900 }, reducedMotion: false,
+                workspaceAnimationName: 'none', workspaceAnimationDuration: '0s'
+              },
+          capturePage: async () => ({ getSize: () => ({ width: 1440, height: 900 }), toPNG: () => png })
+        }
+      },
+      productName: 'Brightdesk Pages',
+      screenshotDir: directory
+    }), /did not reach its compact state/);
+  } finally {
+    await fsp.rm(directory, { recursive: true, force: true });
+  }
+});
+
 test('navigation interaction probe clicks the actual product control and verifies compact state', () => {
   const source = createSidebarInteractionScript();
   assert.match(source, /document.getElementById\('sidebar-toggle'\)/);
