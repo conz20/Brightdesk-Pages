@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const fsp = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -40,7 +41,7 @@ test('navigation interaction probe clicks the actual product control and verifie
 });
 
 test('Electron screenshot capture writes PNGs for the workspace and a real navigation interaction', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'brightdesk-visual-test-'));
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'brightdesk-visual-test-'));
   try {
     const png = Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]), Buffer.alloc(1200)]);
     const result = await runStartupVisualSmoke({
@@ -72,12 +73,12 @@ test('Electron screenshot capture writes PNGs for the workspace and a real navig
     assert.equal(interactionMetadata.state, 'navigation-collapsed');
     assert.equal(interactionMetadata.ariaExpanded, 'false');
   } finally {
-    await fs.rm(directory, { recursive: true, force: true });
+    await fsp.rm(directory, { recursive: true, force: true });
   }
 });
 
 test('smoke profile is isolated and accepts only the exact current terms digest', async () => {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'brightdesk-terms-profile-'));
+  const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'brightdesk-terms-profile-'));
   try {
     const termsPath = path.join(directory, 'TERMS_AND_CONDITIONS.txt');
     const packagePath = path.join(directory, 'package.json');
@@ -91,6 +92,6 @@ test('smoke profile is isolated and accepts only the exact current terms digest'
     const stored = JSON.parse(fs.readFileSync(path.join(profilePath, 'terms-acceptance.json'), 'utf8'));
     assert.equal(stored.termsSha256, record.termsSha256);
   } finally {
-    await fs.rm(directory, { recursive: true, force: true });
+    await fsp.rm(directory, { recursive: true, force: true });
   }
 });
