@@ -3,6 +3,19 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
 
+const PRODUCT_LAUNCH_IDS = {
+  'Brightdesk Pages': 'pages',
+  'Brightdesk Sheets': 'sheets',
+  'Brightdesk Decks': 'slides',
+  'Brightdesk Notes': 'notes',
+  'Brightdesk Database': 'database',
+  'Brightdesk Forms': 'forms',
+  'Brightdesk Lists': 'lists',
+  'Brightdesk Planner': 'planner',
+  'Brightdesk To Do': 'todo',
+  'Brightdesk Workspace': 'loop'
+};
+
 function assertRendererReady(snapshot, productName) {
   const title = String(snapshot?.appTitle || '');
   const expected = String(productName || '');
@@ -11,6 +24,13 @@ function assertRendererReady(snapshot, productName) {
   }
   if (!title || !expected || !title.toLowerCase().includes(expected.toLowerCase())) {
     throw new Error('The Electron renderer title does not match the selected Brightdesk product.');
+  }
+  const expectedAppId = PRODUCT_LAUNCH_IDS[expected] || null;
+  if (!snapshot.productWindow || !snapshot.welcomeHidden ||
+      !Number.isInteger(snapshot.ribbonTabCount) || snapshot.ribbonTabCount < 1 ||
+      (expectedAppId && snapshot.launchAppId !== expectedAppId) ||
+      snapshot.productEyebrow !== 'PRODUCT WORKSPACE') {
+    throw new Error('The Electron renderer has not finished initialising the fully initialised product workspace.');
   }
   if (!Number.isInteger(snapshot.bodyTextLength) || snapshot.bodyTextLength < 10) {
     throw new Error('The Electron renderer produced an empty or incomplete workspace.');
@@ -22,16 +42,36 @@ function assertRendererReady(snapshot, productName) {
 }
 
 function createReadinessScript(productName) {
+  const expectedAppId = PRODUCT_LAUNCH_IDS[productName] || null;
   return `(async () => {
     const expected = ${JSON.stringify(productName)};
+    const expectedAppId = ${JSON.stringify(expectedAppId)};
     const deadline = Date.now() + 10000;
     let appTitle = '';
     let workspace = null;
+    const productState = () => {
+      const welcome = document.getElementById('welcome');
+      const welcomeHidden = Boolean(welcome && welcome.hidden && getComputedStyle(welcome).display === 'none');
+      const ribbonTabCount = document.querySelectorAll('#ribbon-tabs .ribbon-tab').length;
+      const launchAppId = window.brightdesk?.launchAppId || null;
+      const productEyebrow = document.querySelector('.topbar .eyebrow')?.textContent?.trim() || '';
+      const productWindow = document.documentElement.classList.contains('is-product-window');
+      return {
+        productWindow,
+        welcomeHidden,
+        ribbonTabCount,
+        launchAppId,
+        productEyebrow,
+        ready: productWindow && welcomeHidden && ribbonTabCount > 0 &&
+          productEyebrow === 'PRODUCT WORKSPACE' &&
+          (expectedAppId ? launchAppId === expectedAppId : Boolean(launchAppId))
+      };
+    };
     while (Date.now() < deadline) {
       appTitle = document.getElementById('app-title')?.textContent?.trim() || '';
       workspace = document.getElementById('workspace');
       if (document.querySelector('main') && workspace && !workspace.hidden &&
-          appTitle.toLowerCase().includes(expected.toLowerCase())) break;
+          appTitle.toLowerCase().includes(expected.toLowerCase()) && productState().ready) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     await document.fonts.ready;
@@ -51,7 +91,8 @@ function createReadinessScript(productName) {
       viewport: { width: window.innerWidth, height: window.innerHeight },
       reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
       workspaceAnimationName: workspace ? getComputedStyle(workspace).animationName : 'missing',
-      workspaceAnimationDuration: workspace ? getComputedStyle(workspace).animationDuration : '0s'
+      workspaceAnimationDuration: workspace ? getComputedStyle(workspace).animationDuration : '0s',
+      ...productState()
     };
   })()`;
 }
