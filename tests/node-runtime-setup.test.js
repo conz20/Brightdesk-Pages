@@ -75,6 +75,9 @@ test('Pages pilot consumes the reviewed immutable Brightdesk Common Actions Node
   assert.match(workflow, /^permissions:\s*\n  contents: read$/m);
   assert.match(workflow, /runs-on:\s*\[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
   assert.match(workflow, /uses:\s*conz20\/Brightdesk-Common-Actions\/actions\/setup-node-24@801ada1439a4a6a04ce2b088a98bf25a7d795f61/);
+  assert.match(workflow, /ref:\s*\$\{\{\s*github\.event\.pull_request\.head\.sha\s*\|\|\s*github\.sha\s*\}\}/);
+  assert.match(workflow, /EXPECTED_SHA:\s*\$\{\{\s*github\.event\.pull_request\.head\.sha\s*\|\|\s*github\.sha\s*\}\}/);
+  assert.match(workflow, /git rev-parse HEAD/);
   assert.match(workflow, /npm ci --no-audit --no-fund/);
   assert.match(workflow, /npm run check:node/);
   assert.match(workflow, /npm test/);
