@@ -17,7 +17,12 @@ test('renderer readiness requires the expected product and visible workspace', (
     hasWorkspace: true,
     workspaceVisible: true,
     bodyTextLength: 120,
-    visibleBrokenImages: 0
+    visibleBrokenImages: 0,
+    productWindow: true,
+    welcomeHidden: true,
+    ribbonTabCount: 5,
+    launchAppId: 'pages',
+    productEyebrow: 'PRODUCT WORKSPACE'
   };
   assert.equal(assertRendererReady(snapshot, 'Brightdesk Pages'), snapshot);
   assert.throws(() => assertRendererReady({ ...snapshot, workspaceVisible: false }, 'Brightdesk Pages'), /visible main workspace/);
@@ -47,7 +52,7 @@ test('renderer probe waits for the product window shell and rendered ribbon, not
   const source = createReadinessScript('Brightdesk Pages');
   assert.match(source, /classList\\.contains\\('is-product-window'\\)/);
   assert.match(source, /welcome\\.hidden/);
-  assert.match(source, /querySelectorAll\\('#ribbon-tabs \\\\.ribbon-tab'\\)/);
+  assert.ok(source.includes("querySelectorAll('#ribbon-tabs .ribbon-tab')"));
   assert.match(source, /launchAppId/);
 });
 
@@ -57,6 +62,8 @@ test('renderer probe waits for the actual Electron product workspace and records
   assert.match(source, /document\.getElementById\('workspace'\)/);
   assert.match(source, /prefers-reduced-motion: reduce/);
   assert.match(source, /visibleBrokenImages/);
+  assert.match(source, /productState\\(\\)\\.ready/);
+  assert.match(source, /expectedAppId/);
 });
 
 test('navigation interaction probe clicks the actual product control and verifies compact state', () => {
