@@ -88,6 +88,16 @@ test('renderer probe waits for the product window shell and rendered ribbon, not
   assert.match(source, /launchAppId/);
 });
 
+test('renderer probe waits for visible local images before checking for broken assets', () => {
+  const source = createReadinessScript('Brightdesk Pages');
+  assert.match(source, /waitForVisibleImages/);
+  assert.match(source, /image\\.addEventListener\\('load'/);
+  assert.match(source, /image\\.addEventListener\\('error'/);
+  assert.match(source, /1500/);
+  assert.match(source, /await waitForVisibleImages\\(\\)/);
+  assert.ok(source.indexOf('await waitForVisibleImages()') < source.indexOf('const visibleBrokenImages'));
+});
+
 test('renderer probe waits for the actual Electron product workspace and records reduced motion', () => {
   const source = createReadinessScript('Brightdesk Pages');
   assert.match(source, /document\.getElementById\('app-title'\)/);
