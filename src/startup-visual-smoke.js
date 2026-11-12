@@ -94,9 +94,30 @@ function createReadinessScript(productName) {
           appTitle.toLowerCase().includes(expected.toLowerCase()) && productState().ready) break;
       await new Promise(resolve => setTimeout(resolve, 50));
     }
+    const waitForVisibleImages = async () => {
+      const images = [...document.images].filter(image => image.getClientRects().length > 0);
+      await Promise.all(images.map(image => {
+        if (image.complete) return Promise.resolve();
+        return new Promise(resolve => {
+          let finished = false;
+          const finish = () => {
+            if (finished) return;
+            finished = true;
+            clearTimeout(timeout);
+            image.removeEventListener('load', finish);
+            image.removeEventListener('error', finish);
+            resolve();
+          };
+          image.addEventListener('load', finish, { once: true });
+          image.addEventListener('error', finish, { once: true });
+          const timeout = setTimeout(finish, 1500);
+        });
+      }));
+    };
     await document.fonts.ready;
     workspace = document.getElementById('workspace');
     await waitForFiniteAnimations([workspace]);
+    await waitForVisibleImages();
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const visibleBrokenImages = [...document.images].filter(image => {
       if (!image.getClientRects().length) return false;
