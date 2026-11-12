@@ -427,12 +427,12 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.match(install, /run_bounded_launch/);
   assert.match(install, /ps -o stat=/);
   assert.ok(install.includes('kill "$app_pid"'));
-  assert.match(install, /for attempt in 1 2 3 4 5 6 7 8 9 10/);
+  assert.match(install, /for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20/);
   assert.match(install, /xvfb-run -a/);
   assert.match(powershell, /BRIGHTDESK_STARTUP_SMOKE_TEST/);
-  assert.match(powershell, /WaitForExit\(15000\)/);
+  assert.match(powershell, /WaitForExit\(20000\)/);
   assert.ok(powershell.includes("Wait-Process -Id $appProcess.Id"));
-  assert.match(powershell, /did not complete its startup check/);
+  assert.match(powershell, /did not complete its renderer startup check/);
   assert.doesNotMatch(powershell, /Start-Sleep -Seconds 5/);
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));

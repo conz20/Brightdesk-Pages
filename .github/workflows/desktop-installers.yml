@@ -30,6 +30,9 @@ jobs:
   test:
     name: Check Brightdesk Pages
     runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
+    permissions:
+      contents: read
+      checks: write
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -37,6 +40,11 @@ jobs:
           node-version: 24.22.2
       - run: npm ci --no-audit --no-fund
       - run: npm test
+      - run: npm run visual:smoke
+      - name: Publish compressed screenshots without Actions artifacts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/publish-visual-evidence-checks.js
 
   build:
     name: Build ${{ matrix.platform }} desktop installer

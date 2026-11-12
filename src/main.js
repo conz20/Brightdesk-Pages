@@ -3,6 +3,10 @@ const packageConfig = require('../package.json');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
+const { attachStartupVisualSmoke } = require('./startup-visual-smoke');
+const testUserDataDir = process.env.BRIGHTDESK_TEST_USER_DATA_DIR;
+if (testUserDataDir) app.setPath('userData', path.resolve(testUserDataDir));
+const startupSmokeTest = process.env.BRIGHTDESK_STARTUP_SMOKE_TEST === '1';
 const { openOfficeFile, exportOfficeFile, cleanFileName, ensureExtension } = require('./file-service');
 const { BUILTIN_LANGUAGES, validateLanguagePack, getBuiltinLanguage } = require('./language-service');
 const { DictionaryService } = require('./dictionary-service');
@@ -19,7 +23,7 @@ const productNames = {
   database: 'Database', forms: 'Forms', lists: 'Lists', planner: 'Planner',
   todo: 'To Do', loop: 'Workspace'
 };
-const supportedProducts = new Set(Object.keys(PRODUCT_SLUGS));
+const supportedProducts = new Set(Object.keys(productNames));
 const selectedProductId = packageConfig.brightdeskAppId || null;
 if (selectedProductId && !supportedProducts.has(selectedProductId)) {
   throw new Error(`Unsupported Brightdesk product: ${selectedProductId}`);
@@ -36,6 +40,14 @@ function createWindow() {
   mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   mainWindow.webContents.on('will-navigate', event => event.preventDefault());
   mainWindow.on('focus', () => { if (autoUpdater) checkForUpdates({ quiet: true }); });
+  if (startupSmokeTest) {
+    attachStartupVisualSmoke({
+      app,
+      window: mainWindow,
+      productName: packageConfig.build?.productName || 'Brightdesk',
+      screenshotDir: process.env.BRIGHTDESK_SCREENSHOT_DIR || null
+    });
+  }
 }
 function senderIsMain(event) { return mainWindow && event.sender === mainWindow.webContents; }
 
