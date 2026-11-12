@@ -30,7 +30,7 @@ test('builds a bounded check-run summary with image identity, part order and che
     data: 'A'.repeat(40000)
   });
 
-  assert.match(summary, /BRIGHTDESK_VISUAL_EVIDENCE_V1\\|image=workspace\\|part=2\\/3\\|sha256=a{64}\\|data=/);
+  assert.ok(summary.includes('BRIGHTDESK_VISUAL_EVIDENCE_V1|image=workspace|part=2/3|sha256=' + 'a'.repeat(64) + '|data='));
   assert.ok(Buffer.byteLength(summary, 'utf8') < 65535);
 });
 
