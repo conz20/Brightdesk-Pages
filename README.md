@@ -120,6 +120,12 @@ This product vendors the browser-compatible JSON storage helper from [Brightdesk
 
 The checked-in copy is loaded locally before the renderer. It is not fetched from a package registry or any remote service at runtime. Existing document keys are preserved: current documents continue to save under `brightdesk-docs-v3`, legacy `brightdesk-docs-v2` data remains readable, and setup preferences remain under `brightdesk-app-setup-v1`. Document content and settings remain on this device.
 
+## Printing
+
+Brightdesk Pages uses the shared local-first Printing adapter. The **Print** action lists configured operating-system printer queues and opens the visible system print dialog. **Printer settings** opens the operating system's own printer setup screen. Brightdesk does not silently create printer queues, install drivers or upload document content. A successful submission means the operating system accepted the job; it does not confirm that a physical page printed.
+
+The dependency-free adapter snapshot is kept in `src/printing-package/` and records its canonical source commit in `UPSTREAM.json`. Virtual-printer tests cover queue listing, capability reporting, accepted submissions, removed queues and spooler rejection without a physical printer. The native macOS and Windows network-discovery helpers are not yet built and bundled by this product's packaging workflow; Linux discovery depends on the host's `ippfind` utility. Configured system queues and the visible print dialog are the current supported integration path.
+
 ## Customer network policy
 
 Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
