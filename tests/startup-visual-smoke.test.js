@@ -98,6 +98,21 @@ test('renderer probe waits for the actual Electron product workspace and records
   assert.match(source, /expectedAppId/);
 });
 
+test('workspace readiness waits for finite entrance animations to settle before capture', () => {
+  const source = createReadinessScript('Brightdesk Pages');
+  assert.match(source, /waitForFiniteAnimations\(\[workspace\]\)/);
+  assert.match(source, /getAnimations\(\{ subtree: true \}\)/);
+  assert.match(source, /animation\.finished/);
+  assert.match(source, /1200/);
+});
+
+test('navigation interaction waits for the real sidebar width transition before capture', () => {
+  const source = createSidebarInteractionScript();
+  assert.match(source, /waitForFiniteAnimations\(\[sidebar, button\]\)/);
+  assert.match(source, /getAnimations\(\{ subtree: true \}\)/);
+  assert.match(source, /animation\.finished/);
+});
+
 test('navigation interaction probe clicks the actual product control and verifies compact state', () => {
   const source = createSidebarInteractionScript();
   assert.match(source, /document.getElementById\('sidebar-toggle'\)/);
