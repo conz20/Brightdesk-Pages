@@ -46,6 +46,26 @@ function createReadinessScript(productName) {
   return `(async () => {
     const expected = ${JSON.stringify(productName)};
     const expectedAppId = ${JSON.stringify(expectedAppId)};
+    const waitForFiniteAnimations = async elements => {
+      const animations = elements.filter(Boolean).flatMap(element =>
+        typeof element.getAnimations === 'function' ? element.getAnimations({ subtree: true }) : []
+      ).filter(animation => {
+        const iterations = animation.effect?.getComputedTiming?.().iterations;
+        return animation.playState !== 'finished' && iterations !== Infinity;
+      });
+      if (!animations.length) return;
+      await new Promise(resolve => {
+        let finished = false;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
+          resolve();
+        };
+        const timeout = setTimeout(finish, 1200);
+        Promise.all(animations.map(animation => animation.finished.catch(() => undefined))).then(finish, finish);
+      });
+    };
     const deadline = Date.now() + 10000;
     let appTitle = '';
     let workspace = null;
@@ -75,8 +95,9 @@ function createReadinessScript(productName) {
       await new Promise(resolve => setTimeout(resolve, 50));
     }
     await document.fonts.ready;
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     workspace = document.getElementById('workspace');
+    await waitForFiniteAnimations([workspace]);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     const visibleBrokenImages = [...document.images].filter(image => {
       if (!image.getClientRects().length) return false;
       return !image.complete || image.naturalWidth === 0;
@@ -102,7 +123,28 @@ function createSidebarInteractionScript() {
     const button = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar-nav');
     if (!button || !sidebar) return { available: false };
+    const waitForFiniteAnimations = async elements => {
+      const animations = elements.filter(Boolean).flatMap(element =>
+        typeof element.getAnimations === 'function' ? element.getAnimations({ subtree: true }) : []
+      ).filter(animation => {
+        const iterations = animation.effect?.getComputedTiming?.().iterations;
+        return animation.playState !== 'finished' && iterations !== Infinity;
+      });
+      if (!animations.length) return;
+      await new Promise(resolve => {
+        let finished = false;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          clearTimeout(timeout);
+          resolve();
+        };
+        const timeout = setTimeout(finish, 1200);
+        Promise.all(animations.map(animation => animation.finished.catch(() => undefined))).then(finish, finish);
+      });
+    };
     button.click();
+    await waitForFiniteAnimations([sidebar, button]);
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     return {
       available: true,
@@ -153,7 +195,6 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
     if (!interaction.available || !interaction.compact || interaction.ariaExpanded !== 'false' || interaction.sidebarWidth < 1) {
       throw new Error('The product navigation collapse interaction did not reach its compact state.');
     }
-    await new Promise(resolve => setTimeout(resolve, 220));
     const compactImage = await webContents.capturePage();
     const compactSize = compactImage.getSize();
     const compactPng = compactImage.toPNG();
