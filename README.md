@@ -145,3 +145,9 @@ The private installer smoke-test scripts are shared verification tooling. Their 
 The Pages maintenance and installer workflows use repository-scoped private runners only. Controller checks use the Mac runner labelled `self-hosted`, `macOS`, `ARM64`; native installer jobs require the matching `self-hosted`, `Windows`, `X64`, `macOS`, `ARM64`, or `Linux`, `X64` runner. A missing or offline runner remains queued; these workflows do not fall back to paid GitHub-hosted runners.
 
 A platform is complete only after the matching current-version artifacts and SHA-256 records are verified, followed by actual install, first launch, upgrade, repair, uninstall and user-data-preservation checks on that platform. Wine compatibility checks must not be described as native Windows certification. A passing CI run or queued native job does not prove platform acceptance. No unverified platform is described as release-ready.
+
+
+## Shared local JSON storage
+
+Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
+
