@@ -68,3 +68,15 @@ test('platform dependency setup attempts verified Node provisioning before setup
   assert.match(read('scripts/setup/install-dependencies.ps1'), /scripts\/install-node24\.ps1/);
   assert.match(read('scripts/setup/install-dependencies.ps1'), /npm run setup:dev/);
 });
+
+test('Pages pilot consumes the reviewed immutable Brightdesk Common Actions Node setup action', () => {
+  const workflow = read('.github/workflows/common-actions-node-consumer.yml');
+  assert.equal((workflow.match(/^permissions:\s*$/gm) ?? []).length, 1);
+  assert.match(workflow, /^permissions:\s*\n  contents: read$/m);
+  assert.match(workflow, /runs-on:\s*\[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
+  assert.match(workflow, /uses:\s*conz20\/Brightdesk-Common-Actions\/actions\/setup-node-24@801ada1439a4a6a04ce2b088a98bf25a7d795f61/);
+  assert.match(workflow, /npm ci --no-audit --no-fund/);
+  assert.match(workflow, /npm run check:node/);
+  assert.match(workflow, /npm test/);
+  assert.doesNotMatch(workflow, /workflow_dispatch|ubuntu-latest|windows-latest|macos-latest/);
+});
