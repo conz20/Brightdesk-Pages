@@ -17,6 +17,13 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 
 This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
 
+
+## Shared motion foundation
+
+This product bundles the canonical Brightdesk motion stylesheet locally at `src/motion.css`, loaded after `src/design-system.css`. Existing product controls use the shared fast timing and standard easing tokens (120 ms); the shared scale also defines 180 ms and 260 ms transitions. Reusable surface, interactive-control, overlay, progress and loading-indicator primitives are available for product-owned components.
+
+The stylesheet is packaged with the desktop product and does not load from GitHub or another network service at runtime. The `prefers-reduced-motion: reduce` setting disables the shared transitions and spinner animation. Motion does not replace keyboard focus, accessibility semantics or component-specific state handling.
+
 ## Product navigation
 
 Individual Pages windows use the canonical [Brightdesk Design System product-window shell](https://github.com/conz20/Brightdesk-Design-System/blob/main/css/product-window.css). Navigation expands to 232 px at 1008 px and wider, and starts compact at 76 px between 641 px and 1007 px. Compact labels remain available to assistive technology. Brightdesk is desktop-only for Windows, macOS and Linux; no mobile application, mobile edition or mobile navigation mode is built or supported. The Suite keeps its fixed 192 px labelled rail and does not receive the individual-product window class.
