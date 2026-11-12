@@ -7,24 +7,34 @@ RELEASE_DIR="$PROJECT_DIR/release"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$0")" && pwd)"
 
 run_bounded_launch() {
-  local app_pid process_state status attempt
-  BRIGHTDESK_STARTUP_SMOKE_TEST=1 BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 "$@" >/dev/null 2>&1 &
+  local app_pid process_state status attempt smoke_user_data temp_root
+  temp_root="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
+  smoke_user_data="$(mktemp -d "$temp_root/brightdesk-startup-smoke.XXXXXX")"
+  if ! node "$SCRIPT_DIR/prepare-smoke-user-data.js" "$PROJECT_DIR/TERMS_AND_CONDITIONS.txt" "$PROJECT_DIR/package.json" "$smoke_user_data"; then
+    rm -rf -- "$smoke_user_data"
+    echo "Could not prepare an isolated terms-accepted smoke-test profile." >&2
+    return 1
+  fi
+
+  BRIGHTDESK_TEST_USER_DATA_DIR="$smoke_user_data" BRIGHTDESK_STARTUP_SMOKE_TEST=1 BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 "$@" >/dev/null 2>&1 &
   app_pid=$!
   for attempt in 1 2 3 4 5 6 7 8 9 10; do
     process_state="$(ps -o stat= -p "$app_pid" 2>/dev/null | tr -d '[:space:]' || true)"
     if [[ -z "$process_state" || "$process_state" == Z* ]]; then
       if wait "$app_pid"; then
-        return 0
+        status=0
       else
         status=$?
         echo "Installed application launch check failed with exit code $status." >&2
-        return "$status"
       fi
+      rm -rf -- "$smoke_user_data"
+      return "$status"
     fi
     sleep 1
   done
   kill "$app_pid" 2>/dev/null || true
   wait "$app_pid" 2>/dev/null || true
+  rm -rf -- "$smoke_user_data"
   echo "Installed application launch check failed with exit code 124." >&2
   return 124
 }
