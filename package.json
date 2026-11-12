@@ -36,7 +36,8 @@
     "dist:desktop:linux": "node scripts/build-app.js pages linux",
     "verify:desktop:win": "node scripts/verify-desktop-installers.js win release/apps pages",
     "verify:desktop:mac": "node scripts/verify-desktop-installers.js mac release/apps pages",
-    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages"
+    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages",
+    "visual:smoke": "node scripts/visual-smoke.js"
   },
   "dependencies": {
     "docx": "9.15.1",
