@@ -91,6 +91,8 @@ test('writes Electron PNG bytes for the workspace and a real navigation interact
             : {
                 appTitle: 'Brightdesk Pages', hasMain: true, hasWorkspace: true,
                 workspaceVisible: true, bodyTextLength: 120, visibleBrokenImages: 0,
+                productWindow: true, welcomeHidden: true, ribbonTabCount: 5,
+                launchAppId: 'pages', productEyebrow: 'PRODUCT WORKSPACE',
                 viewport: { width: 1440, height: 900 }, reducedMotion: false,
                 workspaceAnimationName: 'bd-motion-enter', workspaceAnimationDuration: '180ms'
               },
