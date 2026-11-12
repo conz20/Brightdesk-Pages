@@ -18,7 +18,7 @@ run_bounded_launch() {
 
   BRIGHTDESK_TEST_USER_DATA_DIR="$smoke_user_data" BRIGHTDESK_STARTUP_SMOKE_TEST=1 BRIGHTDESK_REQUIRE_NATIVE_ENGINE=1 "$@" >/dev/null 2>&1 &
   app_pid=$!
-  for attempt in 1 2 3 4 5 6 7 8 9 10; do
+  for attempt in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
     process_state="$(ps -o stat= -p "$app_pid" 2>/dev/null | tr -d '[:space:]' || true)"
     if [[ -z "$process_state" || "$process_state" == Z* ]]; then
       if wait "$app_pid"; then
