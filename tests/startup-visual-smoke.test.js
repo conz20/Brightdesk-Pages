@@ -64,10 +64,10 @@ test('Electron screenshot capture writes PNGs for the workspace and a real navig
     assert.deepEqual(result.screenshot.workspace, { file: 'workspace.png', width: 1440, height: 900, bytes: png.length });
     assert.equal(result.screenshot.navigationCollapsed.sidebarWidth, 76);
     for (const name of ['workspace.png', 'navigation-collapsed.png']) {
-      assert.deepEqual(await fs.readFile(path.join(directory, name)), png);
+      assert.deepEqual(await fsp.readFile(path.join(directory, name)), png);
     }
-    const metadata = JSON.parse(await fs.readFile(path.join(directory, 'workspace.json'), 'utf8'));
-    const interactionMetadata = JSON.parse(await fs.readFile(path.join(directory, 'navigation-collapsed.json'), 'utf8'));
+    const metadata = JSON.parse(await fsp.readFile(path.join(directory, 'workspace.json'), 'utf8'));
+    const interactionMetadata = JSON.parse(await fsp.readFile(path.join(directory, 'navigation-collapsed.json'), 'utf8'));
     assert.equal(metadata.product, 'Brightdesk Pages');
     assert.equal(metadata.reducedMotion, false);
     assert.equal(interactionMetadata.state, 'navigation-collapsed');
