@@ -24,6 +24,33 @@ test('renderer readiness requires the expected product and visible workspace', (
   assert.throws(() => assertRendererReady({ ...snapshot, appTitle: 'Brightdesk Sheets' }, 'Brightdesk Pages'), /does not match/);
 });
 
+test('renderer readiness rejects static HTML until the individual Pages editor is fully initialised', () => {
+  const staticMarkup = {
+    appTitle: 'Brightdesk Pages',
+    hasMain: true,
+    hasWorkspace: true,
+    workspaceVisible: true,
+    bodyTextLength: 120,
+    visibleBrokenImages: 0,
+    productWindow: false,
+    welcomeHidden: false,
+    ribbonTabCount: 0,
+    launchAppId: null
+  };
+  assert.throws(
+    () => assertRendererReady(staticMarkup, 'Brightdesk Pages'),
+    /fully initialised product workspace/
+  );
+});
+
+test('renderer probe waits for the product window shell and rendered ribbon, not static HTML defaults', () => {
+  const source = createReadinessScript('Brightdesk Pages');
+  assert.match(source, /classList\\.contains\\('is-product-window'\\)/);
+  assert.match(source, /welcome\\.hidden/);
+  assert.match(source, /querySelectorAll\\('#ribbon-tabs \\\\.ribbon-tab'\\)/);
+  assert.match(source, /launchAppId/);
+});
+
 test('renderer probe waits for the actual Electron product workspace and records reduced motion', () => {
   const source = createReadinessScript('Brightdesk Pages');
   assert.match(source, /document\.getElementById\('app-title'\)/);
