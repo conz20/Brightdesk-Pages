@@ -145,3 +145,10 @@ The private installer smoke-test scripts are shared verification tooling. Their 
 The Pages maintenance and installer workflows use repository-scoped private runners only. Controller checks use the Mac runner labelled `self-hosted`, `macOS`, `ARM64`; native installer jobs require the matching `self-hosted`, `Windows`, `X64`, `macOS`, `ARM64`, or `Linux`, `X64` runner. A missing or offline runner remains queued; these workflows do not fall back to paid GitHub-hosted runners.
 
 A platform is complete only after the matching current-version artifacts and SHA-256 records are verified, followed by actual install, first launch, upgrade, repair, uninstall and user-data-preservation checks on that platform. Wine compatibility checks must not be described as native Windows certification. A passing CI run or queued native job does not prove platform acceptance. No unverified platform is described as release-ready.
+
+
+## Shared CI action pilot
+
+A review-only engineering pilot is evaluating the reusable Brightdesk Node.js 24.22.2 setup action from the private Brightdesk-Common-Actions repository. The consumer workflow will pin that action to an immutable commit and run the Pages lockfile, runtime and test checks on the existing private product runner.
+
+This is CI tooling only. It does not add a customer runtime dependency, change the Pages installer, or change how customers run the product. The pilot is not approved for wider rollout until the current Pages pull request passes its exact-head consumer workflow.
