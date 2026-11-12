@@ -145,3 +145,12 @@ The private installer smoke-test scripts are shared verification tooling. Their 
 The Pages maintenance and installer workflows use repository-scoped private runners only. Controller checks use the Mac runner labelled `self-hosted`, `macOS`, `ARM64`; native installer jobs require the matching `self-hosted`, `Windows`, `X64`, `macOS`, `ARM64`, or `Linux`, `X64` runner. A missing or offline runner remains queued; these workflows do not fall back to paid GitHub-hosted runners.
 
 A platform is complete only after the matching current-version artifacts and SHA-256 records are verified, followed by actual install, first launch, upgrade, repair, uninstall and user-data-preservation checks on that platform. Wine compatibility checks must not be described as native Windows certification. A passing CI run or queued native job does not prove platform acceptance. No unverified platform is described as release-ready.
+
+
+## Desktop visual smoke capture
+
+The **Desktop visual smoke** workflow launches the actual Electron desktop window on the private macOS runner. It verifies that the expected product title and workspace render, then captures a PNG of the rendered workspace with a small metadata file (viewport size, product identity, animation state and reduced-motion preference).
+
+The capture uses a temporary user-data directory and a terms-acceptance record whose SHA-256 digest is calculated from the current packaged terms file. It does not reuse a developer's profile, capture customer documents, or bypass the terms gate. Screenshots are retained as private GitHub Actions artifacts for seven days; they are not committed to the repository and are not uploaded to an external visual-testing service.
+
+A successful workflow proves that Electron rendered a captureable window and produced the expected artifact. It does not replace human visual review of layout, animation feel, native platform behaviour, or installer acceptance. README design artwork remains labelled separately from genuine desktop screenshots.
