@@ -23,7 +23,7 @@ const productNames = {
   database: 'Database', forms: 'Forms', lists: 'Lists', planner: 'Planner',
   todo: 'To Do', loop: 'Workspace'
 };
-const supportedProducts = new Set(Object.keys(PRODUCT_SLUGS));
+const supportedProducts = new Set(Object.keys(productNames));
 const selectedProductId = packageConfig.brightdeskAppId || null;
 if (selectedProductId && !supportedProducts.has(selectedProductId)) {
   throw new Error(`Unsupported Brightdesk product: ${selectedProductId}`);
