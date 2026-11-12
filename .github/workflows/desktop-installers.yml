@@ -37,6 +37,13 @@ jobs:
           node-version: 24.22.2
       - run: npm ci --no-audit --no-fund
       - run: npm test
+      - run: npm run visual:smoke
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Brightdesk-Pages-visual-${{ github.run_id }}
+          path: artifacts/visual-smoke/
+          if-no-files-found: error
+          retention-days: 7
 
   build:
     name: Build ${{ matrix.platform }} desktop installer
