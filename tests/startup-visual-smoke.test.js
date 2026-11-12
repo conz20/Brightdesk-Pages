@@ -40,10 +40,15 @@ test('navigation interaction probe clicks the actual product control and verifie
   assert.match(source, /ariaExpanded/);
 });
 
-test('Electron screenshot capture writes PNGs for the workspace and a real navigation interaction', async () => {
+test('writes Electron PNG bytes for the workspace and a real navigation interaction', async () => {
   const directory = await fsp.mkdtemp(path.join(os.tmpdir(), 'brightdesk-visual-test-'));
   try {
-    const png = Buffer.concat([Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]), Buffer.alloc(1200)]);
+    const png = Buffer.alloc(1200);
+    Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]).copy(png, 0);
+    png.writeUInt32BE(13, 8);
+    png.write('IHDR', 12, 'ascii');
+    png.writeUInt32BE(1440, 16);
+    png.writeUInt32BE(900, 20);
     const result = await runStartupVisualSmoke({
       window: {
         webContents: {
@@ -70,6 +75,7 @@ test('Electron screenshot capture writes PNGs for the workspace and a real navig
     const interactionMetadata = JSON.parse(await fsp.readFile(path.join(directory, 'navigation-collapsed.json'), 'utf8'));
     assert.equal(metadata.product, 'Brightdesk Pages');
     assert.equal(metadata.reducedMotion, false);
+    assert.deepEqual(metadata.imageSize, { width: 1440, height: 900 });
     assert.equal(interactionMetadata.state, 'navigation-collapsed');
     assert.equal(interactionMetadata.ariaExpanded, 'false');
   } finally {
