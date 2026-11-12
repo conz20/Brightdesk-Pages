@@ -30,7 +30,7 @@ function assertRendererReady(snapshot, productName) {
       !Number.isInteger(snapshot.ribbonTabCount) || snapshot.ribbonTabCount < 1 ||
       (expectedAppId && snapshot.launchAppId !== expectedAppId) ||
       snapshot.productEyebrow !== 'PRODUCT WORKSPACE') {
-    throw new Error('The Electron renderer has not finished initialising the fully initialised product workspace.');
+    throw new Error('The Electron renderer has not finished initialising the product workspace.');
   }
   if (!Number.isInteger(snapshot.bodyTextLength) || snapshot.bodyTextLength < 10) {
     throw new Error('The Electron renderer produced an empty or incomplete workspace.');
