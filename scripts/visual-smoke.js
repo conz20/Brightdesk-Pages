@@ -64,10 +64,15 @@ async function main() {
       throw new Error('The Electron visual smoke test did not produce a valid workspace PNG.');
     }
     const metadata = JSON.parse(await fs.readFile(path.join(screenshotDir, 'workspace.json'), 'utf8'));
-    if (metadata.product !== packageConfig.build.productName || metadata.screenshot !== 'workspace.png') {
-      throw new Error('The Electron visual screenshot metadata does not match the product manifest.');
+    const interactionMetadata = JSON.parse(await fs.readFile(path.join(screenshotDir, 'navigation-collapsed.json'), 'utf8'));
+    const interactionPng = await fs.readFile(path.join(screenshotDir, 'navigation-collapsed.png'));
+    if (metadata.product !== packageConfig.build.productName || metadata.screenshot !== 'workspace.png' ||
+        interactionMetadata.product !== metadata.product || interactionMetadata.state !== 'navigation-collapsed' ||
+        interactionMetadata.interaction !== 'click #sidebar-toggle' || interactionMetadata.ariaExpanded !== 'false' ||
+        interactionPng.length < 1000 || interactionPng.readUInt32BE(0) !== 0x89504e47) {
+      throw new Error('The Electron visual screenshot metadata or navigation interaction capture does not match the product manifest.');
     }
-    console.log(`Captured the real ${metadata.product} Electron workspace at ${metadata.viewport.width}x${metadata.viewport.height}.`);
+    console.log(`Captured the real ${metadata.product} Electron workspace and collapsed-navigation state at ${metadata.viewport.width}x${metadata.viewport.height}.`);
   } finally {
     await fs.rm(userDataDir, { recursive: true, force: true });
   }
