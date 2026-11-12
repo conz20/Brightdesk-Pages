@@ -432,7 +432,7 @@ test('native installer smoke tests bound application launch time and clean up te
   assert.match(powershell, /BRIGHTDESK_STARTUP_SMOKE_TEST/);
   assert.match(powershell, /WaitForExit\(20000\)/);
   assert.ok(powershell.includes("Wait-Process -Id $appProcess.Id"));
-  assert.match(powershell, /did not complete its startup check/);
+  assert.match(powershell, /did not complete its renderer startup check/);
   assert.doesNotMatch(powershell, /Start-Sleep -Seconds 5/);
   assert.match(powershell, /taskkill\.exe \/PID/);
   assert.ok(!powershell.includes("& $appPath --version"));
