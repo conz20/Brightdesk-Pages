@@ -29,3 +29,13 @@ test("the Pages workspace shows the shared print actions", () => {
   assert.match(app, /window\.brightdesk\.printing\.print\(\{ printBackground: true \}\)/);
   assert.match(app, /window\.brightdesk\.printing\.openPrinterSettings\(\)/);
 });
+
+test("all built-in language packs include printing action labels", () => {
+  for (const locale of ["en-AU", "de-DE", "es-ES", "fr-FR"]) {
+    const pack = JSON.parse(read(`src/languages/${locale}.json`));
+    assert.equal(typeof pack.translations["top.print"], "string");
+    assert.equal(typeof pack.translations["top.printerSettings"], "string");
+    assert.ok(pack.translations["top.print"].length > 0);
+    assert.ok(pack.translations["top.printerSettings"].length > 0);
+  }
+});
