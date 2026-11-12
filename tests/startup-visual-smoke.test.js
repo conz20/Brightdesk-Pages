@@ -168,7 +168,7 @@ test('writes Electron PNG bytes for the workspace and a real navigation interact
       window: {
         webContents: {
           executeJavaScript: async script => script.includes('button.click()')
-            ? { available: true, compact: true, ariaExpanded: 'false', sidebarWidth: 76 }
+            ? { available: true, compact: true, ariaExpanded: 'false', expandedWidth: 232, sidebarWidth: 76 }
             : {
                 appTitle: 'Brightdesk Pages', hasMain: true, hasWorkspace: true,
                 workspaceVisible: true, bodyTextLength: 120, visibleBrokenImages: 0,
@@ -184,7 +184,9 @@ test('writes Electron PNG bytes for the workspace and a real navigation interact
       screenshotDir: directory
     });
     assert.deepEqual(result.screenshot.workspace, { file: 'workspace.png', width: 1440, height: 900, bytes: png.length });
+    assert.equal(result.screenshot.navigationCollapsed.expandedSidebarWidth, 232);
     assert.equal(result.screenshot.navigationCollapsed.sidebarWidth, 76);
+    assert.ok(result.screenshot.navigationCollapsed.sidebarWidth < result.screenshot.navigationCollapsed.expandedSidebarWidth);
     for (const name of ['workspace.png', 'navigation-collapsed.png']) {
       assert.deepEqual(await fsp.readFile(path.join(directory, name)), png);
     }

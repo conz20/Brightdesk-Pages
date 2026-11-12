@@ -123,6 +123,7 @@ function createSidebarInteractionScript() {
     const button = document.getElementById('sidebar-toggle');
     const sidebar = document.getElementById('sidebar-nav');
     if (!button || !sidebar) return { available: false };
+    const expandedWidth = Math.round(sidebar.getBoundingClientRect().width);
     const waitForFiniteAnimations = async elements => {
       const animations = elements.filter(Boolean).flatMap(element =>
         typeof element.getAnimations === 'function' ? element.getAnimations({ subtree: true }) : []
@@ -150,6 +151,7 @@ function createSidebarInteractionScript() {
       available: true,
       compact: sidebar.classList.contains('is-compact'),
       ariaExpanded: button.getAttribute('aria-expanded'),
+      expandedWidth,
       sidebarWidth: Math.round(sidebar.getBoundingClientRect().width)
     };
   })()`;
@@ -192,7 +194,9 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
     await fsImpl.writeFile(path.join(screenshotDir, 'workspace.json'), `${JSON.stringify(metadata, null, 2)}\n`);
 
     const interaction = await webContents.executeJavaScript(createSidebarInteractionScript());
-    if (!interaction.available || !interaction.compact || interaction.ariaExpanded !== 'false' || interaction.sidebarWidth < 1) {
+    if (!interaction.available || !interaction.compact || interaction.ariaExpanded !== 'false' ||
+        !Number.isFinite(interaction.expandedWidth) || !Number.isFinite(interaction.sidebarWidth) ||
+        interaction.sidebarWidth < 1 || interaction.sidebarWidth >= interaction.expandedWidth) {
       throw new Error('The product navigation collapse interaction did not reach its compact state.');
     }
     const compactImage = await webContents.capturePage();
@@ -211,6 +215,7 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
       state: 'navigation-collapsed',
       interaction: 'click #sidebar-toggle',
       ariaExpanded: interaction.ariaExpanded,
+      expandedSidebarWidth: interaction.expandedWidth,
       sidebarWidth: interaction.sidebarWidth,
       viewport: snapshot.viewport,
       reducedMotion: snapshot.reducedMotion,
@@ -226,6 +231,7 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
         width: compactSize.width,
         height: compactSize.height,
         bytes: compactPng.length,
+        expandedSidebarWidth: interaction.expandedWidth,
         sidebarWidth: interaction.sidebarWidth
       }
     };
