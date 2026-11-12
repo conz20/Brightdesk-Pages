@@ -59,17 +59,25 @@ try {
   Write-Output 'Brightdesk Windows smoke test stage: application launch.'
   $previousSmokeTestSetting = $env:BRIGHTDESK_STARTUP_SMOKE_TEST
   $previousNativeRequirement = $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE
+  $previousTestUserDataDir = $env:BRIGHTDESK_TEST_USER_DATA_DIR
+  $smokeUserDataDir = Join-Path $tempRoot ("brightdesk-startup-smoke-" + [guid]::NewGuid().ToString('N'))
+  New-Item -ItemType Directory -Path $smokeUserDataDir | Out-Null
   try {
+    & node (Join-Path $ProjectDir 'scripts/brightdesk-private-runner/prepare-smoke-user-data.js') (Join-Path $ProjectDir 'TERMS_AND_CONDITIONS.txt') (Join-Path $ProjectDir 'package.json') $smokeUserDataDir
+    if ($LASTEXITCODE -ne 0) {
+      throw 'Could not prepare an isolated terms-accepted smoke-test profile.'
+    }
+    $env:BRIGHTDESK_TEST_USER_DATA_DIR = $smokeUserDataDir
     $env:BRIGHTDESK_STARTUP_SMOKE_TEST = '1'
     $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = '1'
     $appProcess = Start-Process -FilePath $appPath -PassThru
-    if (-not $appProcess.WaitForExit(15000)) {
+    if (-not $appProcess.WaitForExit(20000)) {
       taskkill.exe /PID $appProcess.Id /T /F | Out-Null
       Wait-Process -Id $appProcess.Id -Timeout 10 -ErrorAction SilentlyContinue
-      throw 'The installed Windows application did not complete its startup check.'
+      throw 'The installed Windows application did not complete its renderer startup check.'
     }
     if ($appProcess.ExitCode -ne 0) {
-      throw 'The installed Windows application did not complete its startup check.'
+      throw 'The installed Windows application did not complete its renderer startup check.'
     }
   }
   finally {
@@ -82,6 +90,14 @@ try {
       Remove-Item Env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE -ErrorAction SilentlyContinue
     } else {
       $env:BRIGHTDESK_REQUIRE_NATIVE_ENGINE = $previousNativeRequirement
+    }
+    if ($null -eq $previousTestUserDataDir) {
+      Remove-Item Env:BRIGHTDESK_TEST_USER_DATA_DIR -ErrorAction SilentlyContinue
+    } else {
+      $env:BRIGHTDESK_TEST_USER_DATA_DIR = $previousTestUserDataDir
+    }
+    if (Test-Path -LiteralPath $smokeUserDataDir) {
+      Remove-Item -LiteralPath $smokeUserDataDir -Recurse -Force
     }
   }
 
