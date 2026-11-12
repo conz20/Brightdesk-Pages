@@ -44,7 +44,7 @@ function createWindow() {
     attachStartupVisualSmoke({
       app,
       window: mainWindow,
-      productName: packageConfig.productName || 'Brightdesk',
+      productName: packageConfig.build?.productName || 'Brightdesk',
       screenshotDir: process.env.BRIGHTDESK_SCREENSHOT_DIR || null
     });
   }
