@@ -48,6 +48,38 @@ test('renderer readiness rejects static HTML until the individual Pages editor i
   );
 });
 
+test('renderer readiness rejects each incomplete Pages product-shell requirement independently', () => {
+  const ready = {
+    appTitle: 'Brightdesk Pages',
+    hasMain: true,
+    hasWorkspace: true,
+    workspaceVisible: true,
+    bodyTextLength: 120,
+    visibleBrokenImages: 0,
+    productWindow: true,
+    welcomeHidden: true,
+    ribbonTabCount: 5,
+    launchAppId: 'pages',
+    productEyebrow: 'PRODUCT WORKSPACE'
+  };
+
+  const incompleteStates = [
+    ['product window shell is inactive', { productWindow: false }],
+    ['welcome banner is still visible', { welcomeHidden: false }],
+    ['ribbon tabs have not rendered', { ribbonTabCount: 0 }],
+    ['launch ID belongs to another product', { launchAppId: 'sheets' }],
+    ['product workspace heading is missing', { productEyebrow: 'OVERVIEW' }]
+  ];
+
+  for (const [description, change] of incompleteStates) {
+    assert.throws(
+      () => assertRendererReady({ ...ready, ...change }, 'Brightdesk Pages'),
+      /fully initialised product workspace/,
+      description
+    );
+  }
+});
+
 test('renderer probe waits for the product window shell and rendered ribbon, not static HTML defaults', () => {
   const source = createReadinessScript('Brightdesk Pages');
   assert.match(source, /classList\\.contains\\('is-product-window'\\)/);
