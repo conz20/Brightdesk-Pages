@@ -60,17 +60,20 @@ async function main() {
 
     const screenshotPath = path.join(screenshotDir, 'workspace.png');
     const png = await fs.readFile(screenshotPath);
-    if (png.length < 1000 || png.readUInt32BE(0) !== 0x89504e47) {
-      throw new Error('The Electron visual smoke test did not produce a valid workspace PNG.');
-    }
     const metadata = JSON.parse(await fs.readFile(path.join(screenshotDir, 'workspace.json'), 'utf8'));
     const interactionMetadata = JSON.parse(await fs.readFile(path.join(screenshotDir, 'navigation-collapsed.json'), 'utf8'));
     const interactionPng = await fs.readFile(path.join(screenshotDir, 'navigation-collapsed.png'));
-    if (metadata.product !== packageConfig.build.productName || metadata.screenshot !== 'workspace.png' ||
+    const isValidPng = (image, expectedSize) => image.length >= 33 &&
+      image.readUInt32BE(0) === 0x89504e47 &&
+      image.toString('ascii', 12, 16) === 'IHDR' &&
+      image.readUInt32BE(16) === expectedSize.width &&
+      image.readUInt32BE(20) === expectedSize.height;
+    if (!isValidPng(png, metadata.imageSize || {}) ||
+        metadata.product !== packageConfig.build.productName || metadata.screenshot !== 'workspace.png' ||
         interactionMetadata.product !== metadata.product || interactionMetadata.state !== 'navigation-collapsed' ||
         interactionMetadata.interaction !== 'click #sidebar-toggle' || interactionMetadata.ariaExpanded !== 'false' ||
-        interactionPng.length < 1000 || interactionPng.readUInt32BE(0) !== 0x89504e47) {
-      throw new Error('The Electron visual screenshot metadata or navigation interaction capture does not match the product manifest.');
+        !isValidPng(interactionPng, interactionMetadata.imageSize || {})) {
+      throw new Error('The Electron visual screenshots or metadata do not match the product manifest and expected image dimensions.');
     }
     console.log(`Captured the real ${metadata.product} Electron workspace and collapsed-navigation state at ${metadata.viewport.width}x${metadata.viewport.height}.`);
   } finally {
