@@ -132,6 +132,7 @@ async function runStartupVisualSmoke({ window, productName, screenshotDir = null
       sidebarWidth: interaction.sidebarWidth,
       viewport: snapshot.viewport,
       reducedMotion: snapshot.reducedMotion,
+      imageSize: { width: compactSize.width, height: compactSize.height },
       capturedAt: new Date().toISOString()
     };
     await fsImpl.writeFile(path.join(screenshotDir, 'navigation-collapsed.png'), compactPng);
