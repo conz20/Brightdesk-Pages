@@ -1,0 +1,53 @@
+name: Brightdesk Common Actions consumer
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/common-actions-node-consumer.yml"
+      - "tests/node-runtime-setup.test.js"
+      - "README.md"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/common-actions-node-consumer.yml"
+      - "tests/node-runtime-setup.test.js"
+      - "README.md"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-common-actions-consumer-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  consumer:
+    name: Verify the shared Node.js action in Pages
+    runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
+    timeout-minutes: 45
+    steps:
+      - name: Check out the exact Pages change
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # pinned checkout action
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Verify the checked-out commit
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+      - name: Set up Brightdesk Node.js 24.22.2
+        uses: conz20/Brightdesk-Common-Actions/actions/setup-node-24@801ada1439a4a6a04ce2b088a98bf25a7d795f61
+        with:
+          package-manager-cache: "false"
+      - name: Install Pages dependencies from the lock file
+        run: npm ci --no-audit --no-fund
+      - name: Verify the Pages runtime contract
+        run: npm run check:node
+      - name: Verify the Pages lock file
+        run: npm run lock:verify
+      - name: Run the full Pages test suite
+        run: npm test
