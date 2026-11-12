@@ -26,8 +26,9 @@ function assertRendererReady(snapshot, productName) {
     throw new Error('The Electron renderer title does not match the selected Brightdesk product.');
   }
   const expectedAppId = PRODUCT_LAUNCH_IDS[expected] || null;
-  if (!snapshot.productWindow || !snapshot.welcomeHidden ||
+  if (!snapshot.productWindow || !snapshot.welcomeHidden || !snapshot.appTitleVisible ||
       !Number.isInteger(snapshot.ribbonTabCount) || snapshot.ribbonTabCount < 1 ||
+      !Number.isInteger(snapshot.visibleRibbonTabCount) || snapshot.visibleRibbonTabCount < 1 ||
       (expectedAppId && snapshot.launchAppId !== expectedAppId) ||
       snapshot.productEyebrow !== 'PRODUCT WORKSPACE') {
     throw new Error('The Electron renderer has not finished initialising the product workspace.');
@@ -72,7 +73,20 @@ function createReadinessScript(productName) {
     const productState = () => {
       const welcome = document.getElementById('welcome');
       const welcomeHidden = Boolean(welcome && welcome.hidden && getComputedStyle(welcome).display === 'none');
-      const ribbonTabCount = document.querySelectorAll('#ribbon-tabs .ribbon-tab').length;
+      const appTitle = document.getElementById('app-title');
+      const appTitleStyle = appTitle ? getComputedStyle(appTitle) : null;
+      const appTitleRect = appTitle?.getBoundingClientRect();
+      const appTitleVisible = Boolean(appTitle && appTitleStyle &&
+        appTitleStyle.display !== 'none' && appTitleStyle.visibility !== 'hidden' &&
+        appTitleRect && appTitleRect.width > 0 && appTitleRect.height > 0);
+      const ribbonTabs = [...document.querySelectorAll('#ribbon-tabs .ribbon-tab')];
+      const ribbonTabCount = ribbonTabs.length;
+      const visibleRibbonTabCount = ribbonTabs.filter(tab => {
+        const style = getComputedStyle(tab);
+        const rect = tab.getBoundingClientRect();
+        return style.display !== 'none' && style.visibility !== 'hidden' &&
+          rect.width > 0 && rect.height > 0;
+      }).length;
       const launchAppId = window.brightdesk?.launchAppId || null;
       const productEyebrow = document.querySelector('.topbar .eyebrow')?.textContent?.trim() || '';
       const productWindow = document.documentElement.classList.contains('is-product-window');
@@ -80,9 +94,12 @@ function createReadinessScript(productName) {
         productWindow,
         welcomeHidden,
         ribbonTabCount,
+        appTitleVisible,
+        visibleRibbonTabCount,
         launchAppId,
         productEyebrow,
-        ready: productWindow && welcomeHidden && ribbonTabCount > 0 &&
+        ready: productWindow && welcomeHidden && appTitleVisible &&
+          ribbonTabCount > 0 && visibleRibbonTabCount > 0 &&
           productEyebrow === 'PRODUCT WORKSPACE' &&
           (expectedAppId ? launchAppId === expectedAppId : Boolean(launchAppId))
       };

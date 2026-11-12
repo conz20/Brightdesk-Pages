@@ -21,6 +21,8 @@ test('renderer readiness requires the expected product and visible workspace', (
     productWindow: true,
     welcomeHidden: true,
     ribbonTabCount: 5,
+    appTitleVisible: true,
+    visibleRibbonTabCount: 5,
     launchAppId: 'pages',
     productEyebrow: 'PRODUCT WORKSPACE'
   };
@@ -59,6 +61,8 @@ test('renderer readiness rejects each incomplete Pages product-shell requirement
     productWindow: true,
     welcomeHidden: true,
     ribbonTabCount: 5,
+    appTitleVisible: true,
+    visibleRibbonTabCount: 5,
     launchAppId: 'pages',
     productEyebrow: 'PRODUCT WORKSPACE'
   };
@@ -67,6 +71,8 @@ test('renderer readiness rejects each incomplete Pages product-shell requirement
     ['product window shell is inactive', { productWindow: false }],
     ['welcome banner is still visible', { welcomeHidden: false }],
     ['ribbon tabs have not rendered', { ribbonTabCount: 0 }],
+    ['product title exists but is hidden', { appTitleVisible: false }],
+    ['ribbon tabs exist but none are visible', { visibleRibbonTabCount: 0 }],
     ['launch ID belongs to another product', { launchAppId: 'sheets' }],
     ['product workspace heading is missing', { productEyebrow: 'OVERVIEW' }]
   ];
@@ -85,6 +91,8 @@ test('renderer probe waits for the product window shell and rendered ribbon, not
   assert.match(source, /classList\\.contains\\('is-product-window'\\)/);
   assert.match(source, /welcome\\.hidden/);
   assert.ok(source.includes("querySelectorAll('#ribbon-tabs .ribbon-tab')"));
+  assert.match(source, /appTitleVisible/);
+  assert.match(source, /visibleRibbonTabCount/);
   assert.match(source, /launchAppId/);
 });
 
@@ -142,6 +150,8 @@ test('navigation interaction rejects a compact class that does not reduce the ac
                 appTitle: 'Brightdesk Pages', hasMain: true, hasWorkspace: true,
                 workspaceVisible: true, bodyTextLength: 120, visibleBrokenImages: 0,
                 productWindow: true, welcomeHidden: true, ribbonTabCount: 5,
+    appTitleVisible: true,
+    visibleRibbonTabCount: 5,
                 launchAppId: 'pages', productEyebrow: 'PRODUCT WORKSPACE',
                 viewport: { width: 1440, height: 900 }, reducedMotion: false,
                 workspaceAnimationName: 'none', workspaceAnimationDuration: '0s'
@@ -183,6 +193,8 @@ test('writes Electron PNG bytes for the workspace and a real navigation interact
                 appTitle: 'Brightdesk Pages', hasMain: true, hasWorkspace: true,
                 workspaceVisible: true, bodyTextLength: 120, visibleBrokenImages: 0,
                 productWindow: true, welcomeHidden: true, ribbonTabCount: 5,
+    appTitleVisible: true,
+    visibleRibbonTabCount: 5,
                 launchAppId: 'pages', productEyebrow: 'PRODUCT WORKSPACE',
                 viewport: { width: 1440, height: 900 }, reducedMotion: false,
                 workspaceAnimationName: 'bd-motion-enter', workspaceAnimationDuration: '180ms'
