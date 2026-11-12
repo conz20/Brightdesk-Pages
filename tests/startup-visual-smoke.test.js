@@ -91,10 +91,10 @@ test('renderer probe waits for the product window shell and rendered ribbon, not
 test('renderer probe waits for visible local images before checking for broken assets', () => {
   const source = createReadinessScript('Brightdesk Pages');
   assert.match(source, /waitForVisibleImages/);
-  assert.match(source, /image\\.addEventListener\\('load'/);
-  assert.match(source, /image\\.addEventListener\\('error'/);
+  assert.ok(source.includes("image.addEventListener('load'"));
+  assert.ok(source.includes("image.addEventListener('error'"));
   assert.match(source, /1500/);
-  assert.match(source, /await waitForVisibleImages\\(\\)/);
+  assert.ok(source.includes('await waitForVisibleImages()'));
   assert.ok(source.indexOf('await waitForVisibleImages()') < source.indexOf('const visibleBrokenImages'));
 });
 
