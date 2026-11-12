@@ -8,6 +8,7 @@ const { createHash } = require('node:crypto');
 
 const root = path.resolve(__dirname, '..');
 const helperPath = path.join(root, 'src/vendor/brightdesk-common-libs/json-storage.js');
+const provenancePath = path.join(root, 'src/vendor/brightdesk-common-libs/UPSTREAM.json');
 const expectedGitBlobSha = 'c32eed522d283bcf24aeda25729c79f655b37497';
 const loadStorage = () => require(helperPath);
 
@@ -16,6 +17,17 @@ test('vendored JSON storage file matches the pinned Common-Libs Git blob', () =>
   const header = Buffer.from('blob ' + source.length + '\0');
   const actual = createHash('sha1').update(Buffer.concat([header, source])).digest('hex');
   assert.equal(actual, expectedGitBlobSha);
+});
+
+test('vendored provenance records the exact upstream Common-Libs revision', () => {
+  const upstream = JSON.parse(fs.readFileSync(provenancePath, 'utf8'));
+  assert.deepEqual(upstream, {
+    repository: 'conz20/Brightdesk-Common-Libs',
+    commit: '5adecbc4d1e4236a1587bd295addeb706f1aab86',
+    sourcePath: 'src/browser/json-storage.js',
+    apiVersion: '0.1',
+    gitBlobSha: expectedGitBlobSha
+  });
 });
 
 test('local renderer loads the vendored helper before app.js', () => {
