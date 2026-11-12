@@ -18,9 +18,9 @@ test('Brightdesk Pages has the correct desktop product identity', () => {
 
 test('main process validates the selected product ID against its defined product names', () => {
   const main = fs.readFileSync(path.resolve(__dirname, '..', 'src', 'main.js'), 'utf8');
-  assert.match(main, /const productNames = \\{/);
-  assert.match(main, /const supportedProducts = new Set\\(Object\\.keys\\(productNames\\)\\);/);
-  assert.doesNotMatch(main, /\\bPRODUCT_SLUGS\\b/);
+  assert.ok(main.includes('const productNames = {'));
+  assert.ok(main.includes('const supportedProducts = new Set(Object.keys(productNames));'));
+  assert.equal(main.includes('PRODUCT_SLUGS'), false);
 });
 
 test('Brightdesk Pages installer package is configured for Pages only', () => {
