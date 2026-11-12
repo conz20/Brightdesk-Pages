@@ -83,20 +83,20 @@ function createCheckRunPayload({
 
 function validateEnvironment(env) {
   const repository = env.GITHUB_REPOSITORY || '';
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) ||
-      !env.GITHUB_SHA || !/^[a-f0-9]{40}$/.test(env.GITHUB_SHA) ||
-      !/^\d+$/.test(env.GITHUB_RUN_ID || '') ||
+  const headSha = env.BRIGHTDESK_VISUAL_HEAD_SHA || env.GITHUB_SHA || '';
+  if (!/^[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+$/.test(repository) ||
+      !/^[a-f0-9]{40}$/.test(headSha) ||
+      !/^\\d+$/.test(env.GITHUB_RUN_ID || '') ||
       !env.GITHUB_TOKEN) {
     throw new Error('Missing or invalid GitHub Actions repository, commit, run ID or token context.');
   }
   return {
     repository,
-    headSha: env.GITHUB_SHA,
+    headSha,
     runId: env.GITHUB_RUN_ID,
     token: env.GITHUB_TOKEN
   };
 }
-
 async function convertPngToJpeg(inputPath, outputPath, {
   execFileSyncImpl = execFileSync,
   readFileImpl = fs.readFile

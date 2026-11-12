@@ -44,6 +44,7 @@ jobs:
       - name: Publish compressed screenshots without Actions artifacts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRIGHTDESK_VISUAL_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/publish-visual-evidence-checks.js
 
   build:

@@ -6,8 +6,43 @@ const {
   splitBase64,
   createEvidenceSummary,
   createCheckRunPayload,
-  assertValidPng
+  assertValidPng,
+  validateEnvironment
 } = require('../scripts/publish-visual-evidence-checks');
+
+test('pins visual evidence to the pull request source head instead of the synthetic merge SHA', () => {
+  const context = validateEnvironment({
+    GITHUB_REPOSITORY: 'conz20/Brightdesk-Pages',
+    GITHUB_SHA: 'a'.repeat(40),
+    BRIGHTDESK_VISUAL_HEAD_SHA: 'b'.repeat(40),
+    GITHUB_RUN_ID: '43219279497',
+    GITHUB_TOKEN: 'test-token'
+  });
+
+  assert.equal(context.headSha, 'b'.repeat(40));
+  assert.equal(context.runId, '43219279497');
+});
+
+test('uses the selected branch SHA for workflow dispatch when no pull request head exists', () => {
+  const context = validateEnvironment({
+    GITHUB_REPOSITORY: 'conz20/Brightdesk-Pages',
+    GITHUB_SHA: 'c'.repeat(40),
+    GITHUB_RUN_ID: '43219279500',
+    GITHUB_TOKEN: 'test-token'
+  });
+
+  assert.equal(context.headSha, 'c'.repeat(40));
+});
+
+test('rejects an invalid explicit visual evidence head SHA', () => {
+  assert.throws(() => validateEnvironment({
+    GITHUB_REPOSITORY: 'conz20/Brightdesk-Pages',
+    GITHUB_SHA: 'a'.repeat(40),
+    BRIGHTDESK_VISUAL_HEAD_SHA: 'not-a-commit',
+    GITHUB_RUN_ID: '43219279501',
+    GITHUB_TOKEN: 'test-token'
+  }), /Missing or invalid GitHub Actions repository, commit, run ID or token context/);
+});
 
 test('splits compressed image data into ordered, reassemblable check-run chunks', () => {
   const original = Buffer.alloc(110000);
