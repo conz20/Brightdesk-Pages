@@ -33,9 +33,9 @@ test('controller grants only read access through the default workflow token', ()
 
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 5);
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 6);
   assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 3);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 4);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
@@ -61,7 +61,7 @@ test('private diagnostic reporter always runs its local guard after a job failur
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 3);
-  assert.equal((source.match(/available=false/g) || []).length, 3);
+  assert.equal((source.match(/available=false/g) || []).length, 4);
   assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 12);
 });
 
@@ -570,4 +570,21 @@ test('Pages installer workflow uses private runners for build, verification and 
   assert.match(build, /runner: \["self-hosted", "Linux", "X64"\]/);
   assert.match(publish, /runs-on: \[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
   assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+});
+
+
+test('shared language engine checks use a repository-scoped Contents read-only token', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const job = source.split('  shared-language-engine:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.match(job, /if: github\.event_name == 'schedule' \|\| github\.event_name == 'push' \|\| github\.event_name == 'pull_request'/);
+  assert.match(job, /repositories: Brightdesk-Engine/);
+  assert.match(job, /permission-contents: read/);
+  assert.match(job, /repository: conz20\/Brightdesk-Engine/);
+  assert.match(job, /persist-credentials: false/);
+  assert.match(job, /cargo fmt --manifest-path Cargo\.toml --all -- --check/);
+  assert.match(job, /cargo clippy --manifest-path Cargo\.toml --workspace --all-targets --locked -- -D warnings/);
+  assert.match(job, /cargo test --manifest-path Cargo\.toml --workspace --locked/);
+  assert.match(job, /brightdesk-language-native\/Cargo\.toml/);
+  assert.doesNotMatch(job, /actions\/upload-artifact|contents: write|permission-actions: write/);
+  assert.doesNotMatch(job, /cat .*\.log|tee .*\.log/);
 });

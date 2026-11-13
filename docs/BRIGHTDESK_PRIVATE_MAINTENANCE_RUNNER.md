@@ -15,7 +15,7 @@ The workflow expects these two repository-level settings in **Brightdesk-Pages**
 - **Actions variable:** `BRIGHTDESK_APP_ID` — the numeric App ID for the dedicated Brightdesk read-only GitHub App.
 - **Actions secret:** `BRIGHTDESK_APP_PRIVATE_KEY` — the private key PEM for that same GitHub App.
 
-Before adding them, confirm the GitHub App is installed for the `conz20` account and can access these ten private repositories:
+Before adding them, confirm the GitHub App is installed for the `conz20` account and can access the ten private product repositories and the shared Engine repository:
 
 - Brightdesk-suite
 - Brightdesk-Sheets
@@ -27,10 +27,11 @@ Before adding them, confirm the GitHub App is installed for the `conz20` account
 - Brightdesk-Planner
 - Brightdesk-To-Do
 - Brightdesk-Workspace
+- Brightdesk-Engine (shared spelling and language engine; read-only verification only)
 
 For a selected-repository installation, add Lists, Planner, To Do and Workspace to the installation's repository access list. Keep the permission scope at **Contents: Read-only**; no broader repository permissions are needed for checkout and tests.
 
-The App must have **Contents: Read-only** permission for those repositories. Do not grant Contents write, Administration, Actions write, Secrets, or signing-related permissions for this maintenance workflow.
+The App must have **Contents: Read-only** permission for those repositories. For a selected-repository installation, add **Brightdesk-Engine** to the installation's repository access list as well. The existing `BRIGHTDESK_APP_ID` variable and `BRIGHTDESK_APP_PRIVATE_KEY` secret are reused; do not create a second App or replace the key. Do not grant Contents write, Administration, Actions write, Secrets, or signing-related permissions for this maintenance workflow.
 
 To configure the repository settings:
 
@@ -60,7 +61,7 @@ If these two settings are already present and the App installation has the requi
 
 ## Run the checks
 
-Pull-request changes validate the controller automatically on the private Mac runner. The daily schedule runs the private-project checks when the required GitHub App settings and repository access are configured. Do not manually dispatch installer builds as a substitute for native platform acceptance.
+Pull-request changes validate the controller automatically on the private Mac runner. The daily schedule runs the private-project checks and the shared language-engine verification when the required GitHub App settings and repository access are configured. The engine job requests a separate short-lived token restricted to `Brightdesk-Engine` with **Contents: Read-only**. It checks Rust formatting, Clippy, unit tests and compilation of the native Node-API crate; it does not copy source into product repositories or publish build output. Do not manually dispatch installer builds as a substitute for native platform acceptance.
 
 The workflow also runs daily. A trusted push to the controller on `main` triggers the same ten-repository daily checks, while pull-request events validate the controller only and do not check out private projects. Its weekly schedule builds and verifies configured Windows, macOS and Linux packages after the daily checks pass. All jobs use repository-scoped self-hosted runners; no GitHub-hosted `*-latest` runners are selected. The Windows, macOS and Linux platform jobs remain queued until the matching runner is registered and online for the Brightdesk-Pages repository.
 
@@ -74,7 +75,7 @@ Changes to the controller must be reviewed before merging. The GitHub App should
 
 ## Limits
 
-- The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to all ten private repositories.
+- The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to the ten product repositories and Brightdesk-Engine.
 - It checks code, dependencies, release readiness and whether the existing package build/verification scripts succeed. It does not install each package into a real Windows, macOS or Linux machine, launch the installed app, or verify uninstall cleanup yet.
 - This first controller does not write code, create update pull requests, respond to `/ai` comments in private repositories or publish user releases.
 - Controller validation and daily orchestration require the Brightdesk-Pages repository's private Mac runner with labels `self-hosted`, `macOS`, `ARM64`.

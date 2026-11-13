@@ -156,6 +156,76 @@ jobs:
             echo "No private Suite diagnostic report is required for this job."
           fi
 
+  shared-language-engine:
+    name: Verify shared Brightdesk language engine
+    if: github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'pull_request'
+    runs-on: [self-hosted, macOS, ARM64]
+    timeout-minutes: 35
+    steps:
+      - name: Check out the Brightdesk Pages controller
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          path: controller
+      - name: Check whether read-only GitHub App credentials are configured
+        id: engine-token
+        shell: bash
+        env:
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Shared language engine checks are paused until the Brightdesk read-only App credentials are configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Create a short-lived Contents read-only token for Brightdesk Engine
+        id: engine-app-token
+        if: steps.engine-token.outputs.available == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: conz20
+          repositories: Brightdesk-Engine
+          permission-contents: read
+      - name: Check out the shared language engine
+        if: steps.engine-token.outputs.available == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: conz20/Brightdesk-Engine
+          ref: main
+          token: ${{ steps.engine-app-token.outputs.token }}
+          path: engine
+          persist-credentials: false
+      - name: Install the pinned Rust toolchain
+        if: steps.engine-token.outputs.available == 'true'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
+      - name: Verify the shared engine and Node-API crate without exposing source logs
+        if: steps.engine-token.outputs.available == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG_FILE="$RUNNER_TEMP/brightdesk-shared-language-engine.log"
+          cd engine
+          run_check() {
+            local stage="$1"
+            shift
+            if "$@" >> "$LOG_FILE" 2>&1; then
+              echo "Passed: $stage"
+            else
+              local status=$?
+              echo "::error title=Shared language engine check failed::Failed during $stage (exit code $status). Detailed output remains on the private runner."
+              exit "$status"
+            fi
+          }
+          run_check "Rust formatting" cargo fmt --manifest-path Cargo.toml --all -- --check
+          run_check "Rust Clippy" cargo clippy --manifest-path Cargo.toml --workspace --all-targets --locked -- -D warnings
+          run_check "Rust unit tests" cargo test --manifest-path Cargo.toml --workspace --locked
+          run_check "Native Node-API crate compilation" cargo build --manifest-path crates/brightdesk-language-native/Cargo.toml --release --locked
   suite-one-time-installer-smoke-tests:
     name: Build Brightdesk Suite for ${{ matrix.platform }}
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]')
