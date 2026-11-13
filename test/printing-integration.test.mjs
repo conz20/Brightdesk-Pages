@@ -267,3 +267,14 @@ test("shows safe configured-printer capability details and unknown values honest
   assert.match(app, /textContent/);
   assert.match(app, /await refreshConfiguredPrinters\(\)/);
 });
+
+test("private self-hosted pull-request jobs do not execute fork-controlled code", () => {
+  const guard = "if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository";
+  const workflows = [
+    ".github/workflows/desktop-installers.yml",
+    ".github/workflows/readme-freshness.yml",
+  ];
+  for (const file of workflows) {
+    assert.ok(read(file).includes(guard), file + " must restrict self-hosted PR execution to this repository");
+  }
+});
