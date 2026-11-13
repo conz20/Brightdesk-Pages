@@ -15,7 +15,7 @@ The workflow expects these two repository-level settings in **Brightdesk-Pages**
 - **Actions variable:** `BRIGHTDESK_APP_ID` — the numeric App ID for the dedicated Brightdesk read-only GitHub App.
 - **Actions secret:** `BRIGHTDESK_APP_PRIVATE_KEY` — the private key PEM for that same GitHub App.
 
-Before adding them, confirm the GitHub App is installed for the `conz20` account and can access these ten private repositories:
+Before adding them, confirm the GitHub App is installed for the `conz20` account and can access the ten private product repositories and the shared Engine repository:
 
 - Brightdesk-suite
 - Brightdesk-Sheets
