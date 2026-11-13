@@ -159,3 +159,6 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+## Private self-hosted CI
+
+Pull-request workflows that use owner-operated runners run only for changes made in this repository. Pull requests from forks are not executed on these private computers.
