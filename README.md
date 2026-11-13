@@ -151,3 +151,8 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+
+
+## Customer Help
+
+The desktop header includes a **Help** link. It opens the Brightdesk Pages customer guide. Help opens in the customer's normal browser. The customer help website is not yet published, so this link is not ready for customer release. Brightdesk remains usable offline; no document or product data is sent when Help is opened.
