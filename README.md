@@ -122,7 +122,7 @@ The checked-in copy is loaded locally before the renderer. It is not fetched fro
 
 ## Customer network policy
 
-Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
+Once installed, this product uses the internet for official Brightdesk updates. When a customer selects Help, it opens the official read-only Brightdesk Help website in the normal browser; no document or product data is sent, and the connection is not made until Help is selected. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
 
 
 ## Individual product window
@@ -151,3 +151,8 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+
+
+## Customer Help
+
+The left sidebar includes a small, discreet **Help** link near the bottom. It opens the Brightdesk Pages guide at the reserved address `https://help.brightdesk.com/products/pages.html` in the customer's normal browser. The website is not live or verified yet, so this draft must not be released until the production address and all customer pages have been verified. The Wiki is updated independently: approved guide changes appear the next time a customer opens Help and do not require a Brightdesk installer update. Opening Help sends no document or product data.
