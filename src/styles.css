@@ -478,3 +478,9 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
     height: auto !important;
   }
 }
+
+@media print {
+  #brightdesk-print-root[data-app="slides"] .brightdesk-print-slide {
+    background: #fff !important;
+  }
+}
