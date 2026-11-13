@@ -576,7 +576,7 @@ test('Pages installer workflow uses private runners for build, verification and 
 test('shared language engine checks use a repository-scoped Contents read-only token', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const job = source.split('  shared-language-engine:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
-  assert.match(job, /if: github\.event_name == 'schedule' \|\| github\.event_name == 'push'/);
+  assert.match(job, /if: github\.event_name == 'schedule' \|\| github\.event_name == 'push' \|\| github\.event_name == 'pull_request'/);
   assert.match(job, /repositories: Brightdesk-Engine/);
   assert.match(job, /permission-contents: read/);
   assert.match(job, /repository: conz20\/Brightdesk-Engine/);
