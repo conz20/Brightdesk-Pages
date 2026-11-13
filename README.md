@@ -105,9 +105,15 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. For failed Suite tests, a separate Issues-only token can post bounded failing-test names to the private Suite maintenance issue. One-time Suite installer checks build Windows, macOS and Linux packages, verify expected files and SHA-256 checksums, then perform temporary native install, startup and uninstall checks. The launch check sets `BRIGHTDESK_STARTUP_SMOKE_TEST=1`; the installed desktop runtime validates its packaged version, protected terms and default language resources, loads its actual hidden main window, checks the required navigation panels, and exits with a result code. Launch checks fail if the process exits unsuccessfully or exceeds the platform timeout. For installer failures, a separate Suite-only Issues token can post only the platform, approved failed stage, exit code and allow-listed diagnostic details to the private issue. Raw logs, source files, file paths, stack traces, credentials and installer binaries are not published in this repository; build files remain on ephemeral runners.
 
+AI-specific validation is owned by the private [Brightdesk-AI repository](https://github.com/connormolloy12/Brightdesk-AI). This product repository keeps only its product build, test and private project-maintenance checks; it does not contain AI models, prompts, agents or AI control-plane implementation.
+
 ## Identity and licence
 
 Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+
+## Word-processing reference study
+
+The [Wordcraft reference study and Brightdesk Pages roadmap](docs/WORDCRAFT_REFERENCE_AND_PAGES_ROADMAP.md) records feature research, the current verified first-use scope, proposed priorities, acceptance evidence and licensing boundaries. It is a development roadmap, not a claim of Wordcraft parity or completed advanced features.
 
 ## Documentation freshness
 
