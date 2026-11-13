@@ -35,7 +35,7 @@ test('private checkout tokens remain read-only and diagnostic token is issue-onl
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 5);
   assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 3);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 4);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
@@ -61,7 +61,7 @@ test('private diagnostic reporter always runs its local guard after a job failur
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 3);
-  assert.equal((source.match(/available=false/g) || []).length, 3);
+  assert.equal((source.match(/available=false/g) || []).length, 4);
   assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 12);
 });
 
