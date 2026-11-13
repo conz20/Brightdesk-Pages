@@ -1097,7 +1097,7 @@ async function pairNetworkPrinter(printer, actionButton) {
       return;
     }
     if (result?.refreshRequired) {
-      await window.brightdesk.printing.listPrinters();
+      await refreshConfiguredPrinters();
       $('network-printer-status').textContent = result.status === 'already-paired' ? t('printing.alreadyPaired') : t('printing.paired');
     } else {
       $('network-printer-status').textContent = t('printing.pairFailed');
