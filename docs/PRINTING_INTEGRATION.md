@@ -16,16 +16,7 @@ and open the operating system's print dialog.
 
 ## Printer workflow
 
-Pages lists printers already configured by the operating system, offers
-separate network discovery and printer-settings actions, and submits print
-requests through Electron's visible operating-system print dialog. The user
-must choose and approve any pairing, queue setup or driver installation.
-Brightdesk does not silently add queues or install printer drivers.
-
-A network discovery result is marked as discovered, not ready to print. Pages
-only offers printing to a configured operating-system queue. Successful
-submission means the operating system accepted the job; it does not prove that
-a physical page was printed.
+Pages lists configured operating-system queues and submits print requests through Electron's visible operating-system print dialog. Printer settings opens the operating system's printer setup screen. The current renderer does not expose network discovery, WSD pairing or capability lookup as customer-facing actions; those methods are present only in the protected bridge. Users must add a discovered printer through operating-system settings before it becomes a usable queue. Successful submission means the operating system accepted the job; it does not prove that a physical page was printed.
 
 ## Platform integration
 
