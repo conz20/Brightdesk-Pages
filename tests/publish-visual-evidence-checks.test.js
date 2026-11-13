@@ -102,3 +102,22 @@ test('rejects malformed or dimensionless PNG captures before encoding', () => {
   dimensionless.writeUInt32BE(0, 16);
   assert.throws(() => assertValidPng(dimensionless), /valid PNG/);
 });
+
+test('rejects malformed repository slugs and nonnumeric workflow run IDs', () => {
+  const validContext = {
+    GITHUB_REPOSITORY: 'conz20/Brightdesk-Pages',
+    GITHUB_SHA: 'a'.repeat(40),
+    GITHUB_RUN_ID: '43219279497',
+    GITHUB_TOKEN: 'test-token'
+  };
+
+  assert.throws(() => validateEnvironment({
+    ...validContext,
+    GITHUB_REPOSITORY: 'conz20/Brightdesk Pages'
+  }), /Missing or invalid GitHub Actions repository, commit, run ID or token context/);
+
+  assert.throws(() => validateEnvironment({
+    ...validContext,
+    GITHUB_RUN_ID: 'not-a-run'
+  }), /Missing or invalid GitHub Actions repository, commit, run ID or token context/);
+});

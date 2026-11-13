@@ -84,9 +84,9 @@ function createCheckRunPayload({
 function validateEnvironment(env) {
   const repository = env.GITHUB_REPOSITORY || '';
   const headSha = env.BRIGHTDESK_VISUAL_HEAD_SHA || env.GITHUB_SHA || '';
-  if (!/^[A-Za-z0-9_.-]+\\/[A-Za-z0-9_.-]+$/.test(repository) ||
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository) ||
       !/^[a-f0-9]{40}$/.test(headSha) ||
-      !/^\\d+$/.test(env.GITHUB_RUN_ID || '') ||
+      !/^\d+$/.test(env.GITHUB_RUN_ID || '') ||
       !env.GITHUB_TOKEN) {
     throw new Error('Missing or invalid GitHub Actions repository, commit, run ID or token context.');
   }
