@@ -39,3 +39,39 @@ test("all built-in language packs include printing action labels", () => {
     assert.ok(pack.translations["top.printerSettings"].length > 0);
   }
 });
+
+test("the Pages print snapshot includes both platform-native discovery helpers", () => {
+  for (const file of [
+    "src/printing-package/native/macos/ipp-printer-discovery.swift",
+    "src/printing-package/native/windows/ipp-printer-discovery.cpp",
+    "src/printing-package/tools/build-macos-printer-discovery.sh",
+    "src/printing-package/tools/build-windows-printer-discovery.ps1",
+  ]) {
+    assert.ok(fs.existsSync(path.resolve(process.cwd(), file)), file);
+    assert.ok(fs.statSync(path.resolve(process.cwd(), file)).size > 0, file);
+  }
+});
+
+test("Pages builds native discovery for its host and unpacks the executables", () => {
+  const pkg = JSON.parse(read("package.json"));
+  const buildScript = read("scripts/build-printing-native.js");
+  assert.match(buildScript, /build-macos-printer-discovery\.sh/);
+  assert.match(buildScript, /build-windows-printer-discovery\.ps1/);
+  assert.match(buildScript, /process\.platform/);
+  for (const target of [
+    "src/printing-package/native/macos/brightdesk-ipp-discovery",
+    "src/printing-package/native/windows/brightdesk-ipp-discovery.exe",
+  ]) assert.ok(pkg.build.asarUnpack.includes(target), target);
+});
+
+test("Pages desktop bundles declare Bonjour and local-network permission metadata", () => {
+  const pkg = JSON.parse(read("package.json"));
+  assert.deepEqual(pkg.build.mac.extendInfo.NSBonjourServices, [
+    "_ipp._tcp", "_ipps._tcp", "_printer._tcp"
+  ]);
+  assert.match(pkg.build.mac.extendInfo.NSLocalNetworkUsageDescription, /printer/i);
+  const config = read("electron-builder.app.config.js");
+  const macConfig = config.slice(config.indexOf("  mac: {"), config.indexOf("  pkg: {"));
+  assert.match(macConfig, /NSBonjourServices/);
+  assert.match(macConfig, /NSLocalNetworkUsageDescription/);
+});
