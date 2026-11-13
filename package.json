@@ -15,11 +15,11 @@
     "check:node": "node scripts/check-node24.js",
     "start": "electron .",
     "test": "node --test",
-    "dist": "npm run verify:licenses && electron-builder --publish never",
-    "dist:win": "npm run verify:licenses && electron-builder --win nsis --x64 --publish never",
-    "dist:mac": "npm run verify:licenses && electron-builder --mac dmg pkg zip --universal --publish never",
-    "dist:linux": "npm run verify:licenses && electron-builder --linux AppImage deb --x64 --publish never",
-    "release": "npm run verify:licenses && electron-builder --publish never",
+    "dist": "npm run build:printing-native && npm run verify:licenses && electron-builder --publish never",
+    "dist:win": "npm run build:printing-native && npm run verify:licenses && electron-builder --win nsis --x64 --publish never",
+    "dist:mac": "npm run build:printing-native && npm run verify:licenses && electron-builder --mac dmg pkg zip --universal --publish never",
+    "dist:linux": "npm run build:printing-native && npm run verify:licenses && electron-builder --linux AppImage deb --x64 --publish never",
+    "release": "npm run build:printing-native && npm run verify:licenses && electron-builder --publish never",
     "verify:licenses": "node scripts/verify-licenses.js",
     "postinstall": "npm run verify:licenses",
     "release:preflight": "node scripts/release-preflight.js",
@@ -31,12 +31,13 @@
     "lock:verify": "node scripts/verify-lockfile.js",
     "setup:dev": "node scripts/setup/bootstrap-dev.js",
     "rea:inspect": "node scripts/brightdesk-rea.js inspect",
-    "dist:desktop:win": "node scripts/build-app.js pages win",
-    "dist:desktop:mac": "node scripts/build-app.js pages mac",
-    "dist:desktop:linux": "node scripts/build-app.js pages linux",
+    "dist:desktop:win": "npm run build:printing-native && node scripts/build-app.js pages win",
+    "dist:desktop:mac": "npm run build:printing-native && node scripts/build-app.js pages mac",
+    "dist:desktop:linux": "npm run build:printing-native && node scripts/build-app.js pages linux",
     "verify:desktop:win": "node scripts/verify-desktop-installers.js win release/apps pages",
     "verify:desktop:mac": "node scripts/verify-desktop-installers.js mac release/apps pages",
-    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages"
+    "verify:desktop:linux": "node scripts/verify-desktop-installers.js linux release/apps pages",
+    "build:printing-native": "node scripts/build-printing-native.js"
   },
   "dependencies": {
     "docx": "9.15.1",
@@ -92,7 +93,15 @@
         "zip"
       ],
       "category": "public.app-category.productivity",
-      "artifactName": "Brightdesk-${version}-${arch}.${ext}"
+      "artifactName": "Brightdesk-${version}-${arch}.${ext}",
+      "extendInfo": {
+        "NSBonjourServices": [
+          "_ipp._tcp",
+          "_ipps._tcp",
+          "_printer._tcp"
+        ],
+        "NSLocalNetworkUsageDescription": "Brightdesk Pages uses your local network to discover printers you choose to use."
+      }
     },
     "dmg": {
       "sign": false
@@ -113,7 +122,11 @@
       "welcome": "installer/mac-welcome.txt",
       "conclusion": "installer/mac-conclusion.txt",
       "installLocation": "/Applications"
-    }
+    },
+    "asarUnpack": [
+      "src/printing-package/native/macos/brightdesk-ipp-discovery",
+      "src/printing-package/native/windows/brightdesk-ipp-discovery.exe"
+    ]
   },
   "brightdeskAppId": "pages"
 }
