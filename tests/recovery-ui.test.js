@@ -40,3 +40,13 @@ test('Pages writes changed recovery snapshots every ten seconds and when leaving
   assert.match(app, /window\.addEventListener\('blur', \(\) => \{ void flushPageRecovery\(\); \}\)/);
   assert.match(app, /document\.visibilityState === 'hidden'\) void flushPageRecovery\(\)/);
 });
+
+
+test('Pages recovery includes document style-set and watermark metadata', () => {
+  const app = read('app.js');
+  const service = read('recovery-service.js');
+  assert.match(app, /styleSet: pagesStyleSets\.normalizeStyleSet\(doc\.styleSet\)/);
+  assert.match(app, /watermark: pagesStyleSets\.normalizeWatermark\(doc\.watermark\)/);
+  assert.match(service, /styleSet: normalizeStyleSet\(value\.styleSet\)/);
+  assert.match(service, /watermark: normalizeWatermark\(value\.watermark\)/);
+});
