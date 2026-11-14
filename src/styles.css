@@ -431,7 +431,7 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
   background:#fbfbfe;
   color:#33364b;
 }
-.pages-toc h2{
+.pages-toc-title{
   margin:0 0 12px;
   padding:0 0 8px;
   border-bottom:1px solid #e7e8ef;
