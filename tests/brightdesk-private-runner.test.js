@@ -34,7 +34,7 @@ test('controller grants only read access through the default workflow token', ()
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/actions\/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510/g) || []).length, 5);
-  assert.equal((source.match(/client-id: \${{ vars.BRIGHTDESK_APP_ID }}/g) || []).length, 5);
+  assert.equal(source.split('client-id: ${{ vars.BRIGHTDESK_APP_ID }}').length - 1, 5);
   assert.equal((source.match(/^\s*app-id:/gm) || []).length, 0);
   assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
   assert.equal((source.match(/permission-contents: read/g) || []).length, 3);
