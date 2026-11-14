@@ -83,6 +83,14 @@ The Pages Home ribbon includes **Find & Replace** for the active document. Searc
 
 This is an early text-search workflow. Regular-expression search, match highlighting, search across multiple open documents and a dedicated full-size navigation/search pane are not yet included. The feature remains under draft review until its automated tests and real desktop interaction checks pass.
 
+## Multi-page document editing
+
+Pages now lays a document out as a vertical stack of paper pages. Content flows onto the next page at block boundaries, and an **Insert → Page break** command starts a new page at the current paragraph boundary. Page surfaces follow the selected paper size, orientation and margin preset. Temporary page containers are removed from the saved HTML, project data and document export payload, so page layout does not become extra document markup.
+
+PDF export now uses the selected A4, US Letter or US Legal paper size and portrait/landscape orientation. Print layout hides the editing controls and prints the page surfaces with page breaks between them.
+
+This is the first multi-page layout slice, not yet full word-processor pagination. Automatic flow moves whole top-level blocks; it does not split a long paragraph, table or other single block between pages. An oversized block is kept intact and its on-screen page grows so content is not clipped. Section breaks, different page settings per section, draggable page margins and headers/footers remain future work. Real Electron and PDF output checks are still required.
+
 ## Page ruler
 
 The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
