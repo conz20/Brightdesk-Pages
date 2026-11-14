@@ -22,6 +22,8 @@ const STYLE_SETS = Object.freeze({
   })
 });
 const WATERMARKS = Object.freeze(['none', 'draft', 'confidential']);
+const PAGE_COLORS = Object.freeze(['white', 'warm', 'mist']);
+const PAGE_BORDERS = Object.freeze(['none', 'subtle', 'double']);
 
 function normalizeStyleSet(value) {
   return typeof value === 'string' && Object.hasOwn(STYLE_SETS, value)
@@ -33,10 +35,18 @@ function normalizeWatermark(value) {
   return WATERMARKS.includes(value) ? value : 'none';
 }
 
+function normalizePageColor(value) {
+  return PAGE_COLORS.includes(value) ? value : 'white';
+}
+
+function normalizePageBorder(value) {
+  return PAGE_BORDERS.includes(value) ? value : 'subtle';
+}
+
 function getStyleSet(value) {
   return STYLE_SETS[normalizeStyleSet(value)];
 }
 
-const api = { DEFAULT_STYLE_SET, STYLE_SETS, WATERMARKS, normalizeStyleSet, normalizeWatermark, getStyleSet };
+const api = { DEFAULT_STYLE_SET, STYLE_SETS, WATERMARKS, PAGE_COLORS, PAGE_BORDERS, normalizeStyleSet, normalizeWatermark, normalizePageColor, normalizePageBorder, getStyleSet };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.BrightdeskPagesStyleSets = api;
