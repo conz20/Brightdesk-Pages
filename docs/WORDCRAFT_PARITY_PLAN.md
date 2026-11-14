@@ -64,6 +64,7 @@ The feature branch now contains two initial, reviewable implementation slices. T
 | Document design presets | Design tab with Brightdesk, Editorial and Modern preview cards; local Draft and Confidential watermark settings; metadata preserved by local recovery | Pure normalisation and UI integration tests added; exact-head CI and live Electron visual inspection are pending. Full user-editable styles remain future work. |
 | Table of contents | References tab builds a linked contents block from Heading 1–3, assigns safe local heading IDs, updates an existing contents block and preserves only approved internal links during sanitisation | Pure heading-entry tests and UI/security assertions added; exact-head CI pending. Footnotes/citations/bibliography and cross-reference fields remain future work. |
 | Home style gallery | Six visible paragraph-style preview cards for Normal, No Spacing, Heading 1, Title, Heading 2 and Subtitle; Heading 3 remains available as a command | Paragraph style mapping, sanitiser allowlist and responsive gallery styles have regression tests; exact-head CI and running-window visual comparison remain pending. |
+| Read Aloud | Review tab reads the active Pages document using only system voices marked local; supports pause, resume and stop | Text chunking and voice selection have pure tests; live Electron voice availability is platform-dependent and remains unverified. |
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 

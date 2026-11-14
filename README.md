@@ -97,6 +97,12 @@ This is the first multi-page layout slice, not yet full word-processor paginatio
 
 The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
 
+## Read Aloud
+
+The Pages **Review** tab offers Read Aloud controls for the current document. It selects a system voice marked as local by the operating system, supports pause/resume and stop, and splits long documents into manageable sentence-aware sections. Pages does not select online-only speech voices. If the computer has no local voice available, it explains that a local voice must be added in system settings.
+
+Read Aloud depends on the speech voices installed on the computer. Voice and language availability may differ across Windows, macOS and Linux.
+
 ## Table of contents
 
 The Pages **References** tab can insert or update a linked table of contents from Heading 1–3 paragraphs in the current document. It creates internal links to those headings and refreshes the existing contents block when the command is used again. If the document has no usable headings, Pages explains what needs to be added first.

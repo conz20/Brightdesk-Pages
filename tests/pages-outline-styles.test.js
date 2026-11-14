@@ -115,3 +115,17 @@ test('document sanitiser preserves only approved paragraph-style classes', () =>
   assert.ok(app.includes("attr.value === 'pages-doc-no-spacing'"));
   assert.ok(app.includes("attr.value === 'pages-doc-subtitle'"));
 });
+
+
+test('Pages Review exposes local Read Aloud controls and never selects online voices', () => {
+  const app = read('app.js');
+  const html = read('index.html');
+  const helper = read('pages-read-aloud.js');
+  assert.ok(app.includes('function startPagesReadAloud()'));
+  assert.ok(app.includes('function togglePagesReadAloud()'));
+  assert.ok(app.includes('window.speechSynthesis.speak(utterance)'));
+  assert.ok(app.includes("addButton(aloud, 'Read aloud / Pause', togglePagesReadAloud"));
+  assert.ok(app.includes("addButton(aloud, 'Stop', () => stopPagesReadAloud()"));
+  assert.ok(helper.includes('voice && voice.localService === true'));
+  assert.ok(html.includes('<script src="pages-read-aloud.js"></script>'));
+});

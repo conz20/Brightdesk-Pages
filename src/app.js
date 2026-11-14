@@ -46,15 +46,21 @@ let pageRecoveryDirty = false;
 let pageRecoveryHasSnapshot = false;
 let pageRecoveryRevision = 0;
 let pageRecoveryInFlight = null;
+let pagesReadAloudQueue = [];
+let pagesReadAloudIndex = 0;
+let pagesReadAloudVoice = null;
+let pagesReadAloudRunId = 0;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
 const pagePagination = window.BrightdeskPagePagination;
 const pagesStyleSets = window.BrightdeskPagesStyleSets;
 const pagesReferences = window.BrightdeskPagesReferences;
+const pagesReadAloud = window.BrightdeskPagesReadAloud;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
 if (!pagesStyleSets) throw new Error('Brightdesk Pages style-set definitions were not loaded.');
 if (!pagesReferences) throw new Error('Brightdesk Pages references helpers were not loaded.');
+if (!pagesReadAloud) throw new Error('Brightdesk Pages Read Aloud helpers were not loaded.');
 
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
@@ -530,6 +536,86 @@ function setPagesWatermark(watermark) {
   renderToolbar();
 }
 
+function stopPagesReadAloud(updateStatus = true) {
+  pagesReadAloudRunId++;
+  window.speechSynthesis?.cancel();
+  pagesReadAloudQueue = [];
+  pagesReadAloudIndex = 0;
+  pagesReadAloudVoice = null;
+  if (updateStatus) setStatus('Read Aloud stopped.');
+}
+
+function speakNextPagesReadAloud(runId) {
+  if (runId !== pagesReadAloudRunId || state.app !== 'pages') return;
+  if (pagesReadAloudIndex >= pagesReadAloudQueue.length) {
+    pagesReadAloudQueue = [];
+    pagesReadAloudVoice = null;
+    setStatus('Finished reading the document.');
+    return;
+  }
+
+  const utterance = new window.SpeechSynthesisUtterance(pagesReadAloudQueue[pagesReadAloudIndex]);
+  utterance.voice = pagesReadAloudVoice;
+  utterance.lang = pagesReadAloudVoice.lang || state.proofingLanguage || 'en-AU';
+  utterance.onend = () => {
+    if (runId !== pagesReadAloudRunId) return;
+    pagesReadAloudIndex++;
+    speakNextPagesReadAloud(runId);
+  };
+  utterance.onerror = () => {
+    if (runId !== pagesReadAloudRunId) return;
+    stopPagesReadAloud(false);
+    setStatus('Read Aloud stopped because the local voice could not continue.');
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
+function startPagesReadAloud() {
+  if (state.app !== 'pages') return;
+  const speech = window.speechSynthesis;
+  if (!speech || typeof window.SpeechSynthesisUtterance !== 'function') {
+    setStatus('Read Aloud is not available on this computer.');
+    return;
+  }
+
+  const voice = pagesReadAloud.selectLocalVoice(speech.getVoices(), state.proofingLanguage);
+  if (!voice) {
+    setStatus('No local speech voice is available. Add a voice in your system settings and try again.');
+    return;
+  }
+
+  const chunks = pagesReadAloud.splitTextIntoChunks(editor.innerText || '');
+  if (!chunks.length) {
+    setStatus('There is no document text to read yet.');
+    return;
+  }
+
+  stopPagesReadAloud(false);
+  pagesReadAloudQueue = chunks;
+  pagesReadAloudIndex = 0;
+  pagesReadAloudVoice = voice;
+  const runId = ++pagesReadAloudRunId;
+  setStatus(`Reading aloud with ${voice.name} (local voice).`);
+  speakNextPagesReadAloud(runId);
+}
+
+function togglePagesReadAloud() {
+  const speech = window.speechSynthesis;
+  if (!speech) {
+    startPagesReadAloud();
+    return;
+  }
+  if (speech.speaking && !speech.paused) {
+    speech.pause();
+    setStatus('Read Aloud paused.');
+  } else if (speech.paused) {
+    speech.resume();
+    setStatus('Read Aloud resumed.');
+  } else {
+    startPagesReadAloud();
+  }
+}
+
 function createPagesHeadingId() {
   const bytes = new Uint8Array(12);
   window.crypto.getRandomValues(bytes);
@@ -734,6 +820,9 @@ function renderToolbar() {
       const review = group('proofing');
       addButton(review, label('wordCount'), () => { const count = (editor.innerText.trim().match(/\S+/g) || []).length; setStatus(`${count} ${t('common.words')}`); });
       addButton(review, label('spellCheck'), () => { editor.spellcheck = !editor.spellcheck; setStatus(`Spell check ${editor.spellcheck ? 'on' : 'off'}`); });
+      const aloud = group('Read Aloud');
+      addButton(aloud, 'Read aloud / Pause', togglePagesReadAloud, 'Start, pause or resume using a local system voice only');
+      addButton(aloud, 'Stop', () => stopPagesReadAloud(), 'Stop reading the document');
     } else {
       const view = group('zoom');
       addButton(view, label('zoomOut'), () => changeEditorZoom(-10)); addButton(view, '100%', () => { state.editorZoom = 100; applyEditorZoom(); }); addButton(view, label('zoomIn'), () => changeEditorZoom(10));
@@ -1771,9 +1860,9 @@ function importProject(data){
   state.app=kind; state.ribbonTab='home';
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-async function openFile(){try{const data=await window.brightdesk.openFile();if(!data)return;importProject(data);persist();render();setStatus('File opened');}catch(error){alert(`Could not open file: ${error.message}`);}}
+async function openFile(){try{const data=await window.brightdesk.openFile();if(!data)return;stopPagesReadAloud(false);importProject(data);persist();render();setStatus('File opened');}catch(error){alert(`Could not open file: ${error.message}`);}}
 async function saveProject(){try{const result=await window.brightdesk.saveProject({title:$('doc-title').value,docs:state.docs});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Project saved');}}catch(error){alert(`Could not save project: ${error.message}`);}}
-function setApp(app){if((launchAppId && app !== launchAppId) || !(configs[app] || genericConfigs[app]) || !installedApp(app))return;state.app=app;state.view='workspace';state.ribbonTab='home';render();persist();}
+function setApp(app){if((launchAppId && app !== launchAppId) || !(configs[app] || genericConfigs[app]) || !installedApp(app))return;if(state.app==='pages'&&app!=='pages')stopPagesReadAloud(false);state.app=app;state.view='workspace';state.ribbonTab='home';render();persist();}
 
 document.querySelectorAll('.nav[data-app]').forEach(btn=>btn.addEventListener('click',()=>setApp(btn.dataset.app)));
 $('manage-apps').addEventListener('click',()=>{if (launchAppId) return; state.view='manager';render();});
@@ -1816,6 +1905,7 @@ $('pages-replace-one').addEventListener('click', replaceCurrentPagesMatch);
 $('pages-replace-all').addEventListener('click', replaceAllPagesMatches);
 $('recovery-open').addEventListener('click',async()=>{
   if(!recoveryCandidate)return;
+  stopPagesReadAloud(false);
   try{
     const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
     if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
@@ -1910,6 +2000,7 @@ productSidebarToggle?.addEventListener('click', () => {
 window.addEventListener('resize', syncSidebarDensity);
 syncSidebarDensity();
 window.setInterval(() => { void flushPageRecovery(); }, 10000);
+window.addEventListener('beforeunload', () => stopPagesReadAloud(false));
 window.addEventListener('blur', () => { void flushPageRecovery(); });
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flushPageRecovery(); });
 
