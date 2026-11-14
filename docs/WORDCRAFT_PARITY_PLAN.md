@@ -1,6 +1,6 @@
 # Brightdesk Pages — WordCraft Reference and Parity Plan
 
-**Status:** Baseline audit complete; local recovery, document navigation, paragraph styles, Find & Replace and a metric page ruler are on this draft feature branch and await automated verification and live visual review.  
+**Status:** Baseline audit complete; local recovery, document navigation, paragraph styles, Find & Replace, a metric page ruler and an initial multi-page print-layout canvas are on this draft feature branch and await automated verification and live visual review.  
 **Reference reviewed:** Craft Wiki WordCraft pages supplied by the product owner  
 **Target repository:** `conz20/Brightdesk-Pages`  
 **Target product:** Brightdesk Pages  
@@ -60,12 +60,15 @@ The feature branch now contains two initial, reviewable implementation slices. T
 | Paragraph styles | Home ribbon shortcuts apply Normal, Title, Heading 1 and Heading 2 block formatting | Static regression test added; this is not yet a full style manager or live style-preview engine. |
 | Find & Replace | Local document search, Find next, Replace and Replace all; match-case and whole-word options; matches across inline runs in a paragraph | Pure search helper and UI regression tests added; exact-head CI and live desktop interaction checks pending. Regular expressions, match highlighting and cross-document search are not included. |
 | Page ruler | Optional metric ruler aligned to the selected paper size/orientation, with half-centimetre ticks, labels and shaded margin areas | Pure ruler-scale and UI tests added; draggable markers are not included; exact-head CI and live desktop visual inspection pending. |
+| Multi-page editing | Vertically stacked paper surfaces; whole-block automatic flow; explicit paragraph-boundary page breaks; selected page size and orientation carried into PDF export | Pure block-packing and UI regression tests added; long individual blocks are not split and can extend a page. Electron interaction and actual PDF output checks are pending. |
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
 ## Feature target derived from the eight supplied guides
 
 ### 1. Overview and everyday writing
+
+**Multi-page editing slice on the draft branch:** Pages now groups content into vertically stacked paper surfaces using measured top-level block heights, automatically moves following blocks to the next page when they no longer fit, and preserves explicit **Insert → Page break** markers. Page wrappers are transient: document HTML stored in local state and exports is flattened back to the original content blocks. PDF export receives the selected A4/Letter/Legal size and portrait/landscape setting, and print CSS isolates the page surfaces. This is not yet full paginated word-processing: a single long paragraph, table or other oversized block is kept intact and may extend its page rather than being split. Page sections, headers/footers and draggable margins are not yet implemented. Exact-head CI, real Electron interaction and visual PDF inspection remain outstanding.
 
 **First ruler slice on the draft branch:** the Pages View tab now has an accessible Show ruler toggle. It renders a horizontal centimetre scale for the selected paper width and orientation, with half-centimetre ticks and shaded page margins. The scale recalculates when page settings change. It is a visual measuring aid only; draggable margin/indent markers and vertical rulers remain planned. Tests cover metric and inch scale calculations and the View toggle, but the exact-head checks and live desktop visual review are still outstanding.
 
