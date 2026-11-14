@@ -7,6 +7,7 @@ const crypto = require('node:crypto');
 const { normalizePageLayout } = require('./page-layout');
 
 const MAX_RECOVERY_HTML_BYTES = 10 * 1024 * 1024;
+const MAX_RECOVERY_FILE_BYTES = MAX_RECOVERY_HTML_BYTES * 6 + 16 * 1024;
 const MAX_RECOVERY_TITLE_BYTES = 1000;
 const RECOVERY_ID_PATTERN = /^[a-z0-9][a-z0-9_-]{0,63}$/;
 
@@ -71,6 +72,9 @@ class RecoveryService {
     const beforeOpen = await fs.lstat(filePath);
     if (beforeOpen.isSymbolicLink() || !beforeOpen.isFile()) {
       throw new Error('Recovery snapshot must be a regular file, not a symbolic link.');
+    }
+    if (beforeOpen.size <= 0 || beforeOpen.size > MAX_RECOVERY_FILE_BYTES) {
+      throw new Error('Recovery snapshot is empty or exceeds its file-size limit.');
     }
 
     let handle;
@@ -162,4 +166,4 @@ class RecoveryService {
   }
 }
 
-module.exports = { RecoveryService, MAX_RECOVERY_HTML_BYTES, assertRecoveryId, validateSnapshot };
+module.exports = { RecoveryService, MAX_RECOVERY_HTML_BYTES, MAX_RECOVERY_FILE_BYTES, assertRecoveryId, validateSnapshot };
