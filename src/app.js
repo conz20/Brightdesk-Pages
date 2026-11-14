@@ -40,6 +40,11 @@ const state = {
   displayLanguage: 'en-AU', proofingLanguage: 'en-AU',
   installedDictionaries: [], dictionaryCatalogue: [], selectedDictionary: localStorage.getItem('brightdesk-selected-dictionary') || ''
 };
+let recoveryCandidate = null;
+let recoveryDismissed = false;
+let pageRecoveryDirty = false;
+let pageRecoveryRevision = 0;
+let pageRecoveryInFlight = null;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
 const commonJsonStorage = window.BrightdeskCommonLibs;
@@ -48,9 +53,82 @@ if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was no
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
 function setStatus(message) { $('save-status').textContent = message; }
+function markPageRecoveryDirty() {
+  const doc = state.docs.pages;
+  if (state.app !== 'pages' || !doc) return;
+  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title) return;
+  pageRecoveryDirty = true;
+  pageRecoveryRevision++;
+}
+function renderRecoveryBanner() {
+  const banner = $('recovery-banner');
+  if (!banner) return;
+  const visible = state.view === 'workspace' && state.app === 'pages' && Boolean(recoveryCandidate) && !recoveryDismissed;
+  banner.hidden = !visible;
+  if (!visible) return;
+  const savedAt = new Date(recoveryCandidate.savedAt);
+  const dateText = Number.isNaN(savedAt.getTime()) ? 'Saved previously' : `Saved ${savedAt.toLocaleString()}`;
+  $('recovery-summary').textContent = `${recoveryCandidate.title} · ${dateText}. This copy is stored only on this device.`;
+}
+async function refreshRecoveryCandidate() {
+  if (!window.brightdesk.listRecoveries) return;
+  try {
+    const snapshots = await window.brightdesk.listRecoveries();
+    recoveryCandidate = snapshots.find(item => item.productId === 'pages') || null;
+    recoveryDismissed = false;
+    renderRecoveryBanner();
+  } catch (error) {
+    console.warn('Local recovery copies could not be checked.', error);
+  }
+}
+async function flushPageRecovery() {
+  if (!pageRecoveryDirty || pageRecoveryInFlight || state.app !== 'pages' || !window.brightdesk.saveRecovery) return;
+  const doc = state.docs.pages || defaults.pages;
+  const revision = pageRecoveryRevision;
+  const payload = {
+    id: 'pages-active',
+    productId: 'pages',
+    title: String(doc.title || defaults.pages.title),
+    html: String(doc.html || ''),
+    pageSettings: doc.pageSettings || {}
+  };
+  const pending = window.brightdesk.saveRecovery(payload);
+  pageRecoveryInFlight = pending;
+  try {
+    await pending;
+    if (revision === pageRecoveryRevision) pageRecoveryDirty = false;
+  } catch (error) {
+    console.warn('The local recovery copy could not be saved.', error);
+    setStatus('Recovery copy could not be saved');
+  } finally {
+    if (pageRecoveryInFlight === pending) pageRecoveryInFlight = null;
+  }
+}
+async function clearPageRecoverySnapshot() {
+  pageRecoveryDirty = false;
+  pageRecoveryRevision++;
+  const pending = pageRecoveryInFlight;
+  if (pending) await pending.catch(() => {});
+  try {
+    await window.brightdesk.deleteRecovery('pages-active');
+    recoveryCandidate = null;
+    recoveryDismissed = true;
+    renderRecoveryBanner();
+  } catch (error) {
+    console.warn('The saved document recovery copy could not be removed.', error);
+  }
+}
 function persist() {
-  try { commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-docs-v3', state.docs); setStatus('Saved on this device'); }
-  catch (error) { setStatus('Could not save locally'); console.error(error); }
+  try {
+    commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-docs-v3', state.docs);
+    setStatus('Saved on this device');
+    markPageRecoveryDirty();
+    return true;
+  } catch (error) {
+    setStatus('Could not save locally');
+    console.error(error);
+    return false;
+  }
 }
 function loadLocal() {
   try {
@@ -875,6 +953,7 @@ function render() {
     renderToolbar();
     $('workspace').classList.toggle('focus-mode', state.focusMode);
   }
+  renderRecoveryBanner();
   syncAppNavigation();
   document.querySelectorAll('.nav[data-app]').forEach(btn => {
     const visible = launchAppId ? btn.dataset.app === launchAppId : installedApp(btn.dataset.app); btn.hidden = !visible; btn.classList.toggle('active', !manager && !languages && btn.dataset.app === state.app);
@@ -903,8 +982,8 @@ function exportPayload(){
   if(state.app==='slides')return {kind:'slides',title,slides:doc.slides||[]};
   return {kind:'notes',title,text:$('notes-editor').value||''};
 }
-async function exportCurrent(){try{const result=await window.brightdesk.exportFile(exportPayload());if(result?.canceled)return;setStatus('Exported successfully');}catch(error){alert(`Export failed: ${error.message}`);}}
-async function exportPdf(){try{const result=await window.brightdesk.exportPdf({title:$('doc-title').value});if(!result?.canceled)setStatus('PDF exported');}catch(error){alert(`PDF export failed: ${error.message}`);}}
+async function exportCurrent(){try{const result=await window.brightdesk.exportFile(exportPayload());if(result?.canceled)return;if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Exported successfully');}catch(error){alert(`Export failed: ${error.message}`);}}
+async function exportPdf(){try{const result=await window.brightdesk.exportPdf({title:$('doc-title').value});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('PDF exported');}}catch(error){alert(`PDF export failed: ${error.message}`);}}
 function importProject(data){
   if (launchAppId && data?.kind && data.kind !== launchAppId) throw new Error(`This Brightdesk ${appLabel(launchAppId)} installation opens ${appLabel(launchAppId)} files only.`);
   if(data?.docs && typeof data.docs === 'object'){
@@ -926,7 +1005,7 @@ function importProject(data){
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 async function openFile(){try{const data=await window.brightdesk.openFile();if(!data)return;importProject(data);persist();render();setStatus('File opened');}catch(error){alert(`Could not open file: ${error.message}`);}}
-async function saveProject(){try{const result=await window.brightdesk.saveProject({title:$('doc-title').value,docs:state.docs});if(!result?.canceled)setStatus('Project saved');}catch(error){alert(`Could not save project: ${error.message}`);}}
+async function saveProject(){try{const result=await window.brightdesk.saveProject({title:$('doc-title').value,docs:state.docs});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Project saved');}}catch(error){alert(`Could not save project: ${error.message}`);}}
 function setApp(app){if((launchAppId && app !== launchAppId) || !(configs[app] || genericConfigs[app]) || !installedApp(app))return;state.app=app;state.view='workspace';state.ribbonTab='home';render();persist();}
 
 document.querySelectorAll('.nav[data-app]').forEach(btn=>btn.addEventListener('click',()=>setApp(btn.dataset.app)));
@@ -941,6 +1020,26 @@ $('back-to-apps').addEventListener('click',()=>{state.view=state.setupComplete?'
 $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){state.view='workspace';render();}else completeAppSetup();});
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
 editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();});
+$('recovery-open').addEventListener('click',async()=>{
+  if(!recoveryCandidate)return;
+  try{
+    const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
+    if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
+    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{})};
+    state.app='pages';state.view='workspace';state.ribbonTab='home';state.focusMode=false;
+    recoveryDismissed=true;persist();render();
+    setStatus('Recovered copy opened. Save or export it as a new document.');
+  }catch(error){alert(`Could not recover this document: ${error.message}`);await refreshRecoveryCandidate();}
+});
+$('recovery-discard').addEventListener('click',async()=>{
+  if(!recoveryCandidate)return;
+  if(!confirm('Discard this recovery copy? This does not delete any original document file.'))return;
+  try{
+    await window.brightdesk.deleteRecovery(recoveryCandidate.id);
+    recoveryCandidate=null;recoveryDismissed=true;renderRecoveryBanner();
+    setStatus('Recovery copy discarded');
+  }catch(error){alert(`Could not discard this recovery copy: ${error.message}`);}
+});
 $('notes-editor').addEventListener('input',()=>{activeDoc().text=$('notes-editor').value;persist();});
 $('todo-create-form').addEventListener('submit', createTodoTask);
 $('todo-search').addEventListener('input', event => { state.todoQuery = event.target.value; renderTodoWorkspace(); });
@@ -1014,6 +1113,9 @@ productSidebarToggle?.addEventListener('click', () => {
 });
 window.addEventListener('resize', syncSidebarDensity);
 syncSidebarDensity();
+window.setInterval(() => { void flushPageRecovery(); }, 10000);
+window.addEventListener('blur', () => { void flushPageRecovery(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flushPageRecovery(); });
 
 loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platform}`;
 (async()=>{
@@ -1023,5 +1125,6 @@ loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platfo
   } catch (error) { console.warn('The desktop version could not be read.', error); }
   try { await refreshLanguageData(); } catch(error) { console.error('Language packs could not be loaded.',error); }
   try { await refreshDictionaries(); } catch(error) { console.error('Spelling dictionaries could not be loaded.',error); }
+  try { await refreshRecoveryCandidate(); } catch(error) { console.error('Recovery copies could not be checked.',error); }
   render();
 })();
