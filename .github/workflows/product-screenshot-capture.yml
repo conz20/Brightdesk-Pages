@@ -1,0 +1,61 @@
+name: Capture Brightdesk Pages workspace screenshot
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "scripts/capture-product-screenshot.js"
+      - "tests/capture-product-screenshot.test.js"
+      - "package.json"
+      - "package-lock.json"
+      - "TERMS_AND_CONDITIONS.txt"
+      - ".github/workflows/product-screenshot-capture.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "scripts/capture-product-screenshot.js"
+      - "tests/capture-product-screenshot.test.js"
+      - "package.json"
+      - "package-lock.json"
+      - "TERMS_AND_CONDITIONS.txt"
+      - ".github/workflows/product-screenshot-capture.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-pages-screenshot-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  capture:
+    name: Run Pages and capture its real workspace
+    runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
+    timeout-minutes: 15
+    steps:
+      - name: Check out Brightdesk Pages
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Set up Node.js 24.22.2
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24.22.2
+          package-manager-cache: false
+      - name: Verify exact Node.js version
+        run: test "$(node --version)" = "v24.22.2"
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run the product test suite
+        run: npm test
+      - name: Capture the actual Electron workspace
+        run: node scripts/capture-product-screenshot.js
+        env:
+          BRIGHTDESK_SCREENSHOT_OUTPUT: capture-output
+      - name: Upload verified running-app capture
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Brightdesk-Pages-macOS-screenshot-${{ github.sha }}
+          path: capture-output/*
+          if-no-files-found: error
+          retention-days: 30
