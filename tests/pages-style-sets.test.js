@@ -21,8 +21,14 @@ test('document style set selection falls back safely for missing or unknown iden
 
 test('watermark choices are restricted to none, draft and confidential', () => {
   assert.deepEqual(styles.WATERMARKS, ['none', 'draft', 'confidential']);
+  assert.deepEqual(styles.PAGE_COLORS, ['white', 'warm', 'mist']);
+  assert.deepEqual(styles.PAGE_BORDERS, ['none', 'subtle', 'double']);
   assert.equal(styles.normalizeWatermark('draft'), 'draft');
   assert.equal(styles.normalizeWatermark('confidential'), 'confidential');
   assert.equal(styles.normalizeWatermark('external'), 'none');
   assert.equal(styles.normalizeWatermark(undefined), 'none');
+  assert.equal(styles.normalizePageColor('warm'), 'warm');
+  assert.equal(styles.normalizePageColor('unknown'), 'white');
+  assert.equal(styles.normalizePageBorder('double'), 'double');
+  assert.equal(styles.normalizePageBorder('unknown'), 'subtle');
 });
