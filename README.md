@@ -77,6 +77,12 @@ The current WordCraft-inspired development branch adds a left-side document outl
 
 This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
 
+## Find and Replace
+
+The Pages Home ribbon includes **Find & Replace** for the active document. Search is local to the open document and supports case-sensitive and whole-word matching, Find next, Replace and Replace all. Matches can span inline formatting runs in the same paragraph; searches do not join separate paragraphs together. Replacements are saved to the local Pages document and update the Navigation outline when headings are affected.
+
+This is an early text-search workflow. Regular-expression search, match highlighting, search across multiple open documents and a dedicated full-size navigation/search pane are not yet included. The feature remains under draft review until its automated tests and real desktop interaction checks pass.
+
 ## Desktop installers
 
 Choose the installer for your computer:
