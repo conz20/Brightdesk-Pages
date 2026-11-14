@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const t = (key) => window.BrightdeskI18n.t(key);
 const defaults = {
-  pages: { title: 'Untitled document', html: '' },
+  pages: { title: 'Untitled document', html: '', styleSet: 'brightdesk', watermark: 'none' },
   sheets: { title: 'Untitled spreadsheet', cells: Array.from({ length: 20 }, () => Array(12).fill('')) },
   slides: { title: 'Untitled presentation', slides: [{ title: 'Your presentation title', body: 'Add a subtitle or a few words to introduce your idea.' }], current: 0 },
   notes: { title: 'Untitled note', text: '' },
@@ -49,8 +49,10 @@ let pageRecoveryInFlight = null;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
 const pagePagination = window.BrightdeskPagePagination;
+const pagesStyleSets = window.BrightdeskPagesStyleSets;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
+if (!pagesStyleSets) throw new Error('Brightdesk Pages style-set definitions were not loaded.');
 
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
@@ -60,7 +62,9 @@ function pageHasRecoverableState(doc) {
   const defaultLayout = pageLayout.normalizePageLayout();
   return Boolean(String(doc.html || '').trim())
     || (doc.title || defaults.pages.title) !== defaults.pages.title
-    || Object.keys(defaultLayout).some(key => layout[key] !== defaultLayout[key]);
+    || Object.keys(defaultLayout).some(key => layout[key] !== defaultLayout[key])
+    || pagesStyleSets.normalizeStyleSet(doc.styleSet) !== pagesStyleSets.DEFAULT_STYLE_SET
+    || pagesStyleSets.normalizeWatermark(doc.watermark) !== 'none';
 }
 function markPageRecoveryDirty() {
   const doc = state.docs.pages;
@@ -112,7 +116,9 @@ async function flushPageRecovery() {
     productId: 'pages',
     title: String(doc.title || defaults.pages.title),
     html: String(doc.html || ''),
-    pageSettings: doc.pageSettings || {}
+    pageSettings: doc.pageSettings || {},
+    styleSet: pagesStyleSets.normalizeStyleSet(doc.styleSet),
+    watermark: pagesStyleSets.normalizeWatermark(doc.watermark)
   };
   const pending = window.brightdesk.saveRecovery(payload);
   pageRecoveryInFlight = pending;
@@ -212,7 +218,7 @@ function cellRaw(row, col) { return String(activeDoc().cells?.[row]?.[col] ?? ''
 function cellNumeric(row, col) { return window.BrightdeskFormula.calculateCell(activeDoc().cells || [], row, col); }
 function colIndex(label) { return window.BrightdeskFormula.columnIndex(label); }
 const ribbonTabs = {
-  pages: ['home', 'insert', 'layout', 'review', 'view'],
+  pages: ['home', 'insert', 'design', 'layout', 'review', 'view'],
   sheets: ['home', 'insert', 'formulas', 'data', 'view'],
   slides: ['home', 'insert', 'design', 'slideShow', 'view'],
   notes: ['home', 'insert', 'view']
@@ -472,6 +478,98 @@ function addPagesStylesGallery(toolbar) {
   toolbar.append(group);
 }
 
+function applyPagesDocumentDesign() {
+  if (state.app !== 'pages' || !pagesStyleSets) return;
+  editor.dataset.styleSet = pagesStyleSets.normalizeStyleSet(activeDoc().styleSet);
+  editor.dataset.watermark = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+}
+
+function setPagesStyleSet(styleSetId) {
+  if (state.app !== 'pages') return;
+  activeDoc().styleSet = pagesStyleSets.normalizeStyleSet(styleSetId);
+  applyPagesDocumentDesign();
+  paginatePagesDocument();
+  activeDoc().html = serializePagesDocument();
+  persist();
+  renderToolbar();
+}
+
+function setPagesWatermark(watermark) {
+  if (state.app !== 'pages') return;
+  activeDoc().watermark = pagesStyleSets.normalizeWatermark(watermark);
+  applyPagesDocumentDesign();
+  paginatePagesDocument();
+  activeDoc().html = serializePagesDocument();
+  persist();
+  renderToolbar();
+}
+
+function addPagesDesignGallery(toolbar) {
+  const group = document.createElement('div');
+  group.className = 'ribbon-group pages-design-gallery';
+  const commands = document.createElement('div');
+  commands.className = 'ribbon-command-row pages-design-options';
+  const selected = pagesStyleSets.normalizeStyleSet(activeDoc().styleSet);
+
+  Object.values(pagesStyleSets.STYLE_SETS).forEach(styleSet => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-design-card';
+    button.dataset.styleSet = styleSet.id;
+    button.setAttribute('aria-pressed', String(selected === styleSet.id));
+    button.setAttribute('aria-label', `Apply ${styleSet.name} document style`);
+    button.title = styleSet.description;
+
+    const preview = document.createElement('span');
+    preview.className = 'pages-design-swatch';
+    const heading = document.createElement('span');
+    heading.className = 'pages-design-swatch-title';
+    heading.textContent = 'Aa';
+    const body = document.createElement('span');
+    body.className = 'pages-design-swatch-lines';
+    body.textContent = 'Document heading';
+    preview.append(heading, body);
+
+    const label = document.createElement('span');
+    label.className = 'pages-design-card-label';
+    label.textContent = styleSet.name;
+    button.append(preview, label);
+    button.addEventListener('click', () => setPagesStyleSet(styleSet.id));
+    commands.append(button);
+  });
+
+  const caption = document.createElement('span');
+  caption.className = 'ribbon-group-label';
+  caption.textContent = 'Style set';
+  group.append(commands, caption);
+  toolbar.append(group);
+}
+
+function addPagesWatermarkControl(toolbar) {
+  const commands = ribbonGroup(toolbar, 'Page background');
+  const label = document.createElement('label');
+  label.className = 'pages-watermark-setting';
+  label.textContent = 'Watermark';
+  const select = document.createElement('select');
+  select.className = 'pages-watermark-select';
+  select.setAttribute('aria-label', 'Document watermark');
+  const options = [
+    ['none', 'None'],
+    ['draft', 'Draft'],
+    ['confidential', 'Confidential']
+  ];
+  options.forEach(([value, text]) => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = text;
+    select.append(option);
+  });
+  select.value = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+  select.addEventListener('change', () => setPagesWatermark(select.value));
+  label.append(select);
+  commands.append(label);
+}
+
 function renderToolbar() {
   const toolbar = $('toolbar'); toolbar.innerHTML = ''; renderRibbonTabs();
   const label = (key) => t(`common.${key}`);
@@ -503,6 +601,9 @@ function renderToolbar() {
       addButton(insert, label('horizontalLine'), () => { editor.focus(); document.execCommand('insertHorizontalRule'); persist(); });
       addButton(insert, label('date'), () => { editor.focus(); document.execCommand('insertText', false, new Date().toLocaleDateString()); persist(); });
       addButton(insert, 'Page break', insertPagesPageBreak, 'Start a new page at this point');
+    } else if (tab === 'design') {
+      addPagesDesignGallery(toolbar);
+      addPagesWatermarkControl(toolbar);
     } else if (tab === 'layout') {
       const layout = group('paragraph');
       [[label('alignLeft'),'justifyLeft'],[label('centre'),'justifyCenter'],[label('alignRight'),'justifyRight'],[label('justify'),'justifyFull']].forEach(([label, command]) => addButton(layout, label, () => { editor.focus(); document.execCommand(command); persist(); }));
@@ -797,6 +898,8 @@ function paginatePagesDocument() {
     page.setAttribute('role', 'group');
     page.setAttribute('aria-label', `Page ${pageIndex + 1}`);
     page.dataset.pageNumber = String(pageIndex + 1);
+    const watermark = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+    if (watermark !== 'none') page.dataset.watermark = watermark;
     page.setAttribute('data-placeholder', editor.getAttribute('data-placeholder') || 'Start writing…');
     const pageStyle = pageLayout.getPageStyle(settings);
     Object.assign(page.style, pageStyle, {
@@ -882,6 +985,7 @@ function insertPagesPageBreak() {
 
 function applyPageLayout() {
   if (!pageLayout || state.app !== 'pages') return;
+  applyPagesDocumentDesign();
   const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
   activeDoc().pageSettings = settings;
   paginatePagesDocument();
@@ -1604,7 +1708,7 @@ $('recovery-open').addEventListener('click',async()=>{
   try{
     const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
     if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
-    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{})};
+    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{}),styleSet:pagesStyleSets.normalizeStyleSet(record.styleSet),watermark:pagesStyleSets.normalizeWatermark(record.watermark)};
     pageRecoveryHasSnapshot=true;
     state.app='pages';state.view='workspace';state.ribbonTab='home';state.focusMode=false;
     recoveryDismissed=true;persist();render();
