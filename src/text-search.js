@@ -12,12 +12,13 @@ function findTextMatches(segments, query, options = {}) {
   let previousBlock;
   let hasPreviousBlock = false;
 
-  for (const segment of segments) {
+  for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+    const segment = segments[segmentIndex];
     if (!segment || typeof segment.text !== 'string' || segment.text.length === 0) continue;
     if (hasPreviousBlock && segment.blockId !== previousBlock) source += '\n';
     const start = source.length;
     source += segment.text;
-    usable.push({ segmentIndex: segments.indexOf(segment), start, end: source.length, node: segment.node });
+    usable.push({ segmentIndex, start, end: source.length, node: segment.node });
     previousBlock = segment.blockId;
     hasPreviousBlock = true;
   }
