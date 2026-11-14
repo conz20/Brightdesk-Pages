@@ -43,6 +43,7 @@ const state = {
 let recoveryCandidate = null;
 let recoveryDismissed = false;
 let pageRecoveryDirty = false;
+let pageRecoveryHasSnapshot = false;
 let pageRecoveryRevision = 0;
 let pageRecoveryInFlight = null;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
@@ -56,7 +57,7 @@ function setStatus(message) { $('save-status').textContent = message; }
 function markPageRecoveryDirty() {
   const doc = state.docs.pages;
   if (state.app !== 'pages' || !doc) return;
-  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title) return;
+  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title && !pageRecoveryHasSnapshot) return;
   pageRecoveryDirty = true;
   pageRecoveryRevision++;
 }
@@ -75,6 +76,7 @@ async function refreshRecoveryCandidate() {
   try {
     const snapshots = await window.brightdesk.listRecoveries();
     recoveryCandidate = snapshots.find(item => item.productId === 'pages') || null;
+    pageRecoveryHasSnapshot = Boolean(recoveryCandidate);
     recoveryDismissed = false;
     renderRecoveryBanner();
   } catch (error) {
@@ -85,6 +87,18 @@ async function flushPageRecovery() {
   if (!pageRecoveryDirty || pageRecoveryInFlight || state.app !== 'pages' || !window.brightdesk.saveRecovery) return;
   const doc = state.docs.pages || defaults.pages;
   const revision = pageRecoveryRevision;
+  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title) {
+    try {
+      await window.brightdesk.deleteRecovery('pages-active');
+      pageRecoveryHasSnapshot = false;
+      pageRecoveryDirty = false;
+      recoveryCandidate = null;
+      renderRecoveryBanner();
+    } catch (error) {
+      console.warn('The empty Pages recovery copy could not be cleared.', error);
+    }
+    return;
+  }
   const payload = {
     id: 'pages-active',
     productId: 'pages',
@@ -96,6 +110,7 @@ async function flushPageRecovery() {
   pageRecoveryInFlight = pending;
   try {
     await pending;
+    pageRecoveryHasSnapshot = true;
     if (revision === pageRecoveryRevision) pageRecoveryDirty = false;
   } catch (error) {
     console.warn('The local recovery copy could not be saved.', error);
@@ -109,6 +124,8 @@ async function clearPageRecoverySnapshot() {
   pageRecoveryRevision++;
   const pending = pageRecoveryInFlight;
   if (pending) await pending.catch(() => {});
+  pageRecoveryDirty = false;
+  pageRecoveryHasSnapshot = false;
   try {
     await window.brightdesk.deleteRecovery('pages-active');
     recoveryCandidate = null;
@@ -1026,6 +1043,7 @@ $('recovery-open').addEventListener('click',async()=>{
     const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
     if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
     state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{})};
+    pageRecoveryHasSnapshot=true;
     state.app='pages';state.view='workspace';state.ribbonTab='home';state.focusMode=false;
     recoveryDismissed=true;persist();render();
     setStatus('Recovered copy opened. Save or export it as a new document.');
@@ -1036,7 +1054,7 @@ $('recovery-discard').addEventListener('click',async()=>{
   if(!confirm('Discard this recovery copy? This does not delete any original document file.'))return;
   try{
     await window.brightdesk.deleteRecovery(recoveryCandidate.id);
-    recoveryCandidate=null;recoveryDismissed=true;renderRecoveryBanner();
+    recoveryCandidate=null;pageRecoveryHasSnapshot=false;pageRecoveryDirty=false;recoveryDismissed=true;renderRecoveryBanner();
     setStatus('Recovery copy discarded');
   }catch(error){alert(`Could not discard this recovery copy: ${error.message}`);}
 });
