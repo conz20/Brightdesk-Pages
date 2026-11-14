@@ -1272,7 +1272,7 @@ $('check-current-document').addEventListener('click',checkCurrentDocumentSpellin
 $('back-to-apps').addEventListener('click',()=>{state.view=state.setupComplete?'workspace':'manager';render();});
 $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){state.view='workspace';render();}else completeAppSetup();});
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
-editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();});
+editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
 $('pages-outline-search').addEventListener('input', refreshPagesOutline);
 $('pages-find-toggle').addEventListener('click', () => {
   const panel = $('pages-find-panel');
