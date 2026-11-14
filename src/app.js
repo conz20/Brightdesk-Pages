@@ -48,6 +48,7 @@ let pageRecoveryRevision = 0;
 let pageRecoveryInFlight = null;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
+const pagePagination = window.BrightdeskPagePagination;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
 
@@ -196,7 +197,8 @@ function safeHtml(html) {
         [...child.attributes].forEach(attr => {
           const isCell = child.tagName === 'TD' || child.tagName === 'TH';
           const isSpan = isCell && (attr.name === 'colspan' || attr.name === 'rowspan') && /^[1-9]\d{0,2}$/.test(attr.value) && Number(attr.value) <= 100;
-          if (!isSpan) child.removeAttribute(attr.name);
+          const isPageBreak = child.tagName === 'HR' && attr.name === 'data-pages-page-break' && attr.value === 'true';
+          if (!isSpan && !isPageBreak) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
@@ -367,8 +369,9 @@ function replacePagesMatch(match, replacement) {
 }
 
 function commitPagesSearchReplacement() {
-  state.docs.pages.html = editor.innerHTML;
+  state.docs.pages.html = serializePagesDocument();
   persist();
+  schedulePagesPagination();
   refreshPagesOutline();
   pagesFindMatchIndex = -1;
   refreshPagesFindStatus();
@@ -497,6 +500,7 @@ function renderToolbar() {
       addButton(insert, label('table'), () => { editor.focus(); document.execCommand('insertHTML', false, '<table><tbody><tr><td> </td><td> </td></tr><tr><td> </td><td> </td></tr></tbody></table><p></p>'); persist(); });
       addButton(insert, label('horizontalLine'), () => { editor.focus(); document.execCommand('insertHorizontalRule'); persist(); });
       addButton(insert, label('date'), () => { editor.focus(); document.execCommand('insertText', false, new Date().toLocaleDateString()); persist(); });
+      addButton(insert, 'Page break', insertPagesPageBreak, 'Start a new page at this point');
     } else if (tab === 'layout') {
       const layout = group('paragraph');
       [[label('alignLeft'),'justifyLeft'],[label('centre'),'justifyCenter'],[label('alignRight'),'justifyRight'],[label('justify'),'justifyFull']].forEach(([label, command]) => addButton(layout, label, () => { editor.focus(); document.execCommand(command); persist(); }));
@@ -506,7 +510,7 @@ function renderToolbar() {
         const select = document.createElement('select'); select.className = 'page-setting-select'; select.setAttribute('aria-label', caption);
         options.forEach(([value, text]) => { const option = document.createElement('option'); option.value = value; option.textContent = text; select.append(option); });
         const current = pageLayout.normalizePageLayout(activeDoc().pageSettings || {}); select.value = current[key];
-        select.addEventListener('change', () => { const next = pageLayout.normalizePageLayout({ ...activeDoc().pageSettings, [key]: select.value }); activeDoc().pageSettings = next; applyPageLayout(); persist(); });
+        select.addEventListener('change', () => { const next = pageLayout.normalizePageLayout({ ...activeDoc().pageSettings, [key]: select.value }); activeDoc().pageSettings = next; applyPageLayout(); activeDoc().html = serializePagesDocument(); persist(); });
         wrap.append(select); page.append(wrap);
       };
       addPageSelect('Paper', 'size', [['A4','A4'],['Letter','US Letter'],['Legal','US Legal']]);
@@ -636,16 +640,253 @@ function updatePagesRuler() {
   ruler.setAttribute('aria-label', `Horizontal ruler in centimetres for ${settings.size} ${settings.orientation}`);
 }
 
+let pagesPaginationTimer = null;
+
+function serializePagesDocument() {
+  const output = document.createElement('div');
+  for (const node of [...editor.childNodes]) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('pages-document-page')) {
+      for (const child of [...node.childNodes]) output.append(child.cloneNode(true));
+    } else {
+      output.append(node.cloneNode(true));
+    }
+  }
+  return output.innerHTML;
+}
+
+function getPagesSourceNodes() {
+  const source = [];
+  for (const child of [...editor.childNodes]) {
+    if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains('pages-document-page')) {
+      source.push(...child.childNodes);
+    } else {
+      source.push(child);
+    }
+  }
+
+  const nodes = [];
+  for (const node of source) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (!node.nodeValue.trim()) continue;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = node.nodeValue;
+      node.parentNode?.replaceChild(paragraph, node);
+      nodes.push(paragraph);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      nodes.push(node);
+    }
+  }
+
+  // Keep explicit breaks between top-level blocks, not inside editable paragraphs.
+  for (let index = 0; index < nodes.length; index++) {
+    const block = nodes[index];
+    if (block.tagName === 'HR' || typeof block.querySelectorAll !== 'function') continue;
+    const nestedBreaks = [...block.querySelectorAll('hr[data-pages-page-break="true"]')];
+    for (const marker of nestedBreaks) {
+      marker.remove();
+      nodes.splice(index + 1, 0, marker);
+      index++;
+    }
+  }
+  return nodes;
+}
+
+function measurePagesDocumentBlocks(items, settings) {
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const contentWidth = Math.max(80, dimensions.width - margin * 2);
+  const measurer = document.createElement('div');
+  measurer.className = 'editor pages-page-measurer';
+  const editorStyle = getComputedStyle(editor);
+  Object.assign(measurer.style, {
+    position: 'fixed',
+    left: '-100000px',
+    top: '0',
+    width: `${contentWidth}px`,
+    minWidth: `${contentWidth}px`,
+    maxWidth: `${contentWidth}px`,
+    minHeight: '0',
+    height: 'auto',
+    padding: '0',
+    margin: '0',
+    overflow: 'visible',
+    display: 'block',
+    flex: 'none',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    fontFamily: editorStyle.fontFamily,
+    fontSize: editorStyle.fontSize,
+    lineHeight: editorStyle.lineHeight
+  });
+  document.body.append(measurer);
+  try {
+    return items.map(item => {
+      measurer.replaceChildren(item.node.cloneNode(true));
+      const measured = measurer.firstElementChild;
+      if (!measured) return { ...item, height: 0 };
+      const rect = measured.getBoundingClientRect();
+      const style = getComputedStyle(measured);
+      const marginTop = Number.parseFloat(style.marginTop) || 0;
+      const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+      return { ...item, height: rect.height + marginTop + marginBottom };
+    });
+  } finally {
+    measurer.remove();
+  }
+}
+
+function paginatePagesDocument() {
+  if (state.app !== 'pages' || !pageLayout || !pagePagination) return 0;
+  const selection = window.getSelection();
+  const savedRange = selection?.rangeCount && editor.contains(selection.anchorNode)
+    ? selection.getRangeAt(0).cloneRange()
+    : null;
+  const existingPages = [...editor.children].filter(node => node.classList.contains('pages-document-page'));
+  const sourceNodes = getPagesSourceNodes();
+  const flowItems = [];
+  let pendingBreaks = [];
+  let orphanBreaks = [];
+
+  for (const node of sourceNodes) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.matches('hr[data-pages-page-break="true"]')) {
+      pendingBreaks.push(node);
+      continue;
+    }
+    flowItems.push({
+      node,
+      height: 0,
+      pageBreakBefore: pendingBreaks.length > 0,
+      leadingBreaks: pendingBreaks,
+      trailingBreaks: []
+    });
+    pendingBreaks = [];
+  }
+  if (pendingBreaks.length) {
+    if (flowItems.length) flowItems[flowItems.length - 1].trailingBreaks.push(...pendingBreaks);
+    else orphanBreaks = pendingBreaks;
+  }
+
+  const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const availableHeight = Math.max(80, dimensions.height - margin * 2);
+  const measured = measurePagesDocumentBlocks(flowItems, settings);
+  const groups = pagePagination.paginateBlocks(measured, availableHeight);
+  const pageGroups = groups.length ? groups : [[]];
+
+  editor.style.width = '100%';
+  editor.style.maxWidth = 'none';
+  editor.style.minHeight = '0';
+  editor.style.height = 'auto';
+  editor.style.padding = '0';
+  editor.style.margin = '0';
+  editor.style.background = 'transparent';
+  editor.style.border = '0';
+  editor.style.boxShadow = 'none';
+  editor.style.display = 'flex';
+  editor.style.flexDirection = 'column';
+  editor.style.alignItems = 'center';
+  editor.style.gap = '24px';
+  editor.style.overflow = 'visible';
+
+  pageGroups.forEach((indices, pageIndex) => {
+    const page = document.createElement('div');
+    page.className = 'pages-document-page';
+    page.setAttribute('role', 'group');
+    page.setAttribute('aria-label', `Page ${pageIndex + 1}`);
+    page.dataset.pageNumber = String(pageIndex + 1);
+    page.setAttribute('data-placeholder', editor.getAttribute('data-placeholder') || 'Start writing…');
+    const pageStyle = pageLayout.getPageStyle(settings);
+    Object.assign(page.style, pageStyle, {
+      height: `${dimensions.height}px`,
+      minHeight: `${dimensions.height}px`,
+      margin: '0 auto',
+      flex: '0 0 auto',
+      overflow: 'visible',
+      position: 'relative'
+    });
+    editor.append(page);
+
+    for (const itemIndex of indices) {
+      const item = measured[itemIndex];
+      if (!item) continue;
+      item.leadingBreaks.forEach(marker => page.append(marker));
+      if (item.node) page.append(item.node);
+      item.trailingBreaks.forEach(marker => page.append(marker));
+    }
+    if (pageIndex === 0) orphanBreaks.forEach(marker => page.append(marker));
+    if (page.scrollHeight > page.clientHeight + 1) {
+      page.classList.add('is-overflowing');
+      page.style.height = `${page.scrollHeight}px`;
+      page.style.minHeight = `${page.scrollHeight}px`;
+    }
+  });
+
+  existingPages.forEach(page => page.remove());
+  if (savedRange && savedRange.startContainer.isConnected && savedRange.endContainer.isConnected) {
+    try {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    } catch {}
+  }
+  return pageGroups.length;
+}
+
+function schedulePagesPagination() {
+  if (state.app !== 'pages') return;
+  if (pagesPaginationTimer) clearTimeout(pagesPaginationTimer);
+  pagesPaginationTimer = setTimeout(() => {
+    pagesPaginationTimer = null;
+    if (state.app !== 'pages') return;
+    paginatePagesDocument();
+    activeDoc().html = serializePagesDocument();
+    persist();
+    refreshPagesOutline();
+    if (!$('pages-find-panel').hidden) refreshPagesFindStatus();
+  }, 180);
+}
+
+function insertPagesPageBreak() {
+  editor.focus();
+  let selection = window.getSelection();
+  let range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+  if (!range || !editor.contains(range.commonAncestorContainer)) {
+    range = document.createRange();
+    const lastPage = editor.querySelector('.pages-document-page:last-child');
+    if (lastPage?.lastChild) range.selectNodeContents(lastPage.lastChild);
+    else range.selectNodeContents(editor);
+    range.collapse(false);
+    selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  range.deleteContents();
+  const marker = document.createElement('hr');
+  marker.setAttribute('data-pages-page-break', 'true');
+  range.insertNode(marker);
+  const page = marker.closest('.pages-document-page');
+  let topBlock = marker;
+  while (topBlock.parentElement && topBlock.parentElement !== page) topBlock = topBlock.parentElement;
+  if (page && topBlock !== marker && topBlock.parentElement === page) topBlock.after(marker);
+  const caret = document.createRange();
+  caret.setStartAfter(marker);
+  caret.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  activeDoc().html = serializePagesDocument();
+  persist();
+  schedulePagesPagination();
+}
+
 function applyPageLayout() {
   if (!pageLayout || state.app !== 'pages') return;
   const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
   activeDoc().pageSettings = settings;
-  Object.assign(editor.style, pageLayout.getPageStyle(settings));
-  editor.style.maxWidth = 'calc(100% - 40px)';
+  paginatePagesDocument();
   updatePagesRuler();
 }
 function changeEditorZoom(delta) { state.editorZoom = Math.max(70, Math.min(160, state.editorZoom + delta)); applyEditorZoom(); }
-function applyEditorZoom() { editor.style.fontSize = `${14 * state.editorZoom / 100}px`; setStatus(`Document zoom ${state.editorZoom}%`); }
+function applyEditorZoom() { editor.style.fontSize = `${14 * state.editorZoom / 100}px`; setStatus(`Document zoom ${state.editorZoom}%`); schedulePagesPagination(); }
 function changeSheetZoom(delta) { state.sheetZoom = Math.max(70, Math.min(160, state.sheetZoom + delta)); applySheetZoom(); }
 function applySheetZoom() { sheetWrap.style.zoom = `${state.sheetZoom}%`; setStatus(`Sheet zoom ${state.sheetZoom}%`); }
 function insertNoteText(value) { const input = $('notes-editor'); const start = input.selectionStart, end = input.selectionEnd; input.setRangeText(value, start, end, 'end'); activeDoc().text = input.value; persist(); input.focus(); }
@@ -1246,8 +1487,8 @@ function render() {
     $('pages-editor-layout').hidden = state.app !== 'pages';
     editor.hidden = !['pages'].includes(state.app); sheetWrap.hidden = state.app !== 'sheets'; slideWrap.hidden = state.app !== 'slides'; notesWrap.hidden = !['notes'].includes(state.app);
     editor.innerHTML = state.app === 'pages' ? safeHtml(doc.html) : '';
-    refreshPagesOutline();
     if (state.app === 'pages') applyPageLayout(); else editor.removeAttribute('style');
+    refreshPagesOutline();
     $('notes-editor').value = state.app === 'notes' ? (doc.text || '') : '';
     updateDocumentLanguage();
     if (state.app === 'sheets') renderSheet(); if (state.app === 'slides') renderSlides();
@@ -1275,6 +1516,7 @@ function collectDocxBlocks() {
   const walk=(el,type='paragraph')=>{
     if(el.nodeType===Node.TEXT_NODE){if(el.textContent.trim())blocks.push({type,text:el.textContent.trim()});return;}
     if(el.nodeType!==Node.ELEMENT_NODE)return;
+    if (el.classList?.contains('pages-document-page')) { el.childNodes.forEach(n=>walk(n,type)); return; }
     const tag=el.tagName.toLowerCase();const blockType=tag==='h1'?'h1':tag==='h2'?'h2':tag==='li'?'li':type;
     if(['p','div','h1','h2','h3','li','blockquote'].includes(tag)){
       const runs=[];const run=(node,style={})=>{if(node.nodeType===Node.TEXT_NODE){if(node.textContent)runs.push({text:node.textContent,...style});}else if(node.nodeType===Node.ELEMENT_NODE){const next={...style,bold:style.bold||['b','strong'].includes(node.tagName.toLowerCase()),italic:style.italic||['i','em'].includes(node.tagName.toLowerCase()),underline:style.underline||node.tagName.toLowerCase()==='u'};node.childNodes.forEach(n=>run(n,next));}};
@@ -1285,13 +1527,13 @@ function collectDocxBlocks() {
 }
 function exportPayload(){
   const doc=activeDoc(),title=$('doc-title').value||'Brightdesk file';doc.title=title;
-  if(state.app==='pages')return {kind:'pages',title,html:editor.innerHTML,blocks:collectDocxBlocks()};
+  if(state.app==='pages')return {kind:'pages',title,html:serializePagesDocument(),blocks:collectDocxBlocks()};
   if(state.app==='sheets')return {kind:'sheets',title,rows:doc.cells||[]};
   if(state.app==='slides')return {kind:'slides',title,slides:doc.slides||[]};
   return {kind:'notes',title,text:$('notes-editor').value||''};
 }
 async function exportCurrent(){try{const result=await window.brightdesk.exportFile(exportPayload());if(result?.canceled)return;if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Exported successfully');}catch(error){alert(`Export failed: ${error.message}`);}}
-async function exportPdf(){try{const result=await window.brightdesk.exportPdf({title:$('doc-title').value});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('PDF exported');}}catch(error){alert(`PDF export failed: ${error.message}`);}}
+async function exportPdf(){try{const settings=pageLayout.normalizePageLayout(activeDoc().pageSettings||{});const result=await window.brightdesk.exportPdf({title:$('doc-title').value,pageSize:settings.size,landscape:settings.orientation==='landscape'});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('PDF exported');}}catch(error){alert(`PDF export failed: ${error.message}`);}}
 function importProject(data){
   if (launchAppId && data?.kind && data.kind !== launchAppId) throw new Error(`This Brightdesk ${appLabel(launchAppId)} installation opens ${appLabel(launchAppId)} files only.`);
   if(data?.docs && typeof data.docs === 'object'){
@@ -1327,7 +1569,7 @@ $('check-current-document').addEventListener('click',checkCurrentDocumentSpellin
 $('back-to-apps').addEventListener('click',()=>{state.view=state.setupComplete?'workspace':'manager';render();});
 $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){state.view='workspace';render();}else completeAppSetup();});
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
-editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
+editor.addEventListener('input',()=>{if(state.app==='pages'){activeDoc().html=serializePagesDocument();schedulePagesPagination();}else{activeDoc().html=editor.innerHTML;}persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
 $('pages-outline-search').addEventListener('input', refreshPagesOutline);
 document.addEventListener('keydown', event => {
   const modifier = event.ctrlKey || event.metaKey;
