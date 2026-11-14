@@ -62,12 +62,19 @@ The feature branch now contains two initial, reviewable implementation slices. T
 | Page ruler | Optional metric ruler aligned to the selected paper size/orientation, with half-centimetre ticks, labels and shaded margin areas | Pure ruler-scale and UI tests added; draggable markers are not included; exact-head CI and live desktop visual inspection pending. |
 | Multi-page editing | Vertically stacked paper surfaces; whole-block automatic flow; explicit paragraph-boundary page breaks; selected page size and orientation carried into PDF export | Pure block-packing and UI regression tests added; long individual blocks are not split and can extend a page. Electron interaction and actual PDF output checks are pending. |
 | Document design presets | Design tab with Brightdesk, Editorial and Modern preview cards; local Draft and Confidential watermark settings; metadata preserved by local recovery | Pure normalisation and UI integration tests added; exact-head CI and live Electron visual inspection are pending. Full user-editable styles remain future work. |
+| Table of contents | References tab builds a linked contents block from Heading 1–3, assigns safe local heading IDs, updates an existing contents block and preserves only approved internal links during sanitisation | Pure heading-entry tests and UI/security assertions added; exact-head CI pending. Footnotes/citations/bibliography and cross-reference fields remain future work. |
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
+## References implementation slice
+
+The draft branch now includes a References tab with an **Insert or update table of contents** command. It extracts visible Heading 1–3 entries, assigns safe generated heading IDs where needed, and creates internal links. Running the command again refreshes the existing contents block. Reopening a document preserves only heading IDs and internal anchor URLs matching the Pages allowlist; external URLs and arbitrary HTML attributes are stripped by the document sanitizer. The contents list is kept as document HTML, not an external index or cloud service.
+
+Pure helper tests cover safe IDs, heading levels, whitespace, duplicate IDs and internal-only links. UI and sanitizer regression tests cover the actual tab wiring. Exact-head CI and running-Electron interaction review remain outstanding. This first contents block is one page-layout block and is not split across pages. Footnotes, citation management, bibliography, captions, index and generated page-number fields remain future work.
+
 ## Latest visual implementation slice
 
-The draft branch now includes the Pages Design tab. The selectable Brightdesk, Editorial and Modern cards preview their type treatment before application. Draft and Confidential watermark choices are stored with the local document and recovery snapshot. Presets are implemented with system-safe fonts and original Brightdesk colour treatments; no third-party font, image, icon or brand asset is introduced. The source model rejects unknown preset and watermark identifiers by falling back to Brightdesk and no watermark.
+The draft branch now includes the Pages Design tab. The selectable Brightdesk, Editorial and Modern cards preview their type treatment before application. Draft and Confidential watermark choices, page colour and page border are stored with the local document and recovery snapshot. Presets are implemented with system-safe fonts and original Brightdesk colour treatments; no third-party font, image, icon or brand asset is introduced. The source model rejects unknown preset and watermark identifiers by falling back to Brightdesk and no watermark.
 
 The new pure-model and UI regression tests are in the branch. Exact-head CI and a visual inspection of the running Electron window remain pending. The screenshot runner successfully captured a real Electron workspace on its previous baseline, but GitHub artifact storage quota prevented the image upload; no screenshot visual review is claimed.
 
