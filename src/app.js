@@ -266,6 +266,155 @@ function refreshPagesOutline() {
   });
 }
 
+let pagesFindMatchIndex = -1;
+
+function getPagesSearchSegments() {
+  const blockTags = new Set(['ADDRESS','ARTICLE','BLOCKQUOTE','DIV','H1','H2','H3','LI','P','PRE','SECTION','TD','TH']);
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  const segments = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (!node.nodeValue || !node.nodeValue.length) continue;
+    let block = node.parentElement;
+    while (block && block !== editor && !blockTags.has(block.tagName)) block = block.parentElement;
+    segments.push({ text: node.nodeValue, blockId: block || editor, node });
+  }
+  return segments;
+}
+
+function findPagesMatches() {
+  const query = $('pages-find-query').value;
+  return window.BrightdeskTextSearch.findTextMatches(getPagesSearchSegments(), query, {
+    caseSensitive: $('pages-find-case').checked,
+    wholeWord: $('pages-find-whole-word').checked
+  });
+}
+
+function updatePagesFindStatus(matches, selectedIndex = -1) {
+  const status = $('pages-find-status');
+  if (!status) return;
+  const query = $('pages-find-query').value;
+  if (!query) {
+    status.textContent = 'Enter text to find.';
+    return;
+  }
+  if (!matches.length) {
+    status.textContent = 'No matches found.';
+    return;
+  }
+  const countText = matches.length === 1 ? '1 match' : `${matches.length} matches`;
+  status.textContent = selectedIndex >= 0
+    ? `${countText} · Match ${selectedIndex + 1} of ${matches.length}`
+    : countText;
+}
+
+function selectPagesSearchMatch(match) {
+  if (!match?.parts?.length) return false;
+  const first = match.parts[0];
+  const last = match.parts[match.parts.length - 1];
+  if (!first.node?.isConnected || !last.node?.isConnected) return false;
+  const range = document.createRange();
+  range.setStart(first.node, first.start);
+  range.setEnd(last.node, last.end);
+  editor.focus();
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  first.node.parentElement?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+  return true;
+}
+
+function refreshPagesFindStatus() {
+  pagesFindMatchIndex = -1;
+  const matches = findPagesMatches();
+  updatePagesFindStatus(matches);
+}
+
+function findNextPagesMatch() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  pagesFindMatchIndex = (pagesFindMatchIndex + 1) % matches.length;
+  if (!selectPagesSearchMatch(matches[pagesFindMatchIndex])) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus([]);
+    return;
+  }
+  updatePagesFindStatus(matches, pagesFindMatchIndex);
+}
+
+function replacePagesMatch(match, replacement) {
+  if (!match?.parts?.length) return false;
+  const first = match.parts[0];
+  const last = match.parts[match.parts.length - 1];
+  if (!first.node?.isConnected || !last.node?.isConnected) return false;
+  const range = document.createRange();
+  range.setStart(first.node, first.start);
+  range.setEnd(last.node, last.end);
+  range.deleteContents();
+  const inserted = document.createTextNode(replacement);
+  range.insertNode(inserted);
+  const caret = document.createRange();
+  caret.setStartAfter(inserted);
+  caret.collapse(true);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  return true;
+}
+
+function commitPagesSearchReplacement() {
+  state.docs.pages.html = editor.innerHTML;
+  persist();
+  refreshPagesOutline();
+  pagesFindMatchIndex = -1;
+  refreshPagesFindStatus();
+}
+
+function replaceCurrentPagesMatch() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  const index = pagesFindMatchIndex >= 0 && pagesFindMatchIndex < matches.length ? pagesFindMatchIndex : 0;
+  const replacement = $('pages-replace-query').value;
+  if (!replacePagesMatch(matches[index], replacement)) {
+    refreshPagesFindStatus();
+    return;
+  }
+  commitPagesSearchReplacement();
+}
+
+function replaceAllPagesMatches() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  const replacement = $('pages-replace-query').value;
+  let replaced = 0;
+  for (const match of [...matches].reverse()) {
+    if (replacePagesMatch(match, replacement)) replaced++;
+  }
+  commitPagesSearchReplacement();
+  $('pages-find-status').textContent = replaced === 1
+    ? 'Replaced 1 occurrence.'
+    : `Replaced ${replaced} occurrences.`;
+}
+
+function openPagesFindPanel() {
+  const panel = $('pages-find-panel');
+  panel.hidden = false;
+  $('pages-find-toggle').setAttribute('aria-expanded', 'true');
+  $('pages-find-query').focus();
+}
+
 function applyPagesParagraphStyle(tagName) {
   const allowed = new Set(['P', 'H1', 'H2', 'H3']);
   const tag = String(tagName || '').toUpperCase();
@@ -326,6 +475,7 @@ function renderToolbar() {
       addButton(para, label('numbering'), () => { editor.focus(); document.execCommand('insertOrderedList'); persist(); });
       addButton(para, label('quote'), () => { editor.focus(); document.execCommand('formatBlock', false, 'BLOCKQUOTE'); persist(); });
       const edit = group('editing');
+      addButton(edit, 'Find & Replace', openPagesFindPanel, 'Find and replace text in this document');
       addButton(edit, label('undo'), () => { editor.focus(); document.execCommand('undo'); persist(); });
       addButton(edit, label('redo'), () => { editor.focus(); document.execCommand('redo'); persist(); });
       addButton(group('export'), label('pdf'), exportPdf, 'Export as PDF');
@@ -1124,6 +1274,18 @@ $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){stat
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
 editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();});
 $('pages-outline-search').addEventListener('input', refreshPagesOutline);
+$('pages-find-toggle').addEventListener('click', () => {
+  const panel = $('pages-find-panel');
+  panel.hidden = !panel.hidden;
+  $('pages-find-toggle').setAttribute('aria-expanded', String(!panel.hidden));
+  if (!panel.hidden) $('pages-find-query').focus();
+});
+$('pages-find-query').addEventListener('input', refreshPagesFindStatus);
+$('pages-find-case').addEventListener('change', refreshPagesFindStatus);
+$('pages-find-whole-word').addEventListener('change', refreshPagesFindStatus);
+$('pages-find-next').addEventListener('click', findNextPagesMatch);
+$('pages-replace-one').addEventListener('click', replaceCurrentPagesMatch);
+$('pages-replace-all').addEventListener('click', replaceAllPagesMatches);
 $('recovery-open').addEventListener('click',async()=>{
   if(!recoveryCandidate)return;
   try{
