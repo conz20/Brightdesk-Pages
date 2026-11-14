@@ -26,7 +26,7 @@ test('Pages Home ribbon exposes real paragraph style commands', () => {
   assert.match(app, /applyPagesParagraphStyle/);
   assert.match(app, /formatBlock/);
   assert.match(app, /pages-doc-title/);
-  assert.match(app, /\{ label: 'Title', style: 'title' \}/);
+  assert.match(app, /\{ label: 'Title', styleKey: 'title'/);
   assert.match(html, /class="pages-editor-layout"/);
   assert.match(styles, /\.pages-style-gallery/);
   assert.match(styles, /\.pages-navigation-pane/);
