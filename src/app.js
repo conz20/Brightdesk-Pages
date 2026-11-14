@@ -54,10 +54,17 @@ if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was no
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
 function setStatus(message) { $('save-status').textContent = message; }
+function pageHasRecoverableState(doc) {
+  const layout = pageLayout.normalizePageLayout(doc.pageSettings || {});
+  const defaultLayout = pageLayout.normalizePageLayout();
+  return Boolean(String(doc.html || '').trim())
+    || (doc.title || defaults.pages.title) !== defaults.pages.title
+    || Object.keys(defaultLayout).some(key => layout[key] !== defaultLayout[key]);
+}
 function markPageRecoveryDirty() {
   const doc = state.docs.pages;
   if (state.app !== 'pages' || !doc) return;
-  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title && !pageRecoveryHasSnapshot) return;
+  if (!pageHasRecoverableState(doc) && !pageRecoveryHasSnapshot) return;
   pageRecoveryDirty = true;
   pageRecoveryRevision++;
 }
@@ -87,7 +94,7 @@ async function flushPageRecovery() {
   if (!pageRecoveryDirty || pageRecoveryInFlight || state.app !== 'pages' || !window.brightdesk.saveRecovery) return;
   const doc = state.docs.pages || defaults.pages;
   const revision = pageRecoveryRevision;
-  if (!String(doc.html || '').trim() && (doc.title || defaults.pages.title) === defaults.pages.title) {
+  if (!pageHasRecoverableState(doc)) {
     try {
       await window.brightdesk.deleteRecovery('pages-active');
       pageRecoveryHasSnapshot = false;
