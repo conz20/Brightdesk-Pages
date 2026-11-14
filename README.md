@@ -83,6 +83,10 @@ The Pages Home ribbon includes **Find & Replace** for the active document. Searc
 
 This is an early text-search workflow. Regular-expression search, match highlighting, search across multiple open documents and a dedicated full-size navigation/search pane are not yet included. The feature remains under draft review until its automated tests and real desktop interaction checks pass.
 
+## Page ruler
+
+The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
+
 ## Desktop installers
 
 Choose the installer for your computer:
