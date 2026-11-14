@@ -3,15 +3,13 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main]
-    tags: ['v*']
 permissions:
   contents: read
 
 jobs:
   test:
     name: Test Brightdesk Pages
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')))
     runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -28,7 +26,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.platform }} desktop installer
-    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+    if: (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
     needs: test
     strategy:
       fail-fast: false
