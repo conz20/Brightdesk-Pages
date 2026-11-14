@@ -120,6 +120,14 @@ This product vendors the browser-compatible JSON storage helper from [Brightdesk
 
 The checked-in copy is loaded locally before the renderer. It is not fetched from a package registry or any remote service at runtime. Existing document keys are preserved: current documents continue to save under `brightdesk-docs-v3`, legacy `brightdesk-docs-v2` data remains readable, and setup preferences remain under `brightdesk-app-setup-v1`. Document content and settings remain on this device.
 
+## Printing
+
+Microsoft workflow comparison and known gaps: [Brightdesk Printing Compatibility Matrix](https://github.com/conz20/Brightdesk-suite/blob/feat/printing-suite-integration-2026-11-13/docs/PRINTING-COMPATIBILITY.md).
+
+Brightdesk Pages uses the shared local-first Printing adapter. The **Print** action lists configured operating-system printer queues and opens the visible system print dialog. **Printer settings** opens the operating system's own printer setup screen. Brightdesk does not silently create printer queues, install drivers or upload document content. A successful submission means the operating system accepted the job; it does not confirm that a physical page printed.
+
+The dependency-free adapter snapshot is kept in `src/printing-package/` and records its canonical source commit in `UPSTREAM.json`. Virtual-printer tests cover queue listing, capability reporting, accepted submissions, removed queues and spooler rejection without a physical printer. The packaging scripts compile the macOS and Windows discovery helpers on their matching operating systems; Linux discovery uses the host's CUPS `ippfind` utility. The current customer-facing UI exposes only **Print** and **Printer settings**—network discovery, pairing and capability lookup are not yet connected to customer-facing controls. Users must add a printer through operating-system settings before it appears as a usable queue. Native builds and physical printing still require platform-specific verification.
+
 ## Customer network policy
 
 Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
@@ -151,3 +159,10 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+## Private self-hosted CI
+
+Pull-request workflows that use owner-operated runners run only for changes made in this repository. Pull requests from forks are not executed on these private computers.
+
+### Printing integration verification
+
+The shared local-first printing integration is under verification in the product pull request. The Mac CI checks cover the universal Bonjour helper and automated source contracts. Native Windows helper compilation and Windows printer discovery remain unverified until a Windows runner with the Visual Studio C++ Build Tools and Windows SDK is available; they are not claimed as passed by the Mac tests.

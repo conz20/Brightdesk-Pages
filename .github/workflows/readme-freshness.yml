@@ -1,5 +1,9 @@
 name: README freshness
 
+concurrency:
+  group: brightdesk-pages-readme-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
@@ -13,6 +17,7 @@ permissions:
 jobs:
   readme-freshness:
     name: Require README updates for product changes
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, macOS, ARM64, brightdesk-product-ci]
     steps:
       - name: Check out the change

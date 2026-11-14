@@ -56,15 +56,42 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
   assert.equal(pkg.build.nsis.createStartMenuShortcut, true);
 });
 
-test('desktop installer workflow verifies native products and keeps release publishing opt-in', () => {
+
+
+test('superseded Pages pull-request checks are cancelled before they build a backlog', () => {
+  const installer = read('.github/workflows/desktop-installers.yml');
+  const freshness = read('.github/workflows/readme-freshness.yml');
+  const branchKey = '${{ github.event.pull_request.head.ref || github.ref }}';
+  const cancellation = 'cancel-in-progress: ${{ github.event_name == \'pull_request\' }}';
+
+  assert.ok(installer.includes('group: brightdesk-pages-installers-' + branchKey));
+  assert.ok(freshness.includes('group: brightdesk-pages-readme-' + branchKey));
+  assert.ok(installer.includes(cancellation));
+  assert.ok(freshness.includes(cancellation));
+});
+
+test('desktop installer workflow verifies native products and publishes only after version-tag builds pass', () => {
   const workflow = read('.github/workflows/desktop-installers.yml');
   assert.ok(workflow.includes('node-version: 24.22.2'));
   assert.ok(workflow.includes('run: npm ci --no-audit --no-fund'));
   assert.ok(workflow.includes('run: npm test'));
-  assert.ok(workflow.includes('npm run dist:desktop:'));
-  assert.ok(workflow.includes('npm run verify:desktop:'));
-  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.build_installers == true"));
-  assert.ok(workflow.includes("if: github.event_name == 'workflow_dispatch' && inputs.publish_release == true"));
-  assert.ok(workflow.includes('contents: write'));
-  assert.ok(workflow.includes('default: false'));
+  assert.ok(workflow.includes('npm run dist:desktop:${{ matrix.platform }}'));
+  assert.ok(workflow.includes('npm run verify:desktop:${{ matrix.platform }}'));
+  assert.ok(workflow.includes("tags: ['v*']"));
+  assert.doesNotMatch(workflow, /workflow_dispatch/);
+  assert.doesNotMatch(workflow, /ubuntu-latest|windows-latest|macos-latest/);
+
+  const prepare = workflow.split('  prepare-release:')[1]?.split('  release-assets:')[0] ?? '';
+  const assets = workflow.split('  release-assets:')[1]?.split('  publish-release:')[0] ?? '';
+  const publish = workflow.split('  publish-release:')[1] ?? '';
+
+  for (const job of [prepare, assets, publish]) {
+    assert.ok(job.includes("if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')"));
+  }
+  assert.ok(prepare.includes('draft: true'));
+  assert.ok(assets.includes('draft: true'));
+  assert.ok(assets.includes('fail_on_unmatched_files: true'));
+  assert.ok(publish.includes('needs: release-assets'));
+  assert.ok(publish.includes('draft: false'));
+  assert.ok(workflow.includes('contents: read'));
 });
