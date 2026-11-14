@@ -305,7 +305,13 @@ ipcMain.handle('file:pdf', async (event, payload) => {
   const result = await dialog.showSaveDialog(mainWindow, { defaultPath: cleanFileName(payload?.title || 'Brightdesk document') + '.pdf', filters: [{ name: 'PDF document', extensions: ['pdf'] }] });
   if (result.canceled || !result.filePath) return { canceled: true };
   const filePath = ensureExtension(result.filePath, 'pdf');
-  const pdf = await mainWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4', margins: { top: 0.55, bottom: 0.55, left: 0.6, right: 0.6 } });
+  const requestedPageSize = ['A4', 'Letter', 'Legal'].includes(payload?.pageSize) ? payload.pageSize : 'A4';
+  const pdf = await mainWindow.webContents.printToPDF({
+    printBackground: true,
+    pageSize: requestedPageSize,
+    landscape: payload?.landscape === true,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 }
+  });
   await fs.writeFile(filePath, pdf); return { canceled: false, filePath };
 });
 ipcMain.handle('recovery:list', async event => {
