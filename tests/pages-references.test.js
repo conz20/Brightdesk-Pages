@@ -40,3 +40,12 @@ test('Pages table of contents removes duplicate identifiers and normalises white
     { id: 'pages-heading-b2', level: 2, text: 'Second heading' }
   ]);
 });
+
+
+test('Pages table of contents permits only safe internal heading links', () => {
+  assert.equal(references.normalizeHeadingHref('#pages-heading-abc123'), '#pages-heading-abc123');
+  assert.equal(references.normalizeHeadingHref('https://example.com'), null);
+  assert.equal(references.normalizeHeadingHref('//example.com'), null);
+  assert.equal(references.normalizeHeadingHref('#external-link'), null);
+  assert.equal(references.normalizeHeadingHref('#pages-heading-../../bad'), null);
+});
