@@ -34,6 +34,14 @@ test("the Pages workspace shows the shared print actions and respects page setup
   assert.ok(app.includes("window.brightdesk.printing.openPrinterSettings()"));
 });
 
+test("configured-printer refresh returns queues to the print action and preserves errors", () => {
+  const app = read("src/app.js");
+  assert.ok(app.includes("async function refreshConfiguredPrinters({ throwOnError = false } = {})"));
+  assert.ok(app.includes("return availablePrinters;"));
+  assert.ok(app.includes("if (throwOnError) throw error;"));
+  assert.ok(app.includes("refreshConfiguredPrinters({ throwOnError: true })"));
+});
+
 test("all built-in language packs include printing action labels", () => {
   for (const locale of ["en-AU", "de-DE", "es-ES", "fr-FR"]) {
     const pack = JSON.parse(read(`src/languages/${locale}.json`));
