@@ -24,7 +24,7 @@ test('Pages editor renders one labelled paper surface per flowing page', () => {
 test('Pages stores document content without transient page-surface wrappers', () => {
   const app = read('app.js');
   assert.ok(app.includes('function serializePagesDocument()'));
-  assert.ok(app.includes('page.querySelectorAll'));
+  assert.ok(app.includes("node.classList.contains('pages-document-page')"));
   assert.ok(app.includes('serializePagesDocument()'));
   assert.ok(app.includes('activeDoc().html = serializePagesDocument()'));
 });
@@ -56,5 +56,10 @@ test('print CSS isolates Pages and preserves page boundaries', () => {
   assert.ok(css.includes('.pages-document-page'));
   assert.ok(css.includes('@media print'));
   assert.ok(css.includes('break-after:page'));
-  assert.ok(css.includes('break-before:page'));
+  assert.ok(css.includes('page-break-after:always'));
+});
+
+test('DOCX extraction walks through visual page wrappers without merging a page into one paragraph', () => {
+  const app = read('app.js');
+  assert.ok(app.includes("if (el.classList?.contains('pages-document-page')) { el.childNodes.forEach(n=>walk(n,type)); return; }"));
 });
