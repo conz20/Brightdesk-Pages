@@ -412,12 +412,6 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-design-settings{display:flex;align-items:flex-start;gap:8px;flex-wrap:nowrap}
 .pages-watermark-setting{min-width:105px}
 .pages-watermark-select{min-width:105px}
-#editor[data-page-color="warm"] .pages-document-page{background:#fffaf0}
-#editor[data-page-color="mist"] .pages-document-page{background:#f7fafc}
-#editor[data-page-color="white"] .pages-document-page{background:#fff}
-#editor[data-page-border="none"] .pages-document-page{border:0}
-#editor[data-page-border="subtle"] .pages-document-page{border:1px solid #e7e8ee}
-#editor[data-page-border="double"] .pages-document-page{border:3px double #aeb1c5}
 @media(max-width:1100px){.pages-design-settings{gap:6px}.pages-watermark-setting{min-width:96px}.pages-watermark-select{min-width:96px}}
 @media(max-width:720px){.pages-design-settings{gap:6px}}
 
@@ -464,3 +458,75 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .editor .pages-doc-subtitle{margin:0 0 18px;color:#73768b;font-size:16px;font-weight:400;line-height:1.45;letter-spacing:.1px}
 @media(max-width:1100px){.pages-style-gallery{min-width:430px}.pages-style-preview{flex-basis:66px;min-width:66px}}
 @media(max-width:720px){.pages-style-gallery{min-width:430px}.pages-style-preview{flex-basis:66px;min-width:66px}}
+
+
+/* Pages dark workspace: dark application chrome with readable light paper. */
+html.pages-dark-mode{color-scheme:dark;background:#17191f;color:#edf0f6}
+html.pages-dark-mode body,html.pages-dark-mode .main{background:#17191f;color:#edf0f6}
+html.pages-dark-mode .sidebar{background:#20232b;border-right-color:#363b47;color:#edf0f6}
+html.pages-dark-mode .brand b,html.pages-dark-mode .topbar h1{color:#f1f2f7}
+html.pages-dark-mode .brand small,html.pages-dark-mode .nav small,html.pages-dark-mode .section-label{color:#9299aa}
+html.pages-dark-mode .nav{color:#cbd0db}
+html.pages-dark-mode .nav:hover{background:#2b303b;color:#fff}
+html.pages-dark-mode .nav.active{background:#31314c;color:#c8c6ff;box-shadow:inset 3px 0 0 var(--bd-accent)}
+html.pages-dark-mode .free-pill{background:#30314a;color:#c8c6ff}
+html.pages-dark-mode .sidebar-bottom small,html.pages-dark-mode .save-status,html.pages-dark-mode .local-tag{color:#afb5c3}
+html.pages-dark-mode .topbar{border-bottom-color:#363b47}
+html.pages-dark-mode .workspace{background:#252a34;border-color:#3a414e;box-shadow:0 5px 25px #080a101f}
+html.pages-dark-mode .document-bar{background:#252a34;border-bottom-color:#3a414e}
+html.pages-dark-mode .document-bar input{background:transparent;color:#f1f2f7}
+html.pages-dark-mode .ribbon-tabs{background:#20232b;border-bottom-color:#3a414e}
+html.pages-dark-mode .ribbon-tab{color:#c1c7d3}
+html.pages-dark-mode .ribbon-tab:hover{background:#2c313b}
+html.pages-dark-mode .ribbon-tab.active{color:#c8c6ff}
+html.pages-dark-mode .ribbon-tab.active:after{background:#8d89f2}
+html.pages-dark-mode .toolbar{background:#222630;border-bottom-color:#3a414e}
+html.pages-dark-mode .ribbon-group{border-right-color:#3b414e}
+html.pages-dark-mode .ribbon-group-label{color:#969eae}
+html.pages-dark-mode .tool{background:transparent;color:#d6dbe5}
+html.pages-dark-mode .tool:hover{background:#34394a;border-color:#4a5062;color:#fff}
+html.pages-dark-mode .tool:active,html.pages-dark-mode .tool.is-selected{background:#3a3a5a;border-color:#5b5b83;color:#d3d1ff}
+html.pages-dark-mode .pages-editor-layout{background:#17191f}
+html.pages-dark-mode .pages-navigation-pane{background:#20232b;border-right-color:#3a414e}
+html.pages-dark-mode .pages-navigation-heading{color:#f0f2f7}
+html.pages-dark-mode .pages-outline-search-label{color:#adb4c3}
+html.pages-dark-mode .pages-outline-search,html.pages-dark-mode .pages-find-panel .pages-outline-search{background:#292e39;border-color:#464d5c;color:#f0f2f7}
+html.pages-dark-mode .pages-outline-search::placeholder{color:#8c94a5}
+html.pages-dark-mode .pages-outline-search:focus{outline-color:#8d89f2;border-color:#8d89f2}
+html.pages-dark-mode .pages-outline-empty{color:#a1a9b8}
+html.pages-dark-mode .pages-outline-item{color:#c1c7d3}
+html.pages-dark-mode .pages-outline-item:hover{background:#303647;color:#d4d2ff}
+html.pages-dark-mode .pages-editor-column{background:#303541}
+html.pages-dark-mode .pages-ruler{background:#242a35;border-color:#4b5362;border-bottom-color:#616b7d;box-shadow:none}
+html.pages-dark-mode .pages-ruler-margin{background:#323947}
+html.pages-dark-mode .pages-ruler-tick{border-left-color:#8d96a8}
+html.pages-dark-mode .pages-ruler-tick.is-major{border-left-color:#c1c8d4}
+html.pages-dark-mode .pages-ruler-label{color:#d0d5df}
+html.pages-dark-mode .pages-find-toggle{background:#292e39;border-color:#464d5c;color:#d2d4ff}
+html.pages-dark-mode .pages-find-toggle:hover{background:#33394a;border-color:#666c9f}
+html.pages-dark-mode .pages-find-option,html.pages-dark-mode .pages-find-status{color:#b0b7c6}
+html.pages-dark-mode .pages-style-preview,html.pages-dark-mode .pages-design-card{background:#292e39;border-color:#4a5161;color:#eef0f6}
+html.pages-dark-mode .pages-style-label,html.pages-dark-mode .pages-design-card-label{color:#c4cad5}
+html.pages-dark-mode .pages-style-sample,html.pages-dark-mode .pages-design-swatch{background:#fff;color:#33384c;border-color:#e5e7ee}
+html.pages-dark-mode .pages-watermark-select,html.pages-dark-mode .page-setting-select{background:#292e39;border-color:#4a5161;color:#eef0f6}
+html.pages-dark-mode .recovery-banner{background:#2b3040;border-color:#555c7d;color:#eef0f6}
+html.pages-dark-mode .recovery-copy span{color:#c0c6d3}
+html.pages-dark-mode .update-message{background:#292e39;border-color:#4a5161;color:#d9dcef}
+html.pages-dark-mode .secondary{background:#292e39;border-color:#4a5161;color:#e2e6ee}
+html.pages-dark-mode .secondary:hover{background:#343a49}
+html.pages-dark-mode .welcome{background:linear-gradient(110deg,#30314a,#2d3444 70%,#263b47);border:1px solid #41465b}
+html.pages-dark-mode .welcome h2{color:#f0f1f7}
+html.pages-dark-mode .welcome p{color:#c2c8d4}
+html.pages-dark-mode .welcome-orb{color:#a6a2ff}
+
+/* The paper remains a light reading surface in Dark mode, like the reference. */
+html.pages-dark-mode .pages-document-page{color:#303348}
+html.pages-dark-mode .pages-document-page .pages-toc{background:#fbfbfe;color:#33364b}
+html.pages-dark-mode .pages-document-page .pages-toc-title{color:#4642b8}
+html.pages-dark-mode .pages-document-page a{color:#355b91}
+html.pages-dark-mode .pages-document-page blockquote{color:#77758f}
+html.pages-dark-mode .editor .pages-doc-subtitle{color:#73768b}
+html.pages-dark-mode .tool:focus-visible,html.pages-dark-mode .ribbon-tab:focus-visible,html.pages-dark-mode .pages-outline-item:focus-visible{outline-color:#a5a1ff}
+@media(prefers-reduced-motion:reduce){
+  html.pages-dark-mode *,html.pages-dark-mode *::before,html.pages-dark-mode *::after{transition:none!important;animation:none!important}
+}
