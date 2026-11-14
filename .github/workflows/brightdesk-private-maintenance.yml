@@ -85,10 +85,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -97,9 +97,9 @@ jobs:
       - name: Create a short-lived read-only token for this project
         id: app-token
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: ${{ matrix.project }}
@@ -130,9 +130,9 @@ jobs:
         id: issue-token
         if: failure() && matrix.project == 'Brightdesk-suite' && steps.run-private-check.outputs.failure_summary_file != ''
         continue-on-error: true
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -184,10 +184,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -196,9 +196,9 @@ jobs:
       - name: Create a short-lived read-only token for Brightdesk Suite
         id: app-token
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -230,9 +230,9 @@ jobs:
         id: installer-issue-token
         if: failure() && steps.build-installer.outputs.installer_failure_summary_file != ''
         continue-on-error: true
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -392,10 +392,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -404,9 +404,9 @@ jobs:
       - name: Create a short-lived read-only token for this project
         id: app-token
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: ${{ matrix.project }}
