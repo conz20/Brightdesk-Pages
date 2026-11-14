@@ -63,7 +63,7 @@ function pageHasRecoverableState(doc) {
 }
 function markPageRecoveryDirty() {
   const doc = state.docs.pages;
-  if (state.app !== 'pages' || !doc) return;
+  if (state.app !== 'pages' || !doc || (recoveryCandidate && !recoveryDismissed)) return;
   if (!pageHasRecoverableState(doc) && !pageRecoveryHasSnapshot) return;
   pageRecoveryDirty = true;
   pageRecoveryRevision++;
@@ -127,6 +127,7 @@ async function flushPageRecovery() {
   }
 }
 async function clearPageRecoverySnapshot() {
+  if (recoveryCandidate && !recoveryDismissed) return;
   pageRecoveryDirty = false;
   pageRecoveryRevision++;
   const pending = pageRecoveryInFlight;
@@ -1062,6 +1063,7 @@ $('recovery-discard').addEventListener('click',async()=>{
   try{
     await window.brightdesk.deleteRecovery(recoveryCandidate.id);
     recoveryCandidate=null;pageRecoveryHasSnapshot=false;pageRecoveryDirty=false;recoveryDismissed=true;renderRecoveryBanner();
+    markPageRecoveryDirty();
     setStatus('Recovery copy discarded');
   }catch(error){alert(`Could not discard this recovery copy: ${error.message}`);}
 });
