@@ -1,6 +1,6 @@
 # Brightdesk Pages — WordCraft Reference and Parity Plan
 
-**Status:** Baseline audit complete; local recovery, document navigation, paragraph styles and initial Find & Replace are on this draft feature branch and await automated verification and live visual review.  
+**Status:** Baseline audit complete; local recovery, document navigation, paragraph styles, Find & Replace and a metric page ruler are on this draft feature branch and await automated verification and live visual review.  
 **Reference reviewed:** Craft Wiki WordCraft pages supplied by the product owner  
 **Target repository:** `conz20/Brightdesk-Pages`  
 **Target product:** Brightdesk Pages  
@@ -59,12 +59,15 @@ The feature branch now contains two initial, reviewable implementation slices. T
 | Document navigation | A left outline lists Heading 1–3 paragraphs, supports heading search and jumps to a selected heading | Static regression test added; exact-head CI and running-window inspection are pending. |
 | Paragraph styles | Home ribbon shortcuts apply Normal, Title, Heading 1 and Heading 2 block formatting | Static regression test added; this is not yet a full style manager or live style-preview engine. |
 | Find & Replace | Local document search, Find next, Replace and Replace all; match-case and whole-word options; matches across inline runs in a paragraph | Pure search helper and UI regression tests added; exact-head CI and live desktop interaction checks pending. Regular expressions, match highlighting and cross-document search are not included. |
+| Page ruler | Optional metric ruler aligned to the selected paper size/orientation, with half-centimetre ticks, labels and shaded margin areas | Pure ruler-scale and UI tests added; draggable markers are not included; exact-head CI and live desktop visual inspection pending. |
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
 ## Feature target derived from the eight supplied guides
 
 ### 1. Overview and everyday writing
+
+**First ruler slice on the draft branch:** the Pages View tab now has an accessible Show ruler toggle. It renders a horizontal centimetre scale for the selected paper width and orientation, with half-centimetre ticks and shaded page margins. The scale recalculates when page settings change. It is a visual measuring aid only; draggable margin/indent markers and vertical rulers remain planned. Tests cover metric and inch scale calculations and the View toggle, but the exact-head checks and live desktop visual review are still outstanding.
 
 **First Find & Replace slice on the draft branch:** Pages now has a Home-ribbon command that opens local Find & Replace controls. It supports Find next, Replace, Replace all, match case and whole-word matching. The range mapper supports inline formatting runs without joining separate paragraphs. This is a first literal-search implementation; regular expressions, search-result highlighting, document-wide navigation and cross-document search remain planned. Added unit and UI regression tests; no pass is claimed until the current-head workflow completes.
 
