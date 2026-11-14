@@ -31,6 +31,14 @@ function termsRecord(terms, config, date = new Date()) {
 function fileSlug(id) {
   return id === 'slides' ? 'decks' : id === 'loop' ? 'workspace' : id;
 }
+function userDataDirectory(home, config) {
+  // Mirror src/main.js: app.setName(packageConfig.productName || 'Brightdesk').
+  const appName = config && config.productName || 'Brightdesk';
+  if (typeof appName !== 'string' || !appName.trim() || appName.includes('/') || appName.includes('\\')) {
+    throw new Error('Capture requires a valid Electron application name.');
+  }
+  return path.join(home, 'Library', 'Application Support', appName);
+}
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 async function freePort() {
@@ -105,12 +113,9 @@ async function main() {
   try {
     const terms = await readFile(path.join(root, 'TERMS_AND_CONDITIONS.txt'));
     const record = termsRecord(terms, pkg);
-    const appData = path.join(home, 'Library', 'Application Support');
-    for (const appName of new Set([product.name, pkg.name])) {
-      const userData = path.join(appData, appName);
-      await mkdir(userData, { recursive: true });
-      await writeFile(path.join(userData, 'terms-acceptance.json'), JSON.stringify(record, null, 2) + '\n', { mode: 0o600 });
-    }
+    const userData = userDataDirectory(home, pkg);
+    await mkdir(userData, { recursive: true });
+    await writeFile(path.join(userData, 'terms-acceptance.json'), JSON.stringify(record, null, 2) + '\n', { mode: 0o600 });
     await mkdir(output, { recursive: true });
     child = spawn(require('electron'), [
       '--remote-debugging-port=' + port,
@@ -198,4 +203,4 @@ if (require.main === module) {
     process.exitCode = 1;
   });
 }
-module.exports = { identity, termsRecord, fileSlug };
+module.exports = { identity, termsRecord, fileSlug, userDataDirectory };

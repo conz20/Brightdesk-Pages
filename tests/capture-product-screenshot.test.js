@@ -3,7 +3,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
-const { identity, termsRecord, fileSlug } = require('../scripts/capture-product-screenshot');
+const path = require('node:path');
+const { identity, termsRecord, fileSlug, userDataDirectory } = require('../scripts/capture-product-screenshot');
 
 test('terms acceptance fixture is bound to the exact terms content', () => {
   const terms = Buffer.from('Brightdesk test terms v1\n', 'utf8');
@@ -26,4 +27,20 @@ test('capture filenames use approved customer product names', () => {
   assert.equal(fileSlug('slides'), 'decks');
   assert.equal(fileSlug('loop'), 'workspace');
   assert.equal(fileSlug('todo'), 'todo');
+});
+
+test('first-run terms fixture matches the Electron userData directory', () => {
+  const home = '/isolated/brightdesk-home';
+  const packageConfig = {
+    name: 'brightdesk-pages',
+    build: { productName: 'Brightdesk Pages' }
+  };
+  assert.equal(
+    userDataDirectory(home, packageConfig),
+    path.join(home, 'Library', 'Application Support', 'Brightdesk')
+  );
+  assert.equal(
+    userDataDirectory(home, { productName: 'Brightdesk Pages' }),
+    path.join(home, 'Library', 'Application Support', 'Brightdesk Pages')
+  );
 });
