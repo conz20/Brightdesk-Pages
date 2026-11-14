@@ -50,9 +50,11 @@ const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wr
 const pageLayout = window.BrightdeskPageLayout;
 const pagePagination = window.BrightdeskPagePagination;
 const pagesStyleSets = window.BrightdeskPagesStyleSets;
+const pagesReferences = window.BrightdeskPagesReferences;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
 if (!pagesStyleSets) throw new Error('Brightdesk Pages style-set definitions were not loaded.');
+if (!pagesReferences) throw new Error('Brightdesk Pages references helpers were not loaded.');
 
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
@@ -199,7 +201,7 @@ function appLabel(id) { return catalog.find(item => item.id === id)?.name || id;
 
 function safeHtml(html) {
   const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
-  const allowed = new Set(['P','DIV','H1','H2','H3','STRONG','B','EM','I','U','UL','OL','LI','BLOCKQUOTE','BR','SPAN','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','HR']);
+  const allowed = new Set(['P','DIV','H1','H2','H3','STRONG','B','EM','I','U','UL','OL','LI','BLOCKQUOTE','BR','SPAN','A','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','HR']);
   const walk = (node) => {
     [...node.childNodes].forEach(child => {
       if (child.nodeType === Node.ELEMENT_NODE) {
@@ -209,7 +211,11 @@ function safeHtml(html) {
           const isSpan = isCell && (attr.name === 'colspan' || attr.name === 'rowspan') && /^[1-9]\d{0,2}$/.test(attr.value) && Number(attr.value) <= 100;
           const isPageBreak = child.tagName === 'HR' && attr.name === 'data-pages-page-break' && attr.value === 'true';
           const isTitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title';
-          if (!isSpan && !isPageBreak && !isTitleStyle) child.removeAttribute(attr.name);
+          const isHeadingId = ['H1','H2','H3'].includes(child.tagName) && attr.name === 'id' && pagesReferences.normalizeHeadingId(attr.value);
+          const isTocClass = child.tagName === 'DIV' && attr.name === 'class' && attr.value === 'pages-toc';
+          const isTocLevel = child.tagName === 'LI' && attr.name === 'class' && /^pages-toc-level-[23]$/.test(attr.value);
+          const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && attr.value.startsWith('#') && pagesReferences.normalizeHeadingId(attr.value.slice(1));
+          if (!isSpan && !isPageBreak && !isTitleStyle && !isHeadingId && !isTocClass && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
@@ -222,7 +228,7 @@ function cellRaw(row, col) { return String(activeDoc().cells?.[row]?.[col] ?? ''
 function cellNumeric(row, col) { return window.BrightdeskFormula.calculateCell(activeDoc().cells || [], row, col); }
 function colIndex(label) { return window.BrightdeskFormula.columnIndex(label); }
 const ribbonTabs = {
-  pages: ['home', 'insert', 'design', 'layout', 'review', 'view'],
+  pages: ['home', 'insert', 'design', 'layout', 'references', 'review', 'view'],
   sheets: ['home', 'insert', 'formulas', 'data', 'view'],
   slides: ['home', 'insert', 'design', 'slideShow', 'view'],
   notes: ['home', 'insert', 'view']
@@ -510,6 +516,64 @@ function setPagesWatermark(watermark) {
   renderToolbar();
 }
 
+function createPagesHeadingId() {
+  const bytes = new Uint8Array(12);
+  window.crypto.getRandomValues(bytes);
+  return `pages-heading-${[...bytes].map(value => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function collectPagesTocEntries() {
+  const headings = [...editor.querySelectorAll('h1,h2,h3')]
+    .filter(heading => !heading.closest('.pages-toc'));
+  const usedIds = new Set();
+
+  const rows = headings.map(heading => {
+    let id = pagesReferences.normalizeHeadingId(heading.id);
+    if (!id || usedIds.has(id)) {
+      do { id = createPagesHeadingId(); } while (usedIds.has(id));
+      heading.id = id;
+    }
+    usedIds.add(id);
+    return { id, level: Number(heading.tagName.slice(1)), text: heading.textContent };
+  });
+
+  return pagesReferences.buildTocEntries(rows);
+}
+
+function insertOrUpdatePagesTableOfContents() {
+  const entries = collectPagesTocEntries();
+  if (!entries.length) {
+    setStatus('Add a Heading 1, Heading 2 or Heading 3 before inserting a table of contents.');
+    return;
+  }
+
+  const toc = document.createElement('div');
+  toc.className = 'pages-toc';
+  const title = document.createElement('h2');
+  title.textContent = 'Contents';
+  const list = document.createElement('ol');
+
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    if (entry.level > 1) item.className = `pages-toc-level-${entry.level}`;
+    const link = document.createElement('a');
+    link.href = `#${entry.id}`;
+    link.textContent = entry.text;
+    item.append(link);
+    list.append(item);
+  });
+
+  toc.append(title, list);
+  const existing = editor.querySelector('.pages-toc');
+  if (existing) existing.replaceWith(toc);
+  else editor.insertBefore(toc, editor.firstChild);
+
+  activeDoc().html = serializePagesDocument();
+  persist();
+  schedulePagesPagination();
+  setStatus(`Table of contents updated with ${entries.length} heading(s).`);
+}
+
 function setPagesPageColor(pageColor) {
   if (state.app !== 'pages') return;
   activeDoc().pageColor = pagesStyleSets.normalizePageColor(pageColor);
@@ -648,6 +712,9 @@ function renderToolbar() {
       addPageSelect('Paper', 'size', [['A4','A4'],['Letter','US Letter'],['Legal','US Legal']]);
       addPageSelect('Orientation', 'orientation', [['portrait','Portrait'],['landscape','Landscape']]);
       addPageSelect('Margins', 'margin', [['normal','Normal'],['narrow','Narrow'],['moderate','Moderate'],['wide','Wide']]);
+    } else if (tab === 'references') {
+      const references = group('Document references');
+      addButton(references, 'Table of contents', insertOrUpdatePagesTableOfContents, 'Insert or update a linked table of contents from document headings');
     } else if (tab === 'review') {
       const review = group('proofing');
       addButton(review, label('wordCount'), () => { const count = (editor.innerText.trim().match(/\S+/g) || []).length; setStatus(`${count} ${t('common.words')}`); });
