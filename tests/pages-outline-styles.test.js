@@ -14,7 +14,7 @@ test('Pages workspace includes a searchable document outline next to the page ca
   assert.ok(html.includes('id="pages-outline-search"'));
   assert.ok(html.includes('id="pages-outline"'));
   assert.ok(app.includes('function refreshPagesOutline()'));
-  assert.ok(app.includes("querySelectorAll('h1,h2,h3')"));
+  assert.ok(app.includes("editor.querySelectorAll('h1,h2,h3')"));
   assert.ok(app.includes('pages-outline-item'));
 });
 
@@ -34,7 +34,10 @@ test('Pages Home ribbon exposes real paragraph style commands', () => {
 
 test('document outline rebuilds after editing and is refreshed after a document is rendered', () => {
   const app = read('app.js');
-  assert.ok(app.includes("editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline()"));
+  const inputHandler = app.slice(app.indexOf("editor.addEventListener('input'"), app.indexOf("\n$('pages-outline-search')"));
+  assert.ok(inputHandler.includes("activeDoc().html=serializePagesDocument()"));
+  assert.ok(inputHandler.includes("schedulePagesPagination()"));
+  assert.ok(inputHandler.includes("refreshPagesOutline()"));
   const renderIndex = app.indexOf("editor.innerHTML = state.app === 'pages' ? safeHtml(doc.html) : '';");
   const outlineIndex = app.indexOf('refreshPagesOutline();', renderIndex);
   assert.ok(renderIndex >= 0 && outlineIndex > renderIndex);
