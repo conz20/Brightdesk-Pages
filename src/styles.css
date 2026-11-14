@@ -446,3 +446,21 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-toc a{color:inherit;text-decoration:none;border-bottom:1px dotted #a6a8bb}
 .pages-toc a:hover{color:var(--bd-accent-dark);border-bottom-style:solid}
 .pages-toc a:focus-visible{outline:2px solid var(--bd-accent);outline-offset:2px}
+
+
+/* Expanded Home styles gallery, with visible samples before applying. */
+.pages-style-gallery{min-width:470px}
+.pages-style-options{gap:5px;flex-wrap:nowrap}
+.pages-style-preview{flex:0 0 73px;display:flex;flex-direction:column;align-items:stretch;justify-content:space-between;height:54px;min-width:73px;padding:5px 5px 4px;gap:3px}
+.pages-style-sample{display:flex;align-items:center;justify-content:center;flex:1;min-height:0;overflow:hidden;color:#33384c;font-size:15px;line-height:1;white-space:nowrap}
+.pages-style-label{display:block;color:#62677a;font-size:8px;line-height:10px;text-align:center;white-space:nowrap}
+.pages-style-sample.normal{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;font-weight:400}
+.pages-style-sample.no-spacing{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;line-height:1}
+.pages-style-sample.heading-one{font-size:14px;font-weight:750;color:#4642b8}
+.pages-style-sample.title{font-family:Georgia,"Times New Roman",serif;font-size:16px;font-weight:700;color:#303653}
+.pages-style-sample.heading-two{font-size:13px;font-weight:700;color:#626b9b}
+.pages-style-sample.subtitle{font-size:12px;font-weight:400;color:#85899a}
+.editor .pages-doc-no-spacing{margin-top:0;margin-bottom:0;line-height:1.25}
+.editor .pages-doc-subtitle{margin:0 0 18px;color:#73768b;font-size:16px;font-weight:400;line-height:1.45;letter-spacing:.1px}
+@media(max-width:1100px){.pages-style-gallery{min-width:430px}.pages-style-preview{flex-basis:66px;min-width:66px}}
+@media(max-width:720px){.pages-style-gallery{min-width:430px}.pages-style-preview{flex-basis:66px;min-width:66px}}
