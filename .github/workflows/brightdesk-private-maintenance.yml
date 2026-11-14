@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
-          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
+          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js tests/private-test-command.test.js
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
