@@ -12,7 +12,7 @@ This controller runs from the Brightdesk Pages repository and uses its repositor
 
 The workflow expects these two repository-level settings in **Brightdesk-Pages**:
 
-- **Actions variable:** `BRIGHTDESK_APP_ID` — the numeric App ID for the dedicated Brightdesk read-only GitHub App.
+- **Actions variable:** `BRIGHTDESK_APP_ID` — the GitHub App **Client ID** for the dedicated Brightdesk read-only GitHub App. The existing variable name is retained for compatibility; its value must be the Client ID, not the numeric App ID.
 - **Actions secret:** `BRIGHTDESK_APP_PRIVATE_KEY` — the private key PEM for that same GitHub App.
 
 Before adding them, confirm the GitHub App is installed for the `conz20` account and can access these ten private repositories:
@@ -35,7 +35,7 @@ The App must have **Contents: Read-only** permission for those repositories. Do 
 To configure the repository settings:
 
 1. Open [Brightdesk-Pages Actions secrets and variables](https://github.com/conz20/Brightdesk-Pages/settings/secrets/actions).
-2. Under **Variables**, create `BRIGHTDESK_APP_ID` and enter the App ID.
+2. Under **Variables**, create `BRIGHTDESK_APP_ID` and enter the GitHub App Client ID (not the numeric App ID).
 3. Under **Secrets**, create `BRIGHTDESK_APP_PRIVATE_KEY` and paste the PEM private key for that App.
 4. Save both settings. Do not paste the private key into chat, workflow files, commits, or issue comments.
 
@@ -74,7 +74,7 @@ Changes to the controller must be reviewed before merging. The GitHub App should
 
 ## Limits
 
-- The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to all ten private repositories.
+- The controller requires `BRIGHTDESK_APP_ID` (containing the GitHub App Client ID) and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to all ten private repositories.
 - It checks code, dependencies, release readiness and whether the existing package build/verification scripts succeed. It does not install each package into a real Windows, macOS or Linux machine, launch the installed app, or verify uninstall cleanup yet.
 - This first controller does not write code, create update pull requests, respond to `/ai` comments in private repositories or publish user releases.
 - Controller validation and daily orchestration require the Brightdesk-Pages repository's private Mac runner with labels `self-hosted`, `macOS`, `ARM64`.
