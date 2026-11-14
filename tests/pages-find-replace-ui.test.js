@@ -44,3 +44,11 @@ test('the text-search helper is exported to the context-isolated renderer withou
   assert.match(helper, /window\.BrightdeskTextSearch = api/);
   assert.match(helper, /typeof module !== 'undefined'/);
 });
+
+
+test('Pages maps Ctrl+F and Ctrl+H to Find and Replace without overriding macOS Cmd+H', () => {
+  const app = read('app.js');
+  assert.match(app, /event\.ctrlKey \|\| event\.metaKey/);
+  assert.match(app, /openPagesFindPanel\(event\.key\.toLowerCase\(\) === 'h'\)/);
+  assert.match(app, /!event\.ctrlKey \|\| event\.metaKey/);
+});
