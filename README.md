@@ -162,3 +162,7 @@ Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in loca
 ## Private self-hosted CI
 
 Pull-request workflows that use owner-operated runners run only for changes made in this repository. Pull requests from forks are not executed on these private computers.
+
+### Printing integration verification
+
+The shared local-first printing integration is under verification in the product pull request. The Mac CI checks cover the universal Bonjour helper and automated source contracts. Native Windows helper compilation and Windows printer discovery remain unverified until a Windows runner with the Visual Studio C++ Build Tools and Windows SDK is available; they are not claimed as passed by the Mac tests.
