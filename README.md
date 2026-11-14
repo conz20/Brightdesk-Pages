@@ -89,6 +89,8 @@ Pages now lays a document out as a vertical stack of paper pages. Content flows 
 
 PDF export now uses the selected A4, US Letter or US Legal paper size and portrait/landscape orientation. Print layout hides the editing controls and prints the page surfaces with page breaks between them.
 
+Press **Ctrl+Enter** on Windows/Linux or **Command+Enter** on macOS while editing to insert the same page break as the Insert ribbon command.
+
 This is the first multi-page layout slice, not yet full word-processor pagination. Automatic flow moves whole top-level blocks; it does not split a long paragraph, table or other single block between pages. An oversized block is kept intact and its on-screen page grows so content is not clipped. Section breaks, different page settings per section, draggable page margins and headers/footers remain future work. Real Electron and PDF output checks are still required.
 
 ## Page ruler
