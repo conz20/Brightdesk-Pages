@@ -1,6 +1,6 @@
 # Brightdesk Pages — WordCraft Reference and Parity Plan
 
-**Status:** Baseline audit and implementation specification  
+**Status:** Baseline audit complete; the first local recovery implementation is on this draft feature branch and awaits automated verification.  
 **Reference reviewed:** Craft Wiki WordCraft pages supplied by the product owner  
 **Target repository:** `conz20/Brightdesk-Pages`  
 **Target product:** Brightdesk Pages  
@@ -43,7 +43,7 @@ The current main-branch implementation is a useful foundation, but it is not yet
 | Language UI | Four bundled interface translations: en-AU, fr-FR, de-DE and es-ES | Useful start; not 27-language parity |
 | Proofing | Bundled language packs and a Hunspell dictionary service are present | Audit catalogue entries, legally approved packs and actual installed pack coverage separately; catalogue entries are not proof of installed packs |
 | Zotero | No Zotero integration found in the audited Pages source | Missing |
-| Document recovery | No recovery workflow found in the audited Pages source | Missing |
+| Document recovery | No recovery workflow on audited `main`; the feature branch now adds a local single-document recovery slice | In implementation; automated checks pending |
 | AI/automation | No Pages-specific local CLI/MCP document command surface found in the audited source | Missing |
 | Troubleshooting | Existing engineering/release documentation; no complete customer troubleshooting guide matching the reference | Missing |
 
@@ -62,16 +62,19 @@ Build toward:
 - Page layout: margins, columns, headers/footers, page numbers, watermarks, borders, drop caps, line numbers and automatic hyphenation.
 - Pictures and shapes: insert, crop, recolour, remove background where safely supported, wrap text and control positioning.
 - Readable document canvas, visible page boundaries, multiple-page layout and stable pagination.
-- Open/save common document formats with honest compatibility reporting; preserve unsupported OOXML elements instead of silently discarding them wherever feasible.
+- Open/save `.docx`; plan honest support for `.doc` import, `.odt`, `.rtf`, `.html`, `.md`, `.tex` and `.txt`, with PDF export for final sharing. WordCraft's documentation also lists these formats; every Brightdesk format needs its own tested round-trip contract.
+- Preserve unsupported OOXML elements instead of silently discarding them wherever feasible. Expose conversion warnings when fidelity is partial.
 - PDF export with selectable text, links and heading bookmarks.
+- Add equation editing, Developer content controls, document protection/restrict editing and repeatable macro workflows only when their data model and security boundaries are fully tested.
+- Include a polished File/start page with blank documents, templates, recent documents and clear Open/Save/Export actions.
 
 ### 2. Install, update and remove
 
 Keep Brightdesk's existing native desktop installer model rather than copying ArtCraft Launcher:
-- Document the supported Windows, macOS and Linux installer formats already configured for Brightdesk Pages.
+- Document only the Windows, macOS and Linux desktop installer formats already configured and supported by Brightdesk Pages; do not copy WordCraft's extra architectures, package managers or ArtCraft Launcher.
 - Explain first install, update checks, explicit download/install approval, repair and removal.
 - Preserve documents and user settings during upgrades and uninstall unless the user explicitly chooses to remove settings.
-- Verify SHA-256 integrity for downloaded release assets and keep release-signing work separate from ordinary product runtime.
+- Verify SHA-256 integrity for release assets. Add signing/notarisation only through an approved Brightdesk release process and keep release-signing work separate from product runtime.
 - Never imply an installer or platform is verified until its native checks have passed.
 
 ### 3. Workflows
@@ -91,7 +94,10 @@ Add the workflows as real commands and visible user journeys, not just ribbon la
 - Show clear states for not-installed, unavailable, unreadable and installed dictionaries.
 - Install/remove/set-default language resources without restarting where technically safe.
 - Support standard Hunspell `.aff` and `.dic` resources, with provenance, licence, attribution and integrity verification.
-- Keep language packs shared across the ten Brightdesk products where the shared engine supports them.
+- WordCraft's guide describes 75 spelling/hyphenation packs and a 27-language interface. Treat those as comparison targets, not promises to duplicate a pack count before Brightdesk has verified assets.
+- Keep approved Brightdesk language packs shared across the ten Brightdesk products through the shared engine where it supports them.
+- Show install prompts only when useful, never download until the user explicitly chooses Install/Add/Refresh, and verify every pack's known checksum before use.
+- Support mixed-language text ranges and clear states for missing or unreadable dictionaries. Keep interface language independent from each document's proofing language.
 - Do not describe a catalogue entry or candidate locale as a usable language pack until the actual files, licence, checksum, engine compatibility and offline behaviour are verified.
 - Do not silently download third-party dictionaries at runtime. Only official Brightdesk-controlled, reviewed language resources may be discovered or updated online.
 
@@ -109,51 +115,59 @@ Plan an optional local integration with the Zotero desktop application:
 ### 6. Document recovery
 
 Implement local recovery for unsaved drafts and documents with unsaved changes:
+
+**First Pages implementation on `feature/wordcraft-parity-foundation` (not yet merged or verified):** the branch adds a bounded local recovery service, sender-validated Electron IPC, a 10-second dirty-snapshot cycle, extra attempts on window blur/hidden state, and a non-blocking Recover copy/Discard prompt. The snapshot is stored under the Pages user-data folder. Restore sanitises the saved HTML and opens it as an unsaved Pages working copy; it does not replace the original file. The service rejects unsafe IDs, unsupported products, oversized HTML, corrupt snapshots and symlink files. The README now documents its current limits. Automated branch tests are pending; do not describe it as release-ready.
+
+**Remaining parity work:**
 - Write a recovery snapshot no more often than every 10 seconds, and only after content changes.
-- Keep separate snapshots for each open document.
-- On next launch, offer a Recover view listing available copies.
+- Extend the current single-active-document snapshot to separate snapshots for each simultaneously open document and a dedicated Recover page/list.
 - Restore as a new unsaved document; never overwrite the original file.
 - Discard only after explicit confirmation.
 - Continue without restoring while retaining the snapshots.
 - Delete the matching snapshot after a successful save or an explicit discard.
 - Keep snapshots local and do not expire them silently.
 - Exclude password-protected documents unless recovery data can be protected to the same standard.
-- Test crash/relaunch, multiple documents, corrupt snapshots, disk-full/write errors and preservation of the original.
+- Test crash/relaunch, multiple documents, corrupt snapshots, disk-full/write errors, rapid edits during a pending write and preservation of the original.
 
 ### 7. AI agents and automation
 
 Provide an opt-in local command interface that can be driven by a compatible local assistant:
 - Define a stable, documented command registry for creating, editing, formatting and saving documents.
-- Expose only the minimum operations required through a local CLI and MCP-compatible bridge.
+- Expose only the minimum operations required through a local CLI and MCP-compatible stdio bridge; no network listener should be enabled by default.
+- Use a stable command registry with machine-readable command discovery, structured JSON inputs/results, and document operations that match the ribbon's available commands.
+- Support explicit read and write roots (separate folders), read-only mode when no write root is supplied, and clear command-level permission boundaries.
 - Validate all inputs, file paths, document sizes and command permissions.
 - Require explicit user approval before destructive operations, overwrites, external launches or printing.
-- Keep agent actions visible and undoable where possible.
+- Give agent edits a distinct author identity for Track Changes/comments and keep agent actions visible and undoable where possible.
 - Do not add a hosted model, account, API key requirement, remote agent service or customer-document upload.
 - Keep Brightdesk-AI as the separate private engineering assistant. It is not Pages and must not become a customer product.
 
 ### 8. Troubleshooting and customer help
 
 Create clear, task-based help for:
-- Window fails to open, graphics-driver issues and rendering problems.
-- Slow editing, large documents and pagination.
-- File import/export compatibility and formatting differences.
-- Missing/unreadable dictionaries and language packs.
-- Zotero not detected or citations not refreshing.
+- Window fails to open, graphics-driver issues, rendering glitches and graphics-backend workarounds.
+- Slow editing, large documents, page breaks, layout and missing-font substitutions.
+- File import/export compatibility, unsupported objects and formatting differences.
+- Native file-dialog or drag/drop problems on Linux desktop environments.
+- Missing/unreadable dictionaries and language packs, with a clear route to install the approved pack.
+- Zotero not detected, citation dialog failures or bibliography refresh errors.
 - Recovery after a crash and recovery-file handling.
-- Printing and missing printers.
+- Printing, missing printers and stuck print submissions.
 - Update, installation, repair and uninstall failures.
 - Where to find local diagnostic information, with safe redaction and no automatic log upload.
 
 ## Visual direction — what to carry across
 
-Use the supplied WordCraft screenshots as the visual quality bar:
-1. **Home/editor:** compact, well-organised ribbon across the top; document canvas centred beneath it; clear page edges; a useful Navigation pane on the left; a live Styles gallery visible without crowding the writing area.
-2. **Review:** tracked changes and comment balloons clearly separated from document text, with obvious accept/reject controls and author/time information.
-3. **References:** a dedicated tab and contextual controls for contents, footnotes, citations, bibliography, captions and index.
-4. **Design:** visually legible theme/style-set previews, page colour, border, watermark and paragraph spacing controls.
-5. **Layout:** clear page, column, wrapping, hyphenation and line-number controls.
-6. **Dark mode:** a complete dark interface and document-view treatment, not merely a dark sidebar.
-7. **File/start page:** polished new/open/recent/template choices, with clear file actions.
+Use the supplied WordCraft screenshots and the upstream WordCraft README's Home, Review, References, Design, Layout, Dark and File screenshots as the visual quality bar. The screenshots describe these concrete visual states:
+1. **Home/editor:** the Open Studio Handbook is shown across two pages; the ribbon is across the top, the left Navigation pane lists headings, rulers are visible, and the live Styles gallery shows Normal, Heading 1, Title and Subtitle previews. A selected word demonstrates editing context.
+2. **Review:** a distinct markup area to the right of the page; inserted text is coloured, deleted text is struck through, comment balloons are anchored to highlighted text, and accept/reject controls are easy to locate.
+3. **References:** a two-page example with a table of contents, dotted leaders and page numbers on one page, and a table, numbered list and link on the next. The References tab groups footnotes, citations, bibliography, captions, cross-references, table of figures and index.
+4. **Design:** visible style-set previews, a serif type treatment, plum-coloured headings, paragraph spacing choices and a pale diagonal DRAFT watermark; page colour and border controls are grouped coherently.
+5. **Layout:** drop cap at the start of a paragraph, a floating shape with text wrapping, visible automatic hyphenation, line numbers and a subtle page border.
+6. **Dark mode:** a genuinely dark shell and document surface with formatting marks visible and the Insert ribbon still usable.
+7. **File/start page:** clear blank-document and template tiles (handbook, letter, résumé, report), recent documents, and easy open/save/export actions.
+
+Do not copy screenshot pixels, Craft/ArtCraft logos, typography or assets. Recreate their information architecture, hierarchy, spacing and interaction patterns using original Brightdesk components, icons, accent and artwork.
 
 Brightdesk should follow the same overall information architecture and interaction rhythm, but use its own original Pages icon, approved Pages accent, Brightdesk typography, component shapes, spacing tokens and illustrations. Keep controls discoverable, keyboard accessible and consistent across Windows, macOS and Linux. Do not use Craft or ArtCraft screenshots as Brightdesk product screenshots.
 
@@ -167,7 +181,14 @@ Brightdesk should follow the same overall information architecture and interacti
 6. **Integrations and automation:** local Zotero bridge and permission-bounded CLI/MCP command surface.
 7. **Reliability and release:** recovery, print, diagnostics, customer help and native Windows/macOS/Linux acceptance.
 
-Each phase must add behaviour tests before implementation, update the README in the same change, capture genuine running Pages screenshots after the interface is built, and verify the current branch head. Keep incomplete capabilities labelled as planned rather than implemented.
+Each phase must add behaviour tests before implementation, update the README in the same change, capture genuine running Pages screenshots after the interface is built, and verify the current branch head. For the visual implementation, capture the same Home, Review, References, Design, Layout, Dark and File states from the actual Pages desktop runtime. Keep incomplete capabilities labelled as planned rather than implemented.
+
+## Reference material and screenshot sources
+
+- The eight supplied Craft Wiki WordCraft guides are listed below and are the product/feature specification.
+- The WordCraft upstream README describes its own UI-test-rendered screenshots and the visible details above: [storytold/wordcraft README](https://github.com/storytold/wordcraft#-a-tour) and [screenshot assets](https://github.com/storytold/wordcraft/tree/main/docs/images).
+- The AI integration guide's folder-root limits, stdio transport and optional control port are useful architectural references only. Brightdesk must default to local stdio, restrict read/write folders, and must not silently expose a network port or upload document content.
+- The WordCraft project itself is a feature reference, not a dependency or source-code donor. Brightdesk's independent implementation and licensing review remain required.
 
 ## Reference pages
 
