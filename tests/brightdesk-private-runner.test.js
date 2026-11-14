@@ -13,6 +13,16 @@ test('private project check script has valid Bash syntax', { skip: process.platf
   execFileSync('bash', ['-n', runnerScript], { stdio: 'pipe' });
 });
 
+test('Suite compound Node and Vitest test command applies each framework TAP reporter correctly', () => {
+  const source = fs.readFileSync(runnerScript, 'utf8');
+  const suiteTestBlock = source.match(/run_private_tests\\(\\) \\{([\\s\\S]*?)\\n\\}/)?.[1] ?? '';
+
+  assert.match(suiteTestBlock, /PROJECT_NAME.*Brightdesk-suite/);
+  assert.match(suiteTestBlock, /node --test --test-reporter=tap tests\\/\\*\\.test\\.js test\\/\\*\\.test\\.mjs/);
+  assert.match(suiteTestBlock, /\\.\\/node_modules\\/\\.bin\\/vitest run --reporter=tap/);
+  assert.match(suiteTestBlock, /npm test -- --test-reporter=tap/);
+});
+
 test('private check script never prints raw build logs', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
   assert.match(source, />> "\$LOG_FILE" 2>&1/);
