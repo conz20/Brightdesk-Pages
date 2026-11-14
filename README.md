@@ -151,3 +151,6 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+## Private test runner reporting
+
+The Pages maintenance controller runs the Brightdesk Suite Node.js tests and Vitest as separate commands so each receives its own supported TAP reporter option. Other product repositories that use only Node's built-in test runner keep the Node-specific reporter option. This allows the private diagnostic to identify failed test names while keeping raw test output on the temporary runner.
