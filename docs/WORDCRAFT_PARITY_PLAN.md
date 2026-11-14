@@ -64,6 +64,10 @@ The feature branch now contains two initial, reviewable implementation slices. T
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
+## Next visual implementation slice
+
+Add a document-level Design tab with a compact, selectable gallery for Brightdesk, Editorial and Modern style sets, plus optional Draft and Confidential watermarks. The gallery should make its typography and colour previews visible before selection. Save these choices in the document's local metadata so they survive reload and project save, but keep the document body markup unchanged. Keep all artwork, fonts, icons and interaction details original to Brightdesk. Add the style-set normalisation tests before the UI and CSS implementation; update this plan and the product README with the verified result.
+
 ## Feature target derived from the eight supplied guides
 
 ### 1. Overview and everyday writing
