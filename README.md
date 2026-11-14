@@ -71,6 +71,12 @@ Brightdesk Pages now includes a local recovery path for its current document wor
 
 **Current boundary:** the Pages editor currently exposes one active document surface, so this recovery implementation keeps a copy of that active Pages document. Independent recovery for several simultaneously open documents is not yet supported. The last few seconds of typing may be lost if the computer or application stops before the next recovery write. This is a recovery aid, not a substitute for saving important documents.
 
+## Document navigation and paragraph styles
+
+The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2. These are initial editing controls, not yet a complete WordCraft-style style manager or live gallery.
+
+This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
+
 ## Desktop installers
 
 Choose the installer for your computer:
