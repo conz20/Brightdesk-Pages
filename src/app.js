@@ -1004,7 +1004,13 @@ async function printCurrent() {
       return;
     }
     printDocument = createBrightdeskPrintDocument();
-    const result = await window.brightdesk.printing.print({ printBackground: true });
+    const printRequest = { printBackground: true };
+    if (state.app === 'pages') {
+      const pageSettings = pageLayout.normalizePageLayout(activeDoc()?.pageSettings || {});
+      printRequest.orientation = pageSettings.orientation;
+      printRequest.pageSize = pageSettings.size;
+    }
+    const result = await window.brightdesk.printing.print(printRequest);
     setStatus(result?.status === 'submitted'
       ? 'Your computer accepted the print request.'
       : 'The print request was not submitted.');
