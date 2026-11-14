@@ -275,7 +275,7 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-outline-item[data-level="h2"]{padding-left:18px}
 .pages-outline-item[data-level="h3"]{padding-left:28px;color:#73798a}
 .pages-editor-column{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden;background:#f4f5f9}
-.pages-editor-column .editor{flex:1;min-width:0;min-height:0;overflow:auto}
+.pages-editor-column .editor{flex:0 1 auto;min-width:0;min-height:0;overflow:auto}
 .pages-style-gallery{min-width:300px}
 .pages-style-options{gap:5px;flex-wrap:nowrap}
 .pages-style-preview{display:flex;align-items:center;justify-content:center;min-width:65px;height:42px;padding:5px 9px;border:1px solid #dfe2eb;border-radius:4px;background:#fff;color:#41465a;font:inherit;font-size:10px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px #20284308}
