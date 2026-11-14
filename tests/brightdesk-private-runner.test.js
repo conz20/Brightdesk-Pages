@@ -15,12 +15,14 @@ test('private project check script has valid Bash syntax', { skip: process.platf
 
 test('Suite compound Node and Vitest test command applies each framework TAP reporter correctly', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
-  const suiteTestBlock = source.match(/run_private_tests\\(\\) \\{([\\s\\S]*?)\\n\\}/)?.[1] ?? '';
+  const start = source.indexOf('run_private_tests() {');
+  const end = source.indexOf('\\n}\\n\\nrun_rust_checks', start);
+  const suiteTestBlock = start >= 0 && end >= 0 ? source.slice(start, end) : '';
 
-  assert.match(suiteTestBlock, /PROJECT_NAME.*Brightdesk-suite/);
-  assert.match(suiteTestBlock, /node --test --test-reporter=tap tests\\/\\*\\.test\\.js test\\/\\*\\.test\\.mjs/);
-  assert.match(suiteTestBlock, /\\.\\/node_modules\\/\\.bin\\/vitest run --reporter=tap/);
-  assert.match(suiteTestBlock, /npm test -- --test-reporter=tap/);
+  assert.ok(suiteTestBlock.includes('PROJECT_NAME" == "Brightdesk-suite"'));
+  assert.ok(suiteTestBlock.includes('node --test --test-reporter=tap tests/*.test.js test/*.test.mjs'));
+  assert.ok(suiteTestBlock.includes('./node_modules/.bin/vitest run --reporter=tap'));
+  assert.ok(suiteTestBlock.includes('npm test -- --test-reporter=tap'));
 });
 
 test('private check script never prints raw build logs', () => {
