@@ -73,7 +73,7 @@ Brightdesk Pages now includes a local recovery path for its current document wor
 
 ## Document navigation and paragraph styles
 
-The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2; Title is a distinct paragraph style and does not appear in the heading outline. These are initial editing controls, not yet a complete WordCraft-style style manager or live preview gallery.
+The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2; Title is a distinct paragraph style and does not appear in the heading outline. The Design tab adds document-level Brightdesk, Editorial and Modern style-set previews, plus Draft and Confidential watermark options. A full Styles manager and editable paragraph/character styles remain future work.
 
 This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
 
@@ -99,7 +99,11 @@ The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal 
 
 ## Document design presets
 
-The next review-branch slice is planned to add three document-level design presets: Brightdesk, Editorial and Modern. The presets will adjust heading and body typography, spacing and accent treatments while retaining original Brightdesk branding. A separate document watermark option is planned for Draft and Confidential states. These visual settings will be stored with the local document; no document content will be sent to a service. This section describes planned work until the implementation and its checks are complete.
+The Pages **Design** tab now offers three selectable document style sets: **Brightdesk**, **Editorial** and **Modern**. Each has a visible preview before selection. The presets change document typography, heading colours and paragraph rhythm while keeping Brightdesk’s own visual identity. The same tab offers optional **Draft** and **Confidential** watermarks.
+
+Style and watermark choices are saved as local document metadata and are included in the local recovery snapshot. They do not add wrappers or styling attributes to the document's saved HTML. Unknown setting values safely fall back to Brightdesk styling and no watermark.
+
+This work is on the WordCraft-parity draft branch and is not yet part of a published release. The complete document Styles manager, user-defined style sets, and live paragraph/character style editing remain future work.
 
 ## Desktop installers
 
