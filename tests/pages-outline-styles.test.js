@@ -87,6 +87,8 @@ test('Pages References tab inserts and refreshes a linked table of contents', ()
   assert.ok(app.includes('pagesReferences.buildTocEntries(rows)'));
   assert.ok(app.includes("addButton(references, 'Table of contents', insertOrUpdatePagesTableOfContents"));
   assert.ok(app.includes("child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value)"));
+  assert.ok(app.includes("const title = document.createElement('p')"));
+  assert.ok(app.includes("attr.value === 'pages-toc-title'"));
   assert.ok(app.includes("['H1','H2','H3'].includes(child.tagName) && attr.name === 'id'"));
   assert.ok(html.includes('<script src="pages-references.js"></script>'));
   assert.ok(references.includes('function normalizeHeadingHref(value)'));
