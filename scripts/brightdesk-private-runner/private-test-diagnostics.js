@@ -14,10 +14,15 @@ function parseTapFailureNames(tapOutput) {
   const seen = new Set();
 
   for (const line of String(tapOutput).split(/\r?\n/)) {
-    const match = line.match(/^not ok \d+ - (.+)$/);
+    // Vitest TAP nests test cases under file and suite entries. Those parent
+    // entries end with "{", and may contain paths, so report only leaf cases.
+    const match = line.match(/^\s*not ok \d+ - (.+)$/);
     if (!match) continue;
 
-    const name = cleanTestName(match[1]);
+    const rawName = match[1].trim();
+    if (/\s\{$/.test(rawName)) continue;
+
+    const name = cleanTestName(rawName.replace(/\s+# time=[^\s]+\s*$/, ''));
     if (!name || seen.has(name)) continue;
 
     seen.add(name);
