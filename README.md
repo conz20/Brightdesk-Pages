@@ -73,13 +73,13 @@ Brightdesk Pages now includes a local recovery path for its current document wor
 
 ## Document navigation and paragraph styles
 
-The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2. These are initial editing controls, not yet a complete WordCraft-style style manager or live gallery.
+The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2; Title is a distinct paragraph style and does not appear in the heading outline. These are initial editing controls, not yet a complete WordCraft-style style manager or live preview gallery.
 
 This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
 
 ## Find and Replace
 
-The Pages Home ribbon includes **Find & Replace** for the active document. Search is local to the open document and supports case-sensitive and whole-word matching, Find next, Replace and Replace all. Matches can span inline formatting runs in the same paragraph; searches do not join separate paragraphs together. Replacements are saved to the local Pages document and update the Navigation outline when headings are affected.
+The Pages Home ribbon includes **Find & Replace** for the active document. Search is local to the open document and supports case-sensitive and whole-word matching, Find next, Replace and Replace all. Ctrl+F opens Find; Ctrl+H opens the Replace field on Windows and Linux. On macOS, Command+F opens Find; Command+H remains the normal macOS Hide shortcut. Matches can span inline formatting runs in the same paragraph; searches do not join separate paragraphs together. Replacements are saved to the local Pages document and update the Navigation outline when headings are affected.
 
 This is an early text-search workflow. Regular-expression search, match highlighting, search across multiple open documents and a dedicated full-size navigation/search pane are not yet included. The feature remains under draft review until its automated tests and real desktop interaction checks pass.
 
