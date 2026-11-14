@@ -16,7 +16,7 @@ test('private project check script has valid Bash syntax', { skip: process.platf
 test('Suite compound Node and Vitest test command applies each framework TAP reporter correctly', () => {
   const source = fs.readFileSync(runnerScript, 'utf8');
   const start = source.indexOf('run_private_tests() {');
-  const end = source.indexOf('\\n}\\n\\nrun_rust_checks', start);
+  const end = source.indexOf('\n}\n\nrun_rust_checks', start);
   const suiteTestBlock = start >= 0 && end >= 0 ? source.slice(start, end) : '';
 
   assert.ok(suiteTestBlock.includes('PROJECT_NAME" == "Brightdesk-suite"'));
