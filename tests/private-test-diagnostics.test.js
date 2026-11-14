@@ -25,6 +25,33 @@ test('private test diagnostics extracts failed test names from TAP output', () =
 
   assert.deepEqual(parseTapFailureNames(tap), ['first feature']);
 });
+
+test('private test diagnostics extracts leaf case names from nested Vitest TAP without exposing file paths', () => {
+  const tap = [
+    'TAP version 13',
+    '1..1',
+    'not ok 1 - tests/private/document-editor.test.js # time=18.00ms {',
+    '    1..1',
+    '    not ok 1 - document editor suite # time=17.00ms {',
+    '        1..2',
+    '        not ok 1 - preserves formatting when reopening a document # time=8.00ms',
+    '          ---',
+    "          error: 'PRIVATE_ASSERTION_DETAIL'",
+    "          at: '/tmp/private-source/src/private.js:42:1'",
+    '          ...',
+    '        ok 2 - exports the saved document # time=5.00ms',
+    '    }',
+    '}'
+  ].join('\n');
+
+  const names = parseTapFailureNames(tap);
+  const summary = formatPrivateFailureSummary('Brightdesk-suite', names);
+
+  assert.deepEqual(names, ['preserves formatting when reopening a document']);
+  assert.match(summary, /preserves formatting when reopening a document/);
+  assert.doesNotMatch(summary, /private\/document-editor\.test\.js|PRIVATE_ASSERTION_DETAIL|private\.js/);
+});
+
 test('private test diagnostics never includes raw errors, source paths, or stack traces', () => {
   const tap = [
     'not ok 1 - failing feature',
@@ -133,4 +160,3 @@ test('private diagnostic reporter refuses to send an empty report', async () => 
     /non-empty private diagnostic summary/
   );
 });
-

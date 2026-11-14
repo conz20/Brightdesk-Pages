@@ -92,21 +92,36 @@ fi
 
 run_private_tests() {
   STAGE="automated tests"
-  if (cd "$PROJECT_DIR" && npm test -- --test-reporter=tap) >> "$LOG_FILE" 2>&1; then
+  local status=0
+
+  if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+    # Suite chains Node's test runner and Vitest. npm appends extra arguments
+    # only to the final command, so configure each TAP reporter separately.
+    if (
+      cd "$PROJECT_DIR" &&
+      node --test --test-reporter=tap tests/*.test.js test/*.test.mjs &&
+      ./node_modules/.bin/vitest run --reporter=tap
+    ) >> "$LOG_FILE" 2>&1; then
+      return 0
+    else
+      status=$?
+    fi
+  elif (cd "$PROJECT_DIR" && npm test -- --test-reporter=tap) >> "$LOG_FILE" 2>&1; then
     return 0
   else
-    local status=$?
-    if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
-      local summary
-      local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-private-${PROJECT_NAME}-failure-summary.b64"
-      summary="$(node "$SCRIPT_DIR/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
-      printf '%s' "$summary" > "$summary_file"
-      if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
-        printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
-      fi
-    fi
-    fail_check "$status"
+    status=$?
   fi
+
+  if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+    local summary
+    local summary_file="${RUNNER_TEMP:-/tmp}/brightdesk-private-${PROJECT_NAME}-failure-summary.b64"
+    summary="$(node "$SCRIPT_DIR/private-test-diagnostics.js" "$LOG_FILE" "$PROJECT_NAME")"
+    printf '%s' "$summary" > "$summary_file"
+    if [[ -n "${GITHUB_OUTPUT:-}" ]]; then
+      printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
+    fi
+  fi
+  fail_check "$status"
 }
 
 run_rust_checks() {

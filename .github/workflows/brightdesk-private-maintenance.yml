@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           bash -n scripts/brightdesk-private-runner/run-private-project-check.sh
-          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
+          node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js tests/private-test-command.test.js
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
@@ -81,6 +81,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           path: controller
+          persist-credentials: false
       - name: Check whether read-only GitHub App credentials are configured
         id: private-token
         shell: bash
@@ -128,7 +129,7 @@ jobs:
             test source "${{ matrix.project }}"
       - name: Create an issue-only token for the private Suite diagnostic
         id: issue-token
-        if: failure() && matrix.project == 'Brightdesk-suite' && steps.run-private-check.outputs.failure_summary_file != ''
+        if: failure() && matrix.project == 'Brightdesk-suite' && steps.run-private-check.outputs.failure_summary_file != '' && github.event_name != 'workflow_dispatch'
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -138,7 +139,7 @@ jobs:
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitized failure names to the private Suite issue
-        if: always()
+        if: always() && github.event_name != 'workflow_dispatch'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ steps.issue-token.outputs.token }}
