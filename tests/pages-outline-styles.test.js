@@ -59,6 +59,10 @@ test('Pages Design ribbon offers selectable local style sets and watermark contr
   assert.ok(app.includes('function addPagesDesignGallery(toolbar)'));
   assert.ok(app.includes('function setPagesStyleSet(styleSetId)'));
   assert.ok(app.includes('function addPagesWatermarkControl(toolbar)'));
+  assert.ok(app.includes('function setPagesPageColor(pageColor)'));
+  assert.ok(app.includes('function setPagesPageBorder(pageBorder)'));
+  assert.ok(app.includes('normalizePageColor(activeDoc().pageColor)'));
+  assert.ok(app.includes('normalizePageBorder(activeDoc().pageBorder)'));
   assert.ok(app.includes('pagesStyleSets.normalizeWatermark(record.watermark)'));
   assert.ok(html.includes('<script src="pages-style-sets.js"></script>'));
   assert.ok(model.includes("name: 'Brightdesk'"));
@@ -67,4 +71,6 @@ test('Pages Design ribbon offers selectable local style sets and watermark contr
   assert.ok(styles.includes('.pages-design-card[aria-pressed="true"]'));
   assert.ok(styles.includes('#editor[data-style-set="editorial"]'));
   assert.ok(styles.includes('.pages-document-page[data-watermark="draft"]::before'));
+  assert.ok(styles.includes('#editor[data-page-color="warm"]'));
+  assert.ok(styles.includes('#editor[data-page-border="double"]'));
 });
