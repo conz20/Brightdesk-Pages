@@ -998,7 +998,7 @@ function createBrightdeskPrintDocument() {
 async function printCurrent() {
   let printDocument;
   try {
-    const printers = await refreshConfiguredPrinters();
+    const printers = await refreshConfiguredPrinters({ throwOnError: true });
     if (!Array.isArray(printers) || printers.length === 0) {
       setStatus('No printer is available yet. Use Printer settings to add one, then try again.');
       return;
@@ -1176,17 +1176,26 @@ async function loadPrinterCapabilities(systemName, actionButton, container) {
   } finally { actionButton.disabled = false; }
 }
 
-async function refreshConfiguredPrinters() {
-  const button = $('refresh-configured-printers-button'); button.disabled = true;
+async function refreshConfiguredPrinters({ throwOnError = false } = {}) {
+  const button = $('refresh-configured-printers-button');
+  button.disabled = true;
   $('configured-printer-status').textContent = t('printing.loadingPrinters');
   $('configured-printer-list').replaceChildren();
   try {
-    const printers = await window.brightdesk.printing.listPrinters();
-    renderConfiguredPrinterList(Array.isArray(printers) ? printers : []);
-    $('configured-printer-status').textContent = printers?.length ? t('printing.configuredComplete') : t('printing.noConfiguredPrinters');
+    const result = await window.brightdesk.printing.listPrinters();
+    const availablePrinters = Array.isArray(result) ? result : [];
+    renderConfiguredPrinterList(availablePrinters);
+    $('configured-printer-status').textContent = availablePrinters.length
+      ? t('printing.configuredComplete')
+      : t('printing.noConfiguredPrinters');
+    return availablePrinters;
   } catch (error) {
     $('configured-printer-status').textContent = error?.message || t('printing.configuredFailed');
-  } finally { button.disabled = false; }
+    if (throwOnError) throw error;
+    return [];
+  } finally {
+    button.disabled = false;
+  }
 }
 
 function importProject(data){
