@@ -8,7 +8,7 @@ const segment = (text, blockId = 'paragraph', node = null) => ({ text, blockId, 
 
 test('finds literal text case-insensitively by default', () => {
   const matches = findTextMatches([segment('The quick brown fox. THE QUICK fox.')], 'quick');
-  assert.deepEqual(matches.map(match => [match.start, match.end]), [[4, 9], [24, 29]]);
+  assert.deepEqual(matches.map(match => [match.start, match.end]), [[4, 9], [25, 30]]);
 });
 
 test('keeps search matches mapped across inline text nodes in the same paragraph', () => {
@@ -41,7 +41,7 @@ test('does not join text across separate block paragraphs', () => {
 test('can search case-sensitively and match whole words only', () => {
   const segments = [segment('Word word wording WORD')];
   assert.deepEqual(findTextMatches(segments, 'Word', { caseSensitive: true }).map(match => match.start), [0]);
-  assert.deepEqual(findTextMatches(segments, 'word', { wholeWord: true }).map(match => match.start), [0, 5, 19]);
+  assert.deepEqual(findTextMatches(segments, 'word', { wholeWord: true }).map(match => match.start), [0, 5, 18]);
 });
 
 test('finds all repeated matches in reading order without overlapping matches', () => {
