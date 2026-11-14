@@ -198,7 +198,8 @@ function safeHtml(html) {
           const isCell = child.tagName === 'TD' || child.tagName === 'TH';
           const isSpan = isCell && (attr.name === 'colspan' || attr.name === 'rowspan') && /^[1-9]\d{0,2}$/.test(attr.value) && Number(attr.value) <= 100;
           const isPageBreak = child.tagName === 'HR' && attr.name === 'data-pages-page-break' && attr.value === 'true';
-          if (!isSpan && !isPageBreak) child.removeAttribute(attr.name);
+          const isTitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title';
+          if (!isSpan && !isPageBreak && !isTitleStyle) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
