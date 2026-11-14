@@ -129,3 +129,13 @@ test('Pages Review exposes local Read Aloud controls and never selects online vo
   assert.ok(helper.includes('voice && voice.localService === true'));
   assert.ok(html.includes('<script src="pages-read-aloud.js"></script>'));
 });
+
+
+test('Pages pagination applies page colour and border to the actual paper element', () => {
+  const app = read('app.js');
+  const model = read('pages-style-sets.js');
+  assert.ok(app.includes('background: pagesStyleSets.getPageColor(activeDoc().pageColor)'));
+  assert.ok(app.includes('border: pagesStyleSets.getPageBorder(activeDoc().pageBorder)'));
+  assert.ok(model.includes('function getPageColor(value)'));
+  assert.ok(model.includes('function getPageBorder(value)'));
+});
