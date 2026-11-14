@@ -361,3 +361,48 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
   .pages-document-page::after{display:none!important;content:none!important}
   .pages-document-page hr[data-pages-page-break="true"]{display:none!important}
 }
+
+
+/* Pages Design ribbon: live document style-set previews and local watermarks */
+.pages-design-gallery{min-width:350px}
+.pages-design-options{display:flex;align-items:stretch;gap:6px;flex-wrap:nowrap}
+.pages-design-card{display:flex;flex:0 0 104px;flex-direction:column;gap:3px;min-width:0;height:57px;padding:4px;border:1px solid #dfe2ea;border-radius:5px;background:#fff;color:#41465a;font:inherit;cursor:pointer}
+.pages-design-card:hover{border-color:#a5a8de;background:#fafaff}
+.pages-design-card[aria-pressed="true"]{border-color:var(--bd-accent);box-shadow:inset 0 0 0 1px var(--bd-accent);background:#f8f7ff}
+.pages-design-card:focus-visible{outline:2px solid #7985d8;outline-offset:2px}
+.pages-design-swatch{display:flex;flex:1;flex-direction:column;justify-content:center;gap:2px;min-height:0;padding:3px 6px;border:1px solid #eceef3;border-radius:3px;background:#fff;overflow:hidden;text-align:left}
+.pages-design-swatch-title{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;font-weight:750;line-height:1;color:#4642b8}
+.pages-design-swatch-lines{font-size:7px;line-height:1.2;color:#85899a;white-space:nowrap}
+.pages-design-card-label{display:block;color:#55596c;font-size:9px;font-weight:650;line-height:11px;text-align:center}
+.pages-design-card[data-style-set="editorial"] .pages-design-swatch-title{font-family:Georgia,"Times New Roman",serif;color:#77445f}
+.pages-design-card[data-style-set="modern"] .pages-design-swatch-title{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#286b65}
+.pages-design-card[data-style-set="editorial"] .pages-design-swatch{background:#fcf9fa}
+.pages-design-card[data-style-set="modern"] .pages-design-swatch{background:#f7fbfa}
+.pages-watermark-setting{display:flex;flex-direction:column;gap:5px;align-items:flex-start;color:#62677a;font-size:10px;white-space:nowrap}
+.pages-watermark-select{height:29px;min-width:132px;padding:4px 8px;border:1px solid #dfe2ea;border-radius:5px;background:#fff;color:#41465a;font:inherit;font-size:10px}
+.pages-watermark-select:focus-visible{outline:2px solid #7985d8;outline-offset:2px}
+@media(max-width:1100px){.pages-design-gallery{min-width:330px}.pages-design-card{flex-basis:96px}}
+@media(max-width:720px){.pages-design-gallery{min-width:330px}.pages-design-card{flex-basis:96px}}
+
+/* Document-level styles remain local metadata; page content markup is unchanged. */
+#editor[data-style-set="brightdesk"] .pages-document-page{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#303348}
+#editor[data-style-set="brightdesk"] .pages-document-page h1,
+#editor[data-style-set="brightdesk"] .pages-document-page h2,
+#editor[data-style-set="brightdesk"] .pages-document-page h3{color:#4642b8}
+#editor[data-style-set="editorial"] .pages-document-page{font-family:Georgia,"Times New Roman",serif;color:#403943;line-height:1.78}
+#editor[data-style-set="editorial"] .pages-document-page h1,
+#editor[data-style-set="editorial"] .pages-document-page h2,
+#editor[data-style-set="editorial"] .pages-document-page h3{font-family:Georgia,"Times New Roman",serif;color:#77445f;letter-spacing:-.25px}
+#editor[data-style-set="editorial"] .pages-document-page h1{font-size:30px}
+#editor[data-style-set="editorial"] .pages-document-page h2{font-size:23px}
+#editor[data-style-set="editorial"] .pages-document-page p{margin-bottom:1.05em}
+#editor[data-style-set="modern"] .pages-document-page{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#2e3f42;line-height:1.72}
+#editor[data-style-set="modern"] .pages-document-page h1,
+#editor[data-style-set="modern"] .pages-document-page h2,
+#editor[data-style-set="modern"] .pages-document-page h3{color:#286b65;letter-spacing:-.35px}
+.pages-document-page[data-watermark="draft"]::before,
+.pages-document-page[data-watermark="confidential"]::before{position:absolute;z-index:0;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-35deg);color:#7771a0;opacity:.12;font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(42px,6vw,78px);font-weight:800;letter-spacing:5px;white-space:nowrap;pointer-events:none;user-select:none}
+.pages-document-page[data-watermark="draft"]::before{content:"DRAFT"}
+.pages-document-page[data-watermark="confidential"]::before{content:"CONFIDENTIAL";font-size:clamp(29px,4.5vw,60px);color:#81566a}
+.pages-document-page > *{position:relative;z-index:1}
+.pages-document-page::after{z-index:2}
