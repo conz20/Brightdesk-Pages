@@ -35,7 +35,7 @@ const state = {
   todoView: 'my-day', todoQuery: '',
   selectedCell: { row: 0, col: 0 }, update: null, ribbonTab: 'home',
   installedApps: [], setupComplete: false, firstRunSelection: new Set(installableCatalog.map(item => item.id)),
-  slideTheme: 'lavender', focusMode: false, editorZoom: 100, sheetZoom: 100,
+  slideTheme: 'lavender', focusMode: false, showRuler: true, editorZoom: 100, sheetZoom: 100,
   languageCatalog: [], installedLanguagePacks: [], spellCheckerLanguages: [], usesNativeMacSpellChecker: false,
   displayLanguage: 'en-AU', proofingLanguage: 'en-AU',
   installedDictionaries: [], dictionaryCatalogue: [], selectedDictionary: localStorage.getItem('brightdesk-selected-dictionary') || ''
@@ -519,6 +519,13 @@ function renderToolbar() {
     } else {
       const view = group('zoom');
       addButton(view, label('zoomOut'), () => changeEditorZoom(-10)); addButton(view, '100%', () => { state.editorZoom = 100; applyEditorZoom(); }); addButton(view, label('zoomIn'), () => changeEditorZoom(10));
+      const rulerButton = addButton(view, 'Show ruler', () => {
+        state.showRuler = !state.showRuler;
+        updatePagesRuler();
+        renderToolbar();
+      }, 'Show or hide the document ruler');
+      rulerButton.setAttribute('aria-pressed', String(state.showRuler));
+      rulerButton.classList.toggle('is-selected', state.showRuler);
       addButton(view, label('focusMode'), () => { state.focusMode = !state.focusMode; $('workspace').classList.toggle('focus-mode', state.focusMode);
     $('workspace').classList.toggle('todo-mode', isTodo); });
     }
@@ -595,12 +602,47 @@ function sortSheetColumn(descending) {
     return descending ? -result : result;
   }); renderSheet(); persist();
 }
+function updatePagesRuler() {
+  const wrap = $('pages-ruler-wrap');
+  if (!wrap || !pageLayout) return;
+  const visible = state.app === 'pages' && state.showRuler;
+  wrap.hidden = !visible;
+  if (!visible) return;
+
+  const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const ruler = $('pages-ruler');
+  ruler.style.width = `${dimensions.width}px`;
+  ruler.style.maxWidth = 'calc(100% - 40px)';
+  $('pages-ruler-left-margin').style.width = `${margin / dimensions.width * 100}%`;
+  $('pages-ruler-right-margin').style.width = `${margin / dimensions.width * 100}%`;
+
+  const ticks = $('pages-ruler-ticks');
+  ticks.replaceChildren();
+  for (const mark of pageLayout.getRulerMarks(settings, 'cm')) {
+    const tick = document.createElement('span');
+    tick.className = mark.major ? 'pages-ruler-tick is-major' : 'pages-ruler-tick';
+    tick.style.left = `${mark.position / dimensions.width * 100}%`;
+    tick.setAttribute('aria-label', `${mark.value} centimetres`);
+    if (mark.label) {
+      const label = document.createElement('span');
+      label.className = 'pages-ruler-label';
+      label.textContent = mark.label;
+      tick.append(label);
+    }
+    ticks.append(tick);
+  }
+  ruler.setAttribute('aria-label', `Horizontal ruler in centimetres for ${settings.size} ${settings.orientation}`);
+}
+
 function applyPageLayout() {
   if (!pageLayout || state.app !== 'pages') return;
   const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
   activeDoc().pageSettings = settings;
   Object.assign(editor.style, pageLayout.getPageStyle(settings));
   editor.style.maxWidth = 'calc(100% - 40px)';
+  updatePagesRuler();
 }
 function changeEditorZoom(delta) { state.editorZoom = Math.max(70, Math.min(160, state.editorZoom + delta)); applyEditorZoom(); }
 function applyEditorZoom() { editor.style.fontSize = `${14 * state.editorZoom / 100}px`; setStatus(`Document zoom ${state.editorZoom}%`); }
