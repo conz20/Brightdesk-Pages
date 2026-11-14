@@ -1,6 +1,6 @@
 # Brightdesk Pages — WordCraft Reference and Parity Plan
 
-**Status:** Baseline audit complete; the first local recovery implementation is on this draft feature branch and awaits automated verification.  
+**Status:** Baseline audit complete; the first local recovery and Pages workspace UI slices are on this draft feature branch and await automated verification and live visual review.  
 **Reference reviewed:** Craft Wiki WordCraft pages supplied by the product owner  
 **Target repository:** `conz20/Brightdesk-Pages`  
 **Target product:** Brightdesk Pages  
@@ -48,6 +48,18 @@ The current main-branch implementation is a useful foundation, but it is not yet
 | Troubleshooting | Existing engineering/release documentation; no complete customer troubleshooting guide matching the reference | Missing |
 
 **Audit boundary:** This is a source inspection of the Pages default branch and the named files, not a running-build test. “Not found” means not found in the inspected source; it is not a claim about every branch or uninspected dependency.
+
+## Current implementation progress on the draft branch
+
+The feature branch now contains two initial, reviewable implementation slices. They are not merged into `main`, and no release build includes them yet.
+
+| Slice | Code on the branch | Verification boundary |
+|---|---|---|
+| Local recovery | Recovery service, size/shape validation, safe local files, sender-validated IPC, a Recover/Discard prompt, 10-second snapshots and blur/hidden attempts | Unit and UI tests added; exact-head CI is pending. Only the active Pages document is covered. |
+| Document navigation | A left outline lists Heading 1–3 paragraphs, supports heading search and jumps to a selected heading | Static regression test added; exact-head CI and running-window inspection are pending. |
+| Paragraph styles | Home ribbon shortcuts apply Normal, Title, Heading 1 and Heading 2 block formatting | Static regression test added; this is not yet a full style manager or live style-preview engine. |
+
+No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
 ## Feature target derived from the eight supplied guides
 
