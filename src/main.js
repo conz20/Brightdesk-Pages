@@ -1,5 +1,6 @@
 const { app, BrowserWindow, Menu, ipcMain, dialog } = require('electron');
 const packageConfig = require('../package.json');
+const { PRODUCT_SLUGS } = require('./desktop-downloads');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
