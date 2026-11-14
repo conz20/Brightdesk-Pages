@@ -36,13 +36,24 @@ test('keeps a single block that is taller than a page on its own page', () => {
   );
 });
 
-test('does not create empty pages for leading or trailing explicit breaks', () => {
+test('does not create an empty page for a leading explicit break', () => {
   assert.deepEqual(
     pagination.paginateBlocks([
       { height: 10, pageBreakBefore: true },
       { height: 10, pageBreakBefore: true }
     ], 500),
     [[0], [1]]
+  );
+});
+
+test('a page break after a block starts the next block without a trailing blank page', () => {
+  assert.deepEqual(
+    pagination.paginateBlocks([{ height: 10, pageBreakAfter: true }, { height: 10 }], 500),
+    [[0], [1]]
+  );
+  assert.deepEqual(
+    pagination.paginateBlocks([{ height: 10, pageBreakAfter: true }], 500),
+    [[0]]
   );
 });
 
