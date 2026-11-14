@@ -93,10 +93,14 @@ test('recovery snapshots preserve validated Pages design settings', async () => 
       title: 'Styled report',
       html: '<h1>Styled report</h1>',
       styleSet: 'editorial',
-      watermark: 'draft'
+      watermark: 'draft',
+      pageColor: 'warm',
+      pageBorder: 'double'
     });
     assert.equal(saved.styleSet, 'editorial');
     assert.equal(saved.watermark, 'draft');
+    assert.equal(saved.pageColor, 'warm');
+    assert.equal(saved.pageBorder, 'double');
     assert.deepEqual(await service.readSnapshot('pages-active'), saved);
   });
 });
@@ -109,9 +113,13 @@ test('recovery snapshots safely default unknown visual settings', async () => {
       title: 'Safe defaults',
       html: '<p>Local draft</p>',
       styleSet: 'unknown',
-      watermark: 'external'
+      watermark: 'external',
+      pageColor: 'neon',
+      pageBorder: 'heavy'
     });
     assert.equal(saved.styleSet, 'brightdesk');
     assert.equal(saved.watermark, 'none');
+    assert.equal(saved.pageColor, 'white');
+    assert.equal(saved.pageBorder, 'subtle');
   });
 });
