@@ -230,6 +230,81 @@ function renderRibbonTabs() {
     button.addEventListener('click', () => { state.ribbonTab = tabKey; renderToolbar(); }); tabs.append(button);
   });
 }
+function refreshPagesOutline() {
+  const list = $('pages-outline');
+  if (!list) return;
+  const query = ($('pages-outline-search')?.value || '').trim().toLocaleLowerCase();
+  const headings = [...editor.querySelectorAll('h1,h2,h3')].filter(heading => heading.textContent.trim());
+  const visible = headings.filter(heading => !query || heading.textContent.toLocaleLowerCase().includes(query));
+  list.replaceChildren();
+  if (!headings.length) {
+    const empty = document.createElement('p');
+    empty.className = 'pages-outline-empty';
+    empty.textContent = 'Add headings to build your document outline.';
+    list.append(empty);
+    return;
+  }
+  if (!visible.length) {
+    const empty = document.createElement('p');
+    empty.className = 'pages-outline-empty';
+    empty.textContent = 'No matching headings.';
+    list.append(empty);
+    return;
+  }
+  visible.forEach(heading => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-outline-item';
+    button.dataset.level = heading.tagName.toLowerCase();
+    button.textContent = heading.textContent.trim();
+    button.title = heading.textContent.trim();
+    button.addEventListener('click', () => {
+      heading.scrollIntoView({ block: 'center', behavior: 'auto' });
+      editor.focus();
+    });
+    list.append(button);
+  });
+}
+
+function applyPagesParagraphStyle(tagName) {
+  const allowed = new Set(['P', 'H1', 'H2', 'H3']);
+  const tag = String(tagName || '').toUpperCase();
+  if (!allowed.has(tag)) return;
+  editor.focus();
+  document.execCommand('formatBlock', false, tag);
+  persist();
+  refreshPagesOutline();
+}
+
+function addPagesStylesGallery(toolbar) {
+  const group = document.createElement('div');
+  group.className = 'ribbon-group pages-style-gallery';
+  const choices = [
+    { label: 'Normal', tag: 'P', style: 'normal' },
+    { label: 'Title', tag: 'H1', style: 'title' },
+    { label: 'Heading 1', tag: 'H2', style: 'heading-one' },
+    { label: 'Heading 2', tag: 'H3', style: 'heading-two' }
+  ];
+  const commands = document.createElement('div');
+  commands.className = 'ribbon-command-row pages-style-options';
+  choices.forEach(choice => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-style-preview';
+    button.dataset.style = choice.style;
+    button.textContent = choice.label;
+    button.setAttribute('aria-label', `Apply ${choice.label} paragraph style`);
+    button.title = `Apply ${choice.label} paragraph style`;
+    button.addEventListener('click', () => applyPagesParagraphStyle(choice.tag));
+    commands.append(button);
+  });
+  const caption = document.createElement('span');
+  caption.className = 'ribbon-group-label';
+  caption.textContent = 'Styles';
+  group.append(commands, caption);
+  toolbar.append(group);
+}
+
 function renderToolbar() {
   const toolbar = $('toolbar'); toolbar.innerHTML = ''; renderRibbonTabs();
   const label = (key) => t(`common.${key}`);
@@ -245,6 +320,7 @@ function renderToolbar() {
       [[label('bold'),'bold'],[label('italic'),'italic'],[label('underline'),'underline'],[label('heading1'),'heading'],[label('heading2'),'subheading']].forEach(([label, cmd]) => addButton(font, label, () => {
         editor.focus(); if (cmd === 'heading') document.execCommand('formatBlock', false, 'H1'); else if (cmd === 'subheading') document.execCommand('formatBlock', false, 'H2'); else document.execCommand(cmd); persist();
       }, label));
+      addPagesStylesGallery(toolbar);
       const para = group('paragraph');
       addButton(para, label('bullets'), () => { editor.focus(); document.execCommand('insertUnorderedList'); persist(); });
       addButton(para, label('numbering'), () => { editor.focus(); document.execCommand('insertOrderedList'); persist(); });
@@ -962,8 +1038,10 @@ function render() {
     $('todo-wrap').hidden = !isTodo; $('lists-wrap').hidden = !isLists; $('forms-wrap').hidden = !isForms; $('planner-wrap').hidden = !isPlanner; $('database-wrap').hidden = !isDatabase; $('workspace-app-wrap').hidden = !isWorkspace;
     $('open-button').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('save-project').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('export-button').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace;
     document.querySelector('.document-bar').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('ribbon-tabs').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('toolbar').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace;
+    $('pages-editor-layout').hidden = state.app !== 'pages';
     editor.hidden = !['pages'].includes(state.app); sheetWrap.hidden = state.app !== 'sheets'; slideWrap.hidden = state.app !== 'slides'; notesWrap.hidden = !['notes'].includes(state.app);
     editor.innerHTML = state.app === 'pages' ? safeHtml(doc.html) : '';
+    refreshPagesOutline();
     if (state.app === 'pages') applyPageLayout(); else editor.removeAttribute('style');
     $('notes-editor').value = state.app === 'notes' ? (doc.text || '') : '';
     updateDocumentLanguage();
@@ -1044,7 +1122,8 @@ $('check-current-document').addEventListener('click',checkCurrentDocumentSpellin
 $('back-to-apps').addEventListener('click',()=>{state.view=state.setupComplete?'workspace':'manager';render();});
 $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){state.view='workspace';render();}else completeAppSetup();});
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
-editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();});
+editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();});
+$('pages-outline-search').addEventListener('input', refreshPagesOutline);
 $('recovery-open').addEventListener('click',async()=>{
   if(!recoveryCandidate)return;
   try{
