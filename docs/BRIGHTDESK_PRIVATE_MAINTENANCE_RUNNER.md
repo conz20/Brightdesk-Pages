@@ -15,6 +15,8 @@ The workflow expects these two repository-level settings in **Brightdesk-Pages**
 - **Actions variable:** `BRIGHTDESK_APP_ID` — the GitHub App **Client ID** for the dedicated Brightdesk read-only GitHub App. The existing variable name is retained for compatibility; its value must be the Client ID, not the numeric App ID.
 - **Actions secret:** `BRIGHTDESK_APP_PRIVATE_KEY` — the private key PEM for that same GitHub App.
 
+The workflow pins `actions/create-github-app-token` to the verified immutable v3.3.0 release commit and uses its `client-id` input. Keep the `BRIGHTDESK_APP_ID` variable value set to the App's Client ID; the name is retained only for compatibility.
+
 Before adding them, confirm the GitHub App is installed for the `conz20` account and can access these ten private repositories:
 
 - Brightdesk-suite
