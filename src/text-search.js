@@ -1,7 +1,7 @@
 'use strict';
 
 function escapeRegExp(value) {
-  return value.replace(/[.*+?^$${}()|[\]\\]/g, '\\$&');
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function findTextMatches(segments, query, options = {}) {
