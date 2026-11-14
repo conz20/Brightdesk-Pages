@@ -213,9 +213,10 @@ function safeHtml(html) {
           const isTitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title';
           const isHeadingId = ['H1','H2','H3'].includes(child.tagName) && attr.name === 'id' && pagesReferences.normalizeHeadingId(attr.value);
           const isTocClass = child.tagName === 'DIV' && attr.name === 'class' && attr.value === 'pages-toc';
+          const isTocTitle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-toc-title';
           const isTocLevel = child.tagName === 'LI' && attr.name === 'class' && /^pages-toc-level-[23]$/.test(attr.value);
           const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value);
-          if (!isSpan && !isPageBreak && !isTitleStyle && !isHeadingId && !isTocClass && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
+          if (!isSpan && !isPageBreak && !isTitleStyle && !isHeadingId && !isTocClass && !isTocTitle && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
@@ -549,7 +550,8 @@ function insertOrUpdatePagesTableOfContents() {
 
   const toc = document.createElement('div');
   toc.className = 'pages-toc';
-  const title = document.createElement('h2');
+  const title = document.createElement('p');
+  title.className = 'pages-toc-title';
   title.textContent = 'Contents';
   const list = document.createElement('ol');
 
