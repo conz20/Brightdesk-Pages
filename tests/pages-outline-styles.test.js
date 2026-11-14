@@ -10,30 +10,32 @@ const read = name => fs.readFileSync(path.join(__dirname, '..', 'src', name), 'u
 test('Pages workspace includes a searchable document outline next to the page canvas', () => {
   const html = read('index.html');
   const app = read('app.js');
-  assert.match(html, /id="pages-navigation-pane"/);
-  assert.match(html, /id="pages-outline-search"/);
-  assert.match(html, /id="pages-outline"/);
-  assert.match(app, /function refreshPagesOutline/);
-  assert.match(app, /querySelectorAll('h1,h2,h3')/);
-  assert.match(app, /pages-outline-item/);
+  assert.ok(html.includes('id="pages-navigation-pane"'));
+  assert.ok(html.includes('id="pages-outline-search"'));
+  assert.ok(html.includes('id="pages-outline"'));
+  assert.ok(app.includes('function refreshPagesOutline()'));
+  assert.ok(app.includes("querySelectorAll('h1,h2,h3')"));
+  assert.ok(app.includes('pages-outline-item'));
 });
 
 test('Pages Home ribbon exposes real paragraph style commands', () => {
   const app = read('app.js');
   const html = read('index.html');
   const styles = read('styles.css');
-  assert.match(app, /pages-style-gallery/);
-  assert.match(app, /applyPagesParagraphStyle/);
-  assert.match(app, /formatBlock/);
-  assert.match(app, /pages-doc-title/);
-  assert.match(app, /\{ label: 'Title', styleKey: 'title'/);
-  assert.match(html, /class="pages-editor-layout"/);
-  assert.match(styles, /\.pages-style-gallery/);
-  assert.match(styles, /\.pages-navigation-pane/);
+  assert.ok(app.includes('pages-style-gallery'));
+  assert.ok(app.includes('applyPagesParagraphStyle'));
+  assert.ok(app.includes("document.execCommand('formatBlock'"));
+  assert.ok(app.includes('pages-doc-title'));
+  assert.ok(app.includes("{ label: 'Title', styleKey: 'title', style: 'title' }"));
+  assert.ok(html.includes('class="pages-editor-layout"'));
+  assert.ok(styles.includes('.pages-style-gallery'));
+  assert.ok(styles.includes('.pages-navigation-pane'));
 });
 
 test('document outline rebuilds after editing and is refreshed after a document is rendered', () => {
   const app = read('app.js');
-  assert.match(app, /editor\.addEventListener\('input',[\s\S]*?refreshPagesOutline\(\)/);
-  assert.match(app, /editor\.innerHTML = state\.app === 'pages' \? safeHtml\(doc\.html\) : ''[\s\S]*?refreshPagesOutline\(\)/);
+  assert.ok(app.includes("editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline()"));
+  const renderIndex = app.indexOf("editor.innerHTML = state.app === 'pages' ? safeHtml(doc.html) : '';");
+  const outlineIndex = app.indexOf('refreshPagesOutline();', renderIndex);
+  assert.ok(renderIndex >= 0 && outlineIndex > renderIndex);
 });
