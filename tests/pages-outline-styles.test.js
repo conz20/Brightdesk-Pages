@@ -48,3 +48,23 @@ test('safe document loading preserves only the approved Pages title paragraph cl
   assert.ok(app.includes("child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title'"));
   assert.ok(app.includes('!isSpan && !isPageBreak && !isTitleStyle'));
 });
+
+
+test('Pages Design ribbon offers selectable local style sets and watermark controls', () => {
+  const app = read('app.js');
+  const html = read('index.html');
+  const styles = read('styles.css');
+  const model = read('pages-style-sets.js');
+  assert.ok(app.includes("pages: ['home', 'insert', 'design', 'layout', 'review', 'view']"));
+  assert.ok(app.includes('function addPagesDesignGallery(toolbar)'));
+  assert.ok(app.includes('function setPagesStyleSet(styleSetId)'));
+  assert.ok(app.includes('function addPagesWatermarkControl(toolbar)'));
+  assert.ok(app.includes('pagesStyleSets.normalizeWatermark(record.watermark)'));
+  assert.ok(html.includes('<script src="pages-style-sets.js"></script>'));
+  assert.ok(model.includes("name: 'Brightdesk'"));
+  assert.ok(model.includes("name: 'Editorial'"));
+  assert.ok(model.includes("name: 'Modern'"));
+  assert.ok(styles.includes('.pages-design-card[aria-pressed="true"]'));
+  assert.ok(styles.includes('#editor[data-style-set="editorial"]'));
+  assert.ok(styles.includes('.pages-document-page[data-watermark="draft"]::before'));
+});
