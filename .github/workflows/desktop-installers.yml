@@ -1,4 +1,8 @@
 name: Build Brightdesk Pages desktop installers
+
+concurrency:
+  group: brightdesk-pages-installers-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 on:
   pull_request:
     branches: [main]
