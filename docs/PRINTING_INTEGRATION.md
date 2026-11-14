@@ -16,7 +16,7 @@ and open the operating system's print dialog.
 
 ## Printer workflow
 
-Pages lists configured operating-system queues and submits print requests through Electron's visible operating-system print dialog. Printer settings opens the operating system's printer setup screen. The current renderer does not expose network discovery, WSD pairing or capability lookup as customer-facing actions; those methods are present only in the protected bridge. Users must add a discovered printer through operating-system settings before it becomes a usable queue. Successful submission means the operating system accepted the job; it does not prove that a physical page was printed.
+Pages lists configured operating-system queues and submits print requests through Electron's visible operating-system print dialog. The Print request carries the current Page Layout paper size and portrait/landscape orientation into the operating-system dialog. Printer settings opens the operating system's printer setup screen. The current renderer does not expose network discovery, WSD pairing or capability lookup as customer-facing actions; those methods are present only in the protected bridge. Users must add a discovered printer through operating-system settings before it becomes a usable queue. Successful submission means the operating system accepted the job; it does not prove that a physical page was printed.
 
 ## Platform integration
 
