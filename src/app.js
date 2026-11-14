@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const t = (key) => window.BrightdeskI18n.t(key);
 const defaults = {
-  pages: { title: 'Untitled document', html: '', styleSet: 'brightdesk', watermark: 'none' },
+  pages: { title: 'Untitled document', html: '', styleSet: 'brightdesk', watermark: 'none', pageColor: 'white', pageBorder: 'subtle' },
   sheets: { title: 'Untitled spreadsheet', cells: Array.from({ length: 20 }, () => Array(12).fill('')) },
   slides: { title: 'Untitled presentation', slides: [{ title: 'Your presentation title', body: 'Add a subtitle or a few words to introduce your idea.' }], current: 0 },
   notes: { title: 'Untitled note', text: '' },
@@ -64,7 +64,9 @@ function pageHasRecoverableState(doc) {
     || (doc.title || defaults.pages.title) !== defaults.pages.title
     || Object.keys(defaultLayout).some(key => layout[key] !== defaultLayout[key])
     || pagesStyleSets.normalizeStyleSet(doc.styleSet) !== pagesStyleSets.DEFAULT_STYLE_SET
-    || pagesStyleSets.normalizeWatermark(doc.watermark) !== 'none';
+    || pagesStyleSets.normalizeWatermark(doc.watermark) !== 'none'
+    || pagesStyleSets.normalizePageColor(doc.pageColor) !== 'white'
+    || pagesStyleSets.normalizePageBorder(doc.pageBorder) !== 'subtle';
 }
 function markPageRecoveryDirty() {
   const doc = state.docs.pages;
@@ -118,7 +120,9 @@ async function flushPageRecovery() {
     html: String(doc.html || ''),
     pageSettings: doc.pageSettings || {},
     styleSet: pagesStyleSets.normalizeStyleSet(doc.styleSet),
-    watermark: pagesStyleSets.normalizeWatermark(doc.watermark)
+    watermark: pagesStyleSets.normalizeWatermark(doc.watermark),
+    pageColor: pagesStyleSets.normalizePageColor(doc.pageColor),
+    pageBorder: pagesStyleSets.normalizePageBorder(doc.pageBorder)
   };
   const pending = window.brightdesk.saveRecovery(payload);
   pageRecoveryInFlight = pending;
@@ -482,6 +486,8 @@ function applyPagesDocumentDesign() {
   if (state.app !== 'pages' || !pagesStyleSets) return;
   editor.dataset.styleSet = pagesStyleSets.normalizeStyleSet(activeDoc().styleSet);
   editor.dataset.watermark = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+  editor.dataset.pageColor = pagesStyleSets.normalizePageColor(activeDoc().pageColor);
+  editor.dataset.pageBorder = pagesStyleSets.normalizePageBorder(activeDoc().pageBorder);
 }
 
 function setPagesStyleSet(styleSetId) {
@@ -502,6 +508,20 @@ function setPagesWatermark(watermark) {
   activeDoc().html = serializePagesDocument();
   persist();
   renderToolbar();
+}
+
+function setPagesPageColor(pageColor) {
+  if (state.app !== 'pages') return;
+  activeDoc().pageColor = pagesStyleSets.normalizePageColor(pageColor);
+  applyPagesDocumentDesign();
+  persist();
+}
+
+function setPagesPageBorder(pageBorder) {
+  if (state.app !== 'pages') return;
+  activeDoc().pageBorder = pagesStyleSets.normalizePageBorder(pageBorder);
+  applyPagesDocumentDesign();
+  persist();
 }
 
 function addPagesDesignGallery(toolbar) {
@@ -547,27 +567,36 @@ function addPagesDesignGallery(toolbar) {
 
 function addPagesWatermarkControl(toolbar) {
   const commands = ribbonGroup(toolbar, 'Page background');
-  const label = document.createElement('label');
-  label.className = 'pages-watermark-setting';
-  label.textContent = 'Watermark';
-  const select = document.createElement('select');
-  select.className = 'pages-watermark-select';
-  select.setAttribute('aria-label', 'Document watermark');
-  const options = [
-    ['none', 'None'],
-    ['draft', 'Draft'],
-    ['confidential', 'Confidential']
-  ];
-  options.forEach(([value, text]) => {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = text;
-    select.append(option);
-  });
-  select.value = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
-  select.addEventListener('change', () => setPagesWatermark(select.value));
-  label.append(select);
-  commands.append(label);
+  const settings = document.createElement('div');
+  settings.className = 'pages-design-settings';
+  const addSelect = (labelText, ariaLabel, options, currentValue, onChange) => {
+    const label = document.createElement('label');
+    label.className = 'pages-watermark-setting';
+    label.textContent = labelText;
+    const select = document.createElement('select');
+    select.className = 'pages-watermark-select';
+    select.setAttribute('aria-label', ariaLabel);
+    options.forEach(([value, text]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = text;
+      select.append(option);
+    });
+    select.value = currentValue;
+    select.addEventListener('change', () => onChange(select.value));
+    label.append(select);
+    settings.append(label);
+  };
+  addSelect('Watermark', 'Document watermark', [
+    ['none', 'None'], ['draft', 'Draft'], ['confidential', 'Confidential']
+  ], pagesStyleSets.normalizeWatermark(activeDoc().watermark), setPagesWatermark);
+  addSelect('Page colour', 'Page colour', [
+    ['white', 'White'], ['warm', 'Warm'], ['mist', 'Mist']
+  ], pagesStyleSets.normalizePageColor(activeDoc().pageColor), setPagesPageColor);
+  addSelect('Page border', 'Page border', [
+    ['subtle', 'Fine line'], ['none', 'None'], ['double', 'Double line']
+  ], pagesStyleSets.normalizePageBorder(activeDoc().pageBorder), setPagesPageBorder);
+  commands.append(settings);
 }
 
 function renderToolbar() {
@@ -1708,7 +1737,7 @@ $('recovery-open').addEventListener('click',async()=>{
   try{
     const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
     if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
-    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{}),styleSet:pagesStyleSets.normalizeStyleSet(record.styleSet),watermark:pagesStyleSets.normalizeWatermark(record.watermark)};
+    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{}),styleSet:pagesStyleSets.normalizeStyleSet(record.styleSet),watermark:pagesStyleSets.normalizeWatermark(record.watermark),pageColor:pagesStyleSets.normalizePageColor(record.pageColor),pageBorder:pagesStyleSets.normalizePageBorder(record.pageBorder)};
     pageRecoveryHasSnapshot=true;
     state.app='pages';state.view='workspace';state.ribbonTab='home';state.focusMode=false;
     recoveryDismissed=true;persist();render();
