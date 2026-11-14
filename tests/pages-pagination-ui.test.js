@@ -49,6 +49,7 @@ test('PDF export respects the selected supported paper size', () => {
   assert.ok(app.includes('pageSize: pageLayout.normalizePageLayout(activeDoc().pageSettings || {}).size'));
   assert.ok(main.includes("['A4', 'Letter', 'Legal'].includes(payload?.pageSize)"));
   assert.ok(main.includes("pageSize: requestedPageSize"));
+  assert.ok(main.includes("landscape: payload?.landscape === true"));
 });
 
 test('print CSS isolates Pages and preserves page boundaries', () => {
@@ -57,6 +58,8 @@ test('print CSS isolates Pages and preserves page boundaries', () => {
   assert.ok(css.includes('@media print'));
   assert.ok(css.includes('break-after:page'));
   assert.ok(css.includes('page-break-after:always'));
+  assert.ok(css.includes('counter-reset:pages-page'));
+  assert.ok(css.includes('content:"Page " counter(pages-page)'));
 });
 
 test('DOCX extraction walks through visual page wrappers without merging a page into one paragraph', () => {
