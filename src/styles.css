@@ -302,3 +302,19 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-find-status{margin:1px 2px;color:#747b8e;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
 
 .editor .pages-doc-title{margin:0 0 16px;font-size:28px;font-weight:750;line-height:1.2;letter-spacing:-.7px;color:#303653}
+
+
+/* Pages document ruler */
+.pages-ruler-wrap{flex:0 0 auto;width:100%;margin:11px auto -14px;min-height:25px;padding:0 0 0;overflow:visible}
+.pages-ruler-wrap[hidden]{display:none}
+.pages-ruler{position:relative;height:25px;margin:0 auto;border:1px solid #dfe2ea;border-bottom-color:#cfd3df;border-radius:4px 4px 0 0;background:#fff;box-shadow:0 1px 2px #252c4208;box-sizing:border-box;overflow:hidden}
+.pages-ruler-margin{position:absolute;top:0;bottom:0;background:#f0f1f5}
+#pages-ruler-left-margin{left:0;border-right:1px solid #d5d8e2}
+#pages-ruler-right-margin{right:0;border-left:1px solid #d5d8e2}
+.pages-ruler-ticks{position:absolute;inset:0}
+.pages-ruler-tick{position:absolute;top:0;height:6px;border-left:1px solid #aeb3c1}
+.pages-ruler-tick.is-major{height:11px;border-left-color:#747c91}
+.pages-ruler-label{position:absolute;top:11px;left:-4px;color:#71788a;font-size:8px;line-height:10px;font-variant-numeric:tabular-nums;pointer-events:none}
+.pages-ruler-tick:last-child .pages-ruler-label{left:auto;right:2px}
+.tool.is-selected{background:#eeefff;border-color:#d8daf4;color:#414aa5}
+@media(max-width:720px){.pages-ruler-wrap{margin-top:8px}.pages-ruler-label{font-size:7px}}
