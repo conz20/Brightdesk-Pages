@@ -35,7 +35,7 @@ const state = {
   todoView: 'my-day', todoQuery: '',
   selectedCell: { row: 0, col: 0 }, update: null, ribbonTab: 'home',
   installedApps: [], setupComplete: false, firstRunSelection: new Set(installableCatalog.map(item => item.id)),
-  slideTheme: 'lavender', focusMode: false, showRuler: true, editorZoom: 100, sheetZoom: 100,
+  slideTheme: 'lavender', focusMode: false, showRuler: true, theme: 'light', editorZoom: 100, sheetZoom: 100,
   languageCatalog: [], installedLanguagePacks: [], spellCheckerLanguages: [], usesNativeMacSpellChecker: false,
   displayLanguage: 'en-AU', proofingLanguage: 'en-AU',
   installedDictionaries: [], dictionaryCatalogue: [], selectedDictionary: localStorage.getItem('brightdesk-selected-dictionary') || ''
@@ -56,15 +56,31 @@ const pagePagination = window.BrightdeskPagePagination;
 const pagesStyleSets = window.BrightdeskPagesStyleSets;
 const pagesReferences = window.BrightdeskPagesReferences;
 const pagesReadAloud = window.BrightdeskPagesReadAloud;
+const pagesTheme = window.BrightdeskPagesTheme;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
 if (!pagesStyleSets) throw new Error('Brightdesk Pages style-set definitions were not loaded.');
 if (!pagesReferences) throw new Error('Brightdesk Pages references helpers were not loaded.');
 if (!pagesReadAloud) throw new Error('Brightdesk Pages Read Aloud helpers were not loaded.');
+if (!pagesTheme) throw new Error('Brightdesk Pages theme helpers were not loaded.');
 
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
 function setStatus(message) { $('save-status').textContent = message; }
+function applyPagesTheme() {
+  state.theme = pagesTheme.normalizeTheme(state.theme);
+  const dark = state.app === 'pages' && state.view === 'workspace' && state.theme === 'dark';
+  document.documentElement.classList.toggle('pages-dark-mode', dark);
+}
+function togglePagesTheme() {
+  state.theme = pagesTheme.normalizeTheme(state.theme) === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('brightdesk-pages-theme', state.theme);
+  applyPagesTheme();
+  renderToolbar();
+  setStatus(state.theme === 'dark'
+    ? 'Dark workspace enabled. Document pages remain light.'
+    : 'Light workspace enabled.');
+}
 function pageHasRecoverableState(doc) {
   const layout = pageLayout.normalizePageLayout(doc.pageSettings || {});
   const defaultLayout = pageLayout.normalizePageLayout();
@@ -195,6 +211,7 @@ function loadLocal() {
     if (launchAppId) { state.app = launchAppId; state.view = 'workspace'; }
     else if (!state.setupComplete) state.view = 'manager';
     else if (!installedApp(state.app)) state.app = state.installedApps[0] || 'pages';
+    state.theme = pagesTheme.normalizeTheme(localStorage.getItem('brightdesk-pages-theme'));
     state.displayLanguage = localStorage.getItem('brightdesk-display-language') || 'en-AU';
     state.proofingLanguage = localStorage.getItem('brightdesk-proofing-language') || state.displayLanguage;
   } catch (error) { console.warn('Local project or app settings could not be read.', error); state.view = 'manager'; }
@@ -825,6 +842,8 @@ function renderToolbar() {
       addButton(aloud, 'Stop', () => stopPagesReadAloud(), 'Stop reading the document');
     } else {
       const view = group('zoom');
+      const themeButton = addButton(view, state.theme === 'dark' ? 'Light mode' : 'Dark mode', togglePagesTheme, 'Switch the Pages workspace between light and dark themes');
+      themeButton.setAttribute('aria-pressed', String(state.theme === 'dark'));
       addButton(view, label('zoomOut'), () => changeEditorZoom(-10)); addButton(view, '100%', () => { state.editorZoom = 100; applyEditorZoom(); }); addButton(view, label('zoomIn'), () => changeEditorZoom(10));
       const rulerButton = addButton(view, 'Show ruler', () => {
         state.showRuler = !state.showRuler;
@@ -1103,6 +1122,8 @@ function paginatePagesDocument() {
     page.setAttribute('data-placeholder', editor.getAttribute('data-placeholder') || 'Start writing…');
     const pageStyle = pageLayout.getPageStyle(settings);
     Object.assign(page.style, pageStyle, {
+      background: pagesStyleSets.getPageColor(activeDoc().pageColor),
+      border: pagesStyleSets.getPageBorder(activeDoc().pageBorder),
       height: `${dimensions.height}px`,
       minHeight: `${dimensions.height}px`,
       margin: '0 auto',
@@ -1746,6 +1767,7 @@ async function changeProofingLanguage(code) {
 }
 
 function render() {
+  applyPagesTheme();
   window.BrightdeskI18n.localizeStaticElements();
   document.querySelectorAll('.nav[data-app]').forEach(btn => {
     const appId = btn.dataset.app;
