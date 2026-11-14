@@ -415,12 +415,25 @@ function openPagesFindPanel() {
   $('pages-find-query').focus();
 }
 
-function applyPagesParagraphStyle(tagName) {
-  const allowed = new Set(['P', 'H1', 'H2', 'H3']);
-  const tag = String(tagName || '').toUpperCase();
-  if (!allowed.has(tag)) return;
+function applyPagesParagraphStyle(styleKey) {
+  const styles = {
+    normal: { tag: 'P' },
+    title: { tag: 'P', className: 'pages-doc-title' },
+    heading1: { tag: 'H1' },
+    heading2: { tag: 'H2' }
+  };
+  const style = styles[styleKey];
+  if (!style) return;
   editor.focus();
-  document.execCommand('formatBlock', false, tag);
+  document.execCommand('formatBlock', false, style.tag);
+  const selection = window.getSelection();
+  let block = selection?.anchorNode;
+  if (block?.nodeType === Node.TEXT_NODE) block = block.parentElement;
+  while (block && block !== editor && !['P','H1','H2','H3','DIV'].includes(block.tagName)) block = block.parentElement;
+  if (block && block !== editor) {
+    block.classList.remove('pages-doc-title');
+    if (style.className) block.classList.add(style.className);
+  }
   persist();
   refreshPagesOutline();
 }
@@ -429,10 +442,10 @@ function addPagesStylesGallery(toolbar) {
   const group = document.createElement('div');
   group.className = 'ribbon-group pages-style-gallery';
   const choices = [
-    { label: 'Normal', tag: 'P', style: 'normal' },
-    { label: 'Title', tag: 'H1', style: 'title' },
-    { label: 'Heading 1', tag: 'H2', style: 'heading-one' },
-    { label: 'Heading 2', tag: 'H3', style: 'heading-two' }
+    { label: 'Normal', styleKey: 'normal', style: 'normal' },
+    { label: 'Title', styleKey: 'title', style: 'title' },
+    { label: 'Heading 1', styleKey: 'heading1', style: 'heading-one' },
+    { label: 'Heading 2', styleKey: 'heading2', style: 'heading-two' }
   ];
   const commands = document.createElement('div');
   commands.className = 'ribbon-command-row pages-style-options';
@@ -444,7 +457,7 @@ function addPagesStylesGallery(toolbar) {
     button.textContent = choice.label;
     button.setAttribute('aria-label', `Apply ${choice.label} paragraph style`);
     button.title = `Apply ${choice.label} paragraph style`;
-    button.addEventListener('click', () => applyPagesParagraphStyle(choice.tag));
+    button.addEventListener('click', () => applyPagesParagraphStyle(choice.styleKey));
     commands.append(button);
   });
   const caption = document.createElement('span');
