@@ -562,8 +562,8 @@ test('private maintenance validation uses the Mac runner and all installer jobs 
 
 test('Pages installer workflow uses private runners for build, verification and release jobs', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
-  const build = source.split('  build:')[1]?.split('  publish:')[0] ?? '';
-  const publish = source.split('  publish:')[1] ?? '';
+  const build = source.split('  build:')[1]?.split('  prepare-release:')[0] ?? '';
+  const publish = source.split('  publish-release:')[1] ?? '';
 
   assert.match(build, /runner: \["self-hosted", "Windows", "X64"\]/);
   assert.match(build, /runner: \["self-hosted", "macOS", "ARM64"\]/);
