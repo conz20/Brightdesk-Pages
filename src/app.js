@@ -408,11 +408,11 @@ function replaceAllPagesMatches() {
     : `Replaced ${replaced} occurrences.`;
 }
 
-function openPagesFindPanel() {
+function openPagesFindPanel(focusReplace = false) {
   const panel = $('pages-find-panel');
   panel.hidden = false;
   $('pages-find-toggle').setAttribute('aria-expanded', 'true');
-  $('pages-find-query').focus();
+  (focusReplace ? $('pages-replace-query') : $('pages-find-query')).focus();
 }
 
 function applyPagesParagraphStyle(styleKey) {
@@ -1287,6 +1287,14 @@ $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){stat
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
 editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
 $('pages-outline-search').addEventListener('input', refreshPagesOutline);
+document.addEventListener('keydown', event => {
+  const modifier = event.ctrlKey || event.metaKey;
+  if (!modifier || event.altKey || !['f','h'].includes(event.key.toLowerCase())) return;
+  if (state.app !== 'pages') return;
+  if (event.key.toLowerCase() === 'h' && (!event.ctrlKey || event.metaKey)) return;
+  event.preventDefault();
+  openPagesFindPanel(event.key.toLowerCase() === 'h');
+});
 $('pages-find-toggle').addEventListener('click', () => {
   const panel = $('pages-find-panel');
   panel.hidden = !panel.hidden;
