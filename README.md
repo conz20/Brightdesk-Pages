@@ -97,11 +97,17 @@ This is the first multi-page layout slice, not yet full word-processor paginatio
 
 The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
 
+## Table of contents
+
+The Pages **References** tab can insert or update a linked table of contents from Heading 1–3 paragraphs in the current document. It creates internal links to those headings and refreshes the existing contents block when the command is used again. If the document has no usable headings, Pages explains what needs to be added first.
+
+On reload, Pages keeps only the approved internal heading IDs and links. External URLs and other unapproved link attributes are removed when document HTML is sanitised. The initial workflow is a document contents list; footnotes, citations, bibliography, captions, index and automatic page-number fields remain future work. The TOC block is a single layout block and is not yet split across pages.
+
 ## Document design presets
 
-The Pages **Design** tab now offers three selectable document style sets: **Brightdesk**, **Editorial** and **Modern**. Each has a visible preview before selection. The presets change document typography, heading colours and paragraph rhythm while keeping Brightdesk’s own visual identity. The same tab offers optional **Draft** and **Confidential** watermarks.
+The Pages **Design** tab now offers three selectable document style sets: **Brightdesk**, **Editorial** and **Modern**. Each has a visible preview before selection. The presets change document typography, heading colours and paragraph rhythm while keeping Brightdesk’s own visual identity. The same tab offers optional **Draft** and **Confidential** watermarks, three page colours and three page-border choices.
 
-Style and watermark choices are saved as local document metadata and are included in the local recovery snapshot. They do not add wrappers or styling attributes to the document's saved HTML. Unknown setting values safely fall back to Brightdesk styling and no watermark.
+Style, watermark, page-colour and page-border choices are saved as local document metadata and are included in the local recovery snapshot. They do not add wrappers or styling attributes to the document's saved HTML. Unknown setting values safely fall back to Brightdesk styling and no watermark.
 
 This work is on the WordCraft-parity draft branch and is not yet part of a published release. The complete document Styles manager, user-defined style sets, and live paragraph/character style editing remain future work.
 
