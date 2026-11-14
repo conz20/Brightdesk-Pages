@@ -1574,9 +1574,15 @@ $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').v
 editor.addEventListener('input',()=>{if(state.app==='pages'){activeDoc().html=serializePagesDocument();schedulePagesPagination();}else{activeDoc().html=editor.innerHTML;}persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
 $('pages-outline-search').addEventListener('input', refreshPagesOutline);
 document.addEventListener('keydown', event => {
+  if (state.app !== 'pages' || event.altKey) return;
   const modifier = event.ctrlKey || event.metaKey;
-  if (!modifier || event.altKey || !['f','h'].includes(event.key.toLowerCase())) return;
-  if (state.app !== 'pages') return;
+  if (!modifier) return;
+  if (event.key === 'Enter' && (event.target === editor || editor.contains(event.target))) {
+    event.preventDefault();
+    insertPagesPageBreak();
+    return;
+  }
+  if (!['f','h'].includes(event.key.toLowerCase())) return;
   if (event.key.toLowerCase() === 'h' && (!event.ctrlKey || event.metaKey)) return;
   event.preventDefault();
   openPagesFindPanel(event.key.toLowerCase() === 'h');
