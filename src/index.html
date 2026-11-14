@@ -49,7 +49,19 @@
           <button id="recovery-discard" class="secondary" type="button">Discard</button>
         </div>
       </section>
-      <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"></div>
+      <div class="pages-editor-layout">
+        <aside id="pages-navigation-pane" class="pages-navigation-pane" aria-label="Document navigation">
+          <div class="pages-navigation-heading">Navigation</div>
+          <label class="pages-outline-search-label" for="pages-outline-search">Find a heading</label>
+          <input id="pages-outline-search" class="pages-outline-search" type="search" placeholder="Search headings" autocomplete="off">
+          <div id="pages-outline" class="pages-outline" aria-label="Document headings">
+            <p class="pages-outline-empty">Add headings to build your document outline.</p>
+          </div>
+        </aside>
+        <div class="pages-editor-column">
+          <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"></div>
+        </div>
+      </div>
       <div id="sheet-wrap" class="sheet-wrap" hidden></div>
       <div id="slide-wrap" class="slide-wrap" hidden></div>
       <div id="notes-wrap" class="notes-wrap" hidden><textarea id="notes-editor" aria-label="Notes editor" placeholder="Type a note, idea or reminder…" data-i18n-placeholder="common.notesPlaceholder"></textarea><div class="notes-hint" data-i18n="common.notesHint">Your notes save automatically on this device.</div></div>
