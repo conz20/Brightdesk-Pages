@@ -26,12 +26,12 @@ test("the Pages workspace shows the shared print actions and respects page setup
   const app = read("src/app.js");
   assert.match(html, /id="print-button"/);
   assert.match(html, /id="printer-settings-button"/);
-  assert.match(app, /const printRequest = \\{ printBackground: true \\}/);
-  assert.match(app, /pageLayout\\.normalizePageLayout\\(activeDoc\\(\\)\\.pageSettings \\|\\| \\{\\}\\)/);
-  assert.match(app, /printRequest\\.orientation = pageSettings\\.orientation/);
-  assert.match(app, /printRequest\\.pageSize = pageSettings\\.size/);
-  assert.match(app, /window\\.brightdesk\\.printing\\.print\\(printRequest\\)/);
-  assert.match(app, /window\\.brightdesk\\.printing\\.openPrinterSettings\\(\\)/);
+  assert.ok(app.includes("const printRequest = { printBackground: true };"));
+  assert.ok(app.includes("const pageSettings = pageLayout.normalizePageLayout(activeDoc()?.pageSettings || {});"));
+  assert.ok(app.includes("printRequest.orientation = pageSettings.orientation;"));
+  assert.ok(app.includes("printRequest.pageSize = pageSettings.size;"));
+  assert.ok(app.includes("window.brightdesk.printing.print(printRequest)"));
+  assert.ok(app.includes("window.brightdesk.printing.openPrinterSettings()"));
 });
 
 test("all built-in language packs include printing action labels", () => {
