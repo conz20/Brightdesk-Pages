@@ -56,6 +56,20 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
   assert.equal(pkg.build.nsis.createStartMenuShortcut, true);
 });
 
+
+
+test('superseded Pages pull-request checks are cancelled before they build a backlog', () => {
+  const installer = read('.github/workflows/desktop-installers.yml');
+  const freshness = read('.github/workflows/readme-freshness.yml');
+  const branchKey = '${{ github.event.pull_request.head.ref || github.ref }}';
+  const cancellation = 'cancel-in-progress: ${{ github.event_name == \'pull_request\' }}';
+
+  assert.ok(installer.includes('group: brightdesk-pages-installers-' + branchKey));
+  assert.ok(freshness.includes('group: brightdesk-pages-readme-' + branchKey));
+  assert.ok(installer.includes(cancellation));
+  assert.ok(freshness.includes(cancellation));
+});
+
 test('desktop installer workflow verifies native products and publishes only after version-tag builds pass', () => {
   const workflow = read('.github/workflows/desktop-installers.yml');
   assert.ok(workflow.includes('node-version: 24.22.2'));
