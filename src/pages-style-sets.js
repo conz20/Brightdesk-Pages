@@ -43,10 +43,29 @@ function normalizePageBorder(value) {
   return PAGE_BORDERS.includes(value) ? value : 'subtle';
 }
 
+const PAGE_COLOR_VALUES = Object.freeze({
+  white: '#ffffff',
+  warm: '#fffaf0',
+  mist: '#f7fafc'
+});
+const PAGE_BORDER_VALUES = Object.freeze({
+  none: '0',
+  subtle: '1px solid #e7e8ee',
+  double: '3px double #aeb1c5'
+});
+
+function getPageColor(value) {
+  return PAGE_COLOR_VALUES[normalizePageColor(value)];
+}
+
+function getPageBorder(value) {
+  return PAGE_BORDER_VALUES[normalizePageBorder(value)];
+}
+
 function getStyleSet(value) {
   return STYLE_SETS[normalizeStyleSet(value)];
 }
 
-const api = { DEFAULT_STYLE_SET, STYLE_SETS, WATERMARKS, PAGE_COLORS, PAGE_BORDERS, normalizeStyleSet, normalizeWatermark, normalizePageColor, normalizePageBorder, getStyleSet };
+const api = { DEFAULT_STYLE_SET, STYLE_SETS, WATERMARKS, PAGE_COLORS, PAGE_BORDERS, normalizeStyleSet, normalizeWatermark, normalizePageColor, normalizePageBorder, getPageColor, getPageBorder, getStyleSet };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.BrightdeskPagesStyleSets = api;
