@@ -74,3 +74,22 @@ test('Pages Design ribbon offers selectable local style sets and watermark contr
   assert.ok(styles.includes('#editor[data-page-color="warm"]'));
   assert.ok(styles.includes('#editor[data-page-border="double"]'));
 });
+
+
+test('Pages References tab inserts and refreshes a linked table of contents', () => {
+  const app = read('app.js');
+  const html = read('index.html');
+  const styles = read('styles.css');
+  const references = read('pages-references.js');
+  assert.ok(app.includes("pages: ['home', 'insert', 'design', 'layout', 'references', 'review', 'view']"));
+  assert.ok(app.includes('function insertOrUpdatePagesTableOfContents()'));
+  assert.ok(app.includes('function collectPagesTocEntries()'));
+  assert.ok(app.includes('pagesReferences.buildTocEntries(rows)'));
+  assert.ok(app.includes("addButton(references, 'Table of contents', insertOrUpdatePagesTableOfContents"));
+  assert.ok(app.includes("child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value)"));
+  assert.ok(app.includes("['H1','H2','H3'].includes(child.tagName) && attr.name === 'id'"));
+  assert.ok(html.includes('<script src="pages-references.js"></script>'));
+  assert.ok(references.includes('function normalizeHeadingHref(value)'));
+  assert.ok(styles.includes('.pages-toc-level-2'));
+  assert.ok(styles.includes('.pages-toc a:focus-visible'));
+});
