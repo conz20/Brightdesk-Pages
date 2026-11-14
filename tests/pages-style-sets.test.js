@@ -32,3 +32,15 @@ test('watermark choices are restricted to none, draft and confidential', () => {
   assert.equal(styles.normalizePageBorder('double'), 'double');
   assert.equal(styles.normalizePageBorder('unknown'), 'subtle');
 });
+
+
+test('page appearance presets resolve to concrete page surfaces', () => {
+  assert.equal(styles.getPageColor('white'), '#ffffff');
+  assert.equal(styles.getPageColor('warm'), '#fffaf0');
+  assert.equal(styles.getPageColor('mist'), '#f7fafc');
+  assert.equal(styles.getPageColor('unexpected'), '#ffffff');
+  assert.equal(styles.getPageBorder('none'), '0');
+  assert.equal(styles.getPageBorder('subtle'), '1px solid #e7e8ee');
+  assert.equal(styles.getPageBorder('double'), '3px double #aeb1c5');
+  assert.equal(styles.getPageBorder('unexpected'), '1px solid #e7e8ee');
+});
