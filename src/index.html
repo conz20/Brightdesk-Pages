@@ -39,6 +39,16 @@
       <div class="document-bar"><input id="doc-title" value="Untitled document" aria-label="Document title" /><span class="local-tag" data-i18n="top.storedLocally">● Stored locally</span></div>
       <div id="ribbon-tabs" class="ribbon-tabs" role="tablist" aria-label="Ribbon tabs"></div>
       <div id="toolbar" class="toolbar" aria-label="Ribbon commands"></div>
+      <section id="recovery-banner" class="recovery-banner" aria-label="Recovered document" role="status" aria-live="polite" hidden>
+        <div class="recovery-copy">
+          <strong>We found a recovered Pages document.</strong>
+          <span id="recovery-summary">A local recovery copy is available.</span>
+        </div>
+        <div class="recovery-actions">
+          <button id="recovery-open" class="primary" type="button">Recover copy</button>
+          <button id="recovery-discard" class="secondary" type="button">Discard</button>
+        </div>
+      </section>
       <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"></div>
       <div id="sheet-wrap" class="sheet-wrap" hidden></div>
       <div id="slide-wrap" class="slide-wrap" hidden></div>
