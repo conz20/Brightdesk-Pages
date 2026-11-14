@@ -37,3 +37,10 @@ test('Pages Home ribbon provides a command to open Find and Replace', () => {
   assert.match(app, /Find & Replace/);
   assert.match(app, /pages-find-toggle/);
 });
+
+
+test('the text-search helper is exported to the context-isolated renderer without Node access', () => {
+  const helper = read('text-search.js');
+  assert.match(helper, /window\.BrightdeskTextSearch = api/);
+  assert.match(helper, /typeof module !== 'undefined'/);
+});
