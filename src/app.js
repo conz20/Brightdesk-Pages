@@ -211,12 +211,14 @@ function safeHtml(html) {
           const isSpan = isCell && (attr.name === 'colspan' || attr.name === 'rowspan') && /^[1-9]\d{0,2}$/.test(attr.value) && Number(attr.value) <= 100;
           const isPageBreak = child.tagName === 'HR' && attr.name === 'data-pages-page-break' && attr.value === 'true';
           const isTitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title';
+          const isNoSpacingStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-no-spacing';
+          const isSubtitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-subtitle';
           const isHeadingId = ['H1','H2','H3'].includes(child.tagName) && attr.name === 'id' && pagesReferences.normalizeHeadingId(attr.value);
           const isTocClass = child.tagName === 'DIV' && attr.name === 'class' && attr.value === 'pages-toc';
           const isTocTitle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-toc-title';
           const isTocLevel = child.tagName === 'LI' && attr.name === 'class' && /^pages-toc-level-[23]$/.test(attr.value);
           const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value);
-          if (!isSpan && !isPageBreak && !isTitleStyle && !isHeadingId && !isTocClass && !isTocTitle && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
+          if (!isSpan && !isPageBreak && !isTitleStyle && !isNoSpacingStyle && !isSubtitleStyle && !isHeadingId && !isTocClass && !isTocTitle && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
@@ -439,9 +441,12 @@ function openPagesFindPanel(focusReplace = false) {
 function applyPagesParagraphStyle(styleKey) {
   const styles = {
     normal: { tag: 'P' },
+    noSpacing: { tag: 'P', className: 'pages-doc-no-spacing' },
     title: { tag: 'P', className: 'pages-doc-title' },
+    subtitle: { tag: 'P', className: 'pages-doc-subtitle' },
     heading1: { tag: 'H1' },
-    heading2: { tag: 'H2' }
+    heading2: { tag: 'H2' },
+    heading3: { tag: 'H3' }
   };
   const style = styles[styleKey];
   if (!style) return;
@@ -452,7 +457,7 @@ function applyPagesParagraphStyle(styleKey) {
   if (block?.nodeType === Node.TEXT_NODE) block = block.parentElement;
   while (block && block !== editor && !['P','H1','H2','H3','DIV'].includes(block.tagName)) block = block.parentElement;
   if (block && block !== editor) {
-    block.classList.remove('pages-doc-title');
+    block.classList.remove('pages-doc-title', 'pages-doc-no-spacing', 'pages-doc-subtitle');
     if (style.className) block.classList.add(style.className);
   }
   persist();
@@ -464,10 +469,12 @@ function addPagesStylesGallery(toolbar) {
   const group = document.createElement('div');
   group.className = 'ribbon-group pages-style-gallery';
   const choices = [
-    { label: 'Normal', styleKey: 'normal', style: 'normal' },
-    { label: 'Title', styleKey: 'title', style: 'title' },
-    { label: 'Heading 1', styleKey: 'heading1', style: 'heading-one' },
-    { label: 'Heading 2', styleKey: 'heading2', style: 'heading-two' }
+    { label: 'Normal', styleKey: 'normal', style: 'normal', sample: 'AaBbCcDd' },
+    { label: 'No Spacing', styleKey: 'noSpacing', style: 'no-spacing', sample: 'AaBbCcDd' },
+    { label: 'Heading 1', styleKey: 'heading1', style: 'heading-one', sample: 'Heading 1' },
+    { label: 'Title', styleKey: 'title', style: 'title', sample: 'Document title' },
+    { label: 'Heading 2', styleKey: 'heading2', style: 'heading-two', sample: 'Heading 2' },
+    { label: 'Subtitle', styleKey: 'subtitle', style: 'subtitle', sample: 'Document subtitle' }
   ];
   const commands = document.createElement('div');
   commands.className = 'ribbon-command-row pages-style-options';
@@ -476,9 +483,15 @@ function addPagesStylesGallery(toolbar) {
     button.type = 'button';
     button.className = 'pages-style-preview';
     button.dataset.style = choice.style;
-    button.textContent = choice.label;
     button.setAttribute('aria-label', `Apply ${choice.label} paragraph style`);
     button.title = `Apply ${choice.label} paragraph style`;
+    const sample = document.createElement('span');
+    sample.className = `pages-style-sample ${choice.style}`;
+    sample.textContent = choice.sample;
+    const label = document.createElement('span');
+    label.className = 'pages-style-label';
+    label.textContent = choice.label;
+    button.append(sample, label);
     button.addEventListener('click', () => applyPagesParagraphStyle(choice.styleKey));
     commands.append(button);
   });
