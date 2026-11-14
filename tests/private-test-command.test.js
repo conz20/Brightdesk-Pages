@@ -18,3 +18,28 @@ test('Suite compound Node and Vitest test command applies each framework TAP rep
   assert.ok(suiteTestBlock.includes('./node_modules/.bin/vitest run --reporter=tap'));
   assert.ok(suiteTestBlock.includes('npm test -- --test-reporter=tap'));
 });
+
+test('manual private test dispatch keeps GitHub credentials away from controller scripts', () => {
+  const workflowPath = path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml');
+  const workflow = fs.readFileSync(workflowPath, 'utf8');
+  const jobStart = workflow.indexOf('  daily-private-tests:');
+  const jobEnd = workflow.indexOf('  suite-one-time-installer-smoke-tests:', jobStart);
+  const job = jobStart >= 0 && jobEnd > jobStart ? workflow.slice(jobStart, jobEnd) : '';
+
+  const controllerCheckoutStart = job.indexOf('- name: Check out the Brightdesk Pages controller');
+  const credentialCheckStart = job.indexOf('- name: Check whether read-only GitHub App credentials are configured', controllerCheckoutStart);
+  const controllerCheckout = controllerCheckoutStart >= 0 && credentialCheckStart > controllerCheckoutStart
+    ? job.slice(controllerCheckoutStart, credentialCheckStart)
+    : '';
+
+  const issueTokenStart = job.indexOf('- name: Create an issue-only token for the private Suite diagnostic');
+  const issueReportStart = job.indexOf('- name: Save sanitized failure names to the private Suite issue', issueTokenStart);
+  const issueTokenStep = issueTokenStart >= 0 && issueReportStart > issueTokenStart
+    ? job.slice(issueTokenStart, issueReportStart)
+    : '';
+  const issueReportStep = issueReportStart >= 0 ? job.slice(issueReportStart) : '';
+
+  assert.match(controllerCheckout, /persist-credentials: false/);
+  assert.match(issueTokenStep, /github\.event_name != 'workflow_dispatch'/);
+  assert.match(issueReportStep, /if: always\(\) && github\.event_name != 'workflow_dispatch'/);
+});
