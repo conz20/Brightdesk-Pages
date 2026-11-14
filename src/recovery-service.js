@@ -5,7 +5,7 @@ const fsConstants = require('node:fs').constants;
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { normalizePageLayout } = require('./page-layout');
-const { normalizeStyleSet, normalizeWatermark } = require('./pages-style-sets');
+const { normalizeStyleSet, normalizeWatermark, normalizePageColor, normalizePageBorder } = require('./pages-style-sets');
 
 const MAX_RECOVERY_HTML_BYTES = 10 * 1024 * 1024;
 const MAX_RECOVERY_FILE_BYTES = MAX_RECOVERY_HTML_BYTES * 6 + 16 * 1024;
@@ -45,6 +45,8 @@ function validateSnapshot(value) {
     pageSettings: normalizePageLayout(value.pageSettings || {}),
     styleSet: normalizeStyleSet(value.styleSet),
     watermark: normalizeWatermark(value.watermark),
+    pageColor: normalizePageColor(value.pageColor),
+    pageBorder: normalizePageBorder(value.pageBorder),
     savedAt: new Date(value.savedAt).toISOString()
   };
 }
@@ -108,6 +110,8 @@ class RecoveryService {
       pageSettings: payload?.pageSettings || {},
       styleSet: payload?.styleSet,
       watermark: payload?.watermark,
+      pageColor: payload?.pageColor,
+      pageBorder: payload?.pageBorder,
       savedAt: new Date().toISOString()
     });
     const destination = this.snapshotPath(record.id);
