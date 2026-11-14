@@ -57,6 +57,23 @@
           <div id="pages-outline" class="pages-outline" aria-label="Document headings">
             <p class="pages-outline-empty">Add headings to build your document outline.</p>
           </div>
+          <div class="pages-find-entry">
+            <button id="pages-find-toggle" class="pages-find-toggle" type="button" aria-expanded="false" aria-controls="pages-find-panel">Find &amp; Replace</button>
+          </div>
+          <section id="pages-find-panel" class="pages-find-panel" aria-label="Find and replace in document" hidden>
+            <label class="pages-outline-search-label" for="pages-find-query">Find</label>
+            <input id="pages-find-query" class="pages-outline-search" type="search" placeholder="Search in this document" autocomplete="off">
+            <label class="pages-outline-search-label" for="pages-replace-query">Replace with</label>
+            <input id="pages-replace-query" class="pages-outline-search" type="text" placeholder="Replacement text" autocomplete="off">
+            <label class="pages-find-option"><input id="pages-find-case" type="checkbox"> Match case</label>
+            <label class="pages-find-option"><input id="pages-find-whole-word" type="checkbox"> Whole words</label>
+            <div class="pages-find-actions">
+              <button id="pages-find-next" class="secondary" type="button">Find next</button>
+              <button id="pages-replace-one" class="secondary" type="button">Replace</button>
+              <button id="pages-replace-all" class="primary" type="button">Replace all</button>
+            </div>
+            <p id="pages-find-status" class="pages-find-status" role="status" aria-live="polite">Enter text to find.</p>
+          </section>
         </aside>
         <div class="pages-editor-column">
           <div id="editor" class="editor" contenteditable="true" spellcheck="true" aria-label="Document editor"></div>
@@ -133,6 +150,7 @@
   </main>
   <script src="formula.js"></script>
   <script src="page-layout.js"></script>
+  <script src="text-search.js"></script>
   <script src="app-catalog.js"></script>
   <script src="todo-service.js"></script>
   <script src="lists-service.js"></script>
