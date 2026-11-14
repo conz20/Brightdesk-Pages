@@ -36,6 +36,12 @@ test('Pages Insert ribbon includes an explicit page-break command', () => {
   assert.ok(app.includes("'Page break'"));
 });
 
+test('Ctrl+Enter and Command+Enter insert page breaks only from the editor', () => {
+  const app = read('app.js');
+  assert.ok(app.includes("if (event.key === 'Enter' && (event.target === editor || editor.contains(event.target)))"));
+  assert.ok(app.includes('insertPagesPageBreak();'));
+});
+
 test('safe document import keeps only the exact page-break marker attribute on HR elements', () => {
   const app = read('app.js');
   assert.ok(app.includes("child.tagName === 'HR'"));
