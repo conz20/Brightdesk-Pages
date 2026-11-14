@@ -406,3 +406,17 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-document-page[data-watermark="confidential"]::before{content:"CONFIDENTIAL";font-size:clamp(29px,4.5vw,60px);color:#81566a}
 .pages-document-page > *{position:relative;z-index:1}
 .pages-document-page::after{z-index:2}
+
+
+/* Page colour and border presets from the Pages Design tab. */
+.pages-design-settings{display:flex;align-items:flex-start;gap:8px;flex-wrap:nowrap}
+.pages-watermark-setting{min-width:105px}
+.pages-watermark-select{min-width:105px}
+#editor[data-page-color="warm"] .pages-document-page{background:#fffaf0}
+#editor[data-page-color="mist"] .pages-document-page{background:#f7fafc}
+#editor[data-page-color="white"] .pages-document-page{background:#fff}
+#editor[data-page-border="none"] .pages-document-page{border:0}
+#editor[data-page-border="subtle"] .pages-document-page{border:1px solid #e7e8ee}
+#editor[data-page-border="double"] .pages-document-page{border:3px double #aeb1c5}
+@media(max-width:1100px){.pages-design-settings{gap:6px}.pages-watermark-setting{min-width:96px}.pages-watermark-select{min-width:96px}}
+@media(max-width:720px){.pages-design-settings{gap:6px}}
