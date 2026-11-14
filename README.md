@@ -97,6 +97,10 @@ This is the first multi-page layout slice, not yet full word-processor paginatio
 
 The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
 
+## Dark workspace
+
+The Pages **View** tab includes a Light/Dark workspace switch. Dark mode changes the application shell, ribbon, navigation pane, ruler and surrounding work area while keeping document pages light for comfortable reading. The preference is stored locally on this computer and does not change the appearance of the document itself.
+
 ## Read Aloud
 
 The Pages **Review** tab offers Read Aloud controls for the current document. It selects a system voice marked as local by the operating system, supports pause/resume and stop, and splits long documents into manageable sentence-aware sections. Pages does not select online-only speech voices. If the computer has no local voice available, it explains that a local voice must be added in system settings.
