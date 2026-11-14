@@ -59,6 +59,18 @@ These are configured build targets, not confirmation that a package has passed i
 - Save and reopen Brightdesk project data; use the supported document import and export options, including PDF export.
 
 **Known boundaries:** Pages is an early document-editor foundation, not complete Word feature parity. Advanced page-layout tools, macros, collaboration and perfect round-trip conversion are not promised.
+## Document recovery
+
+Brightdesk Pages now includes a local recovery path for its current document workspace:
+
+- When the Pages document has changed, a recovery snapshot is written at most once every 10 seconds. Pages also attempts a snapshot when its window loses focus or becomes hidden.
+- On the next launch, an available recovery copy is offered with **Recover copy** and **Discard** actions. The prompt is non-blocking, so the user can continue working without restoring it.
+- Recover opens a sanitised copy in the Pages workspace as an unsaved working document. It does not overwrite the original file; the user can export or save the recovered work separately.
+- Discard requires confirmation. Recovery copies are stored in the local Electron user-data folder and are not uploaded or synchronised.
+- A recovered copy remains available until the user restores and saves/exports it, or explicitly discards it. It is not subject to an automatic expiry.
+
+**Current boundary:** the Pages editor currently exposes one active document surface, so this recovery implementation keeps a copy of that active Pages document. Independent recovery for several simultaneously open documents is not yet supported. The last few seconds of typing may be lost if the computer or application stops before the next recovery write. This is a recovery aid, not a substitute for saving important documents.
+
 ## Desktop installers
 
 Choose the installer for your computer:
