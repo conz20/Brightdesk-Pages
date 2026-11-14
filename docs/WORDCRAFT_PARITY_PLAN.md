@@ -1,6 +1,6 @@
 # Brightdesk Pages — WordCraft Reference and Parity Plan
 
-**Status:** Baseline audit complete; local recovery, document navigation, paragraph styles, Find & Replace, a metric page ruler and an initial multi-page print-layout canvas are on this draft feature branch and await automated verification and live visual review.  
+**Status:** The draft branch now includes local recovery, document navigation, paragraph styles, Find & Replace, a metric page ruler, an initial multi-page canvas, and document design presets with watermarks. Automated tests passed on the previous head before the latest design slice; the exact new head and live visual review are pending.  
 **Reference reviewed:** Craft Wiki WordCraft pages supplied by the product owner  
 **Target repository:** `conz20/Brightdesk-Pages`  
 **Target product:** Brightdesk Pages  
@@ -61,12 +61,15 @@ The feature branch now contains two initial, reviewable implementation slices. T
 | Find & Replace | Local document search, Find next, Replace and Replace all; match-case and whole-word options; matches across inline runs in a paragraph | Pure search helper and UI regression tests added; exact-head CI and live desktop interaction checks pending. Regular expressions, match highlighting and cross-document search are not included. |
 | Page ruler | Optional metric ruler aligned to the selected paper size/orientation, with half-centimetre ticks, labels and shaded margin areas | Pure ruler-scale and UI tests added; draggable markers are not included; exact-head CI and live desktop visual inspection pending. |
 | Multi-page editing | Vertically stacked paper surfaces; whole-block automatic flow; explicit paragraph-boundary page breaks; selected page size and orientation carried into PDF export | Pure block-packing and UI regression tests added; long individual blocks are not split and can extend a page. Electron interaction and actual PDF output checks are pending. |
+| Document design presets | Design tab with Brightdesk, Editorial and Modern preview cards; local Draft and Confidential watermark settings; metadata preserved by local recovery | Pure normalisation and UI integration tests added; exact-head CI and live Electron visual inspection are pending. Full user-editable styles remain future work. |
 
 No feature is described as release-ready until the exact current branch checks pass and the Electron workspace has been captured and visually inspected.
 
-## Next visual implementation slice
+## Latest visual implementation slice
 
-Add a document-level Design tab with a compact, selectable gallery for Brightdesk, Editorial and Modern style sets, plus optional Draft and Confidential watermarks. The gallery should make its typography and colour previews visible before selection. Save these choices in the document's local metadata so they survive reload and project save, but keep the document body markup unchanged. Keep all artwork, fonts, icons and interaction details original to Brightdesk. Add the style-set normalisation tests before the UI and CSS implementation; update this plan and the product README with the verified result.
+The draft branch now includes the Pages Design tab. The selectable Brightdesk, Editorial and Modern cards preview their type treatment before application. Draft and Confidential watermark choices are stored with the local document and recovery snapshot. Presets are implemented with system-safe fonts and original Brightdesk colour treatments; no third-party font, image, icon or brand asset is introduced. The source model rejects unknown preset and watermark identifiers by falling back to Brightdesk and no watermark.
+
+The new pure-model and UI regression tests are in the branch. Exact-head CI and a visual inspection of the running Electron window remain pending. The screenshot runner successfully captured a real Electron workspace on its previous baseline, but GitHub artifact storage quota prevented the image upload; no screenshot visual review is claimed.
 
 ## Feature target derived from the eight supplied guides
 
@@ -82,7 +85,7 @@ Build toward:
 - A familiar ribbon with Home, Insert, Draw, Design, Layout, References, Mailings, Review, View, Developer and Help; show contextual tabs only when relevant.
 - Command search/help so users can find a command without hunting through tabs.
 - Smart quotes, AutoCorrect, automatic list continuation/indentation, find and replace, useful keyboard shortcuts and repeat-last-action behaviour.
-- A real Styles gallery with live preview, editable paragraph/character styles, theme and style-set support, and Format Painter.
+- Extend the new document style-set previews into a full Styles pane with live style hover previews, editable paragraph/character styles, custom theme/style sets, and Format Painter.
 - Full table workflows: insert, select, style, merge/split cells, repeat header rows, sort and supported formulas.
 - Page layout: margins, columns, headers/footers, page numbers, watermarks, borders, drop caps, line numbers and automatic hyphenation.
 - Pictures and shapes: insert, crop, recolour, remove background where safely supported, wrap text and control positioning.
