@@ -6,6 +6,12 @@ function normalizeHeadingId(value) {
   return typeof value === 'string' && HEADING_ID_PATTERN.test(value) ? value : null;
 }
 
+function normalizeHeadingHref(value) {
+  if (typeof value !== 'string' || !value.startsWith('#')) return null;
+  const id = normalizeHeadingId(value.slice(1));
+  return id ? `#${id}` : null;
+}
+
 function buildTocEntries(headings) {
   if (!Array.isArray(headings)) return [];
   const usedIds = new Set();
@@ -23,6 +29,6 @@ function buildTocEntries(headings) {
   return entries;
 }
 
-const api = { normalizeHeadingId, buildTocEntries };
+const api = { normalizeHeadingId, normalizeHeadingHref, buildTocEntries };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.BrightdeskPagesReferences = api;
