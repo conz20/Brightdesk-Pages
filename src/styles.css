@@ -285,3 +285,18 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .pages-style-preview[data-style="heading-two"]{font-size:11px;font-weight:700;color:#626b9b}
 @media(max-width:1100px){.pages-navigation-pane{flex-basis:190px;padding:14px 9px}.pages-style-gallery{min-width:270px}.pages-style-preview{min-width:58px;padding-inline:6px}}
 @media(max-width:720px){.pages-navigation-pane{flex-basis:150px}.pages-style-gallery{min-width:255px}}
+
+
+/* Pages Find and Replace controls */
+.pages-find-entry{margin-top:12px;padding-top:10px;border-top:1px solid #eceef3}
+.pages-find-toggle{width:100%;padding:7px 8px;border:1px solid #e2e5ed;border-radius:5px;background:#fafbfe;color:#4f5680;text-align:left;font:inherit;font-size:11px;font-weight:650;cursor:pointer}
+.pages-find-toggle:hover{background:#f1f2ff;border-color:#d8daf3}
+.pages-find-panel{display:flex;flex-direction:column;gap:7px;padding-top:8px}
+.pages-find-panel[hidden]{display:none}
+.pages-find-panel .pages-outline-search{height:29px}
+.pages-find-option{display:flex;align-items:center;gap:6px;color:#62697e;font-size:10px;cursor:pointer}
+.pages-find-option input{margin:0;accent-color:var(--bd-accent)}
+.pages-find-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pages-find-actions button{min-width:0;padding:7px 5px;font-size:10px}
+.pages-find-actions #pages-replace-all{grid-column:1 / -1}
+.pages-find-status{margin:1px 2px;color:#747b8e;font-size:10px;line-height:1.4;overflow-wrap:anywhere}
