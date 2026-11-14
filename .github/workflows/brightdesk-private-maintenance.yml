@@ -85,10 +85,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -99,7 +99,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: ${{ matrix.project }}
@@ -132,7 +132,7 @@ jobs:
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -184,10 +184,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -198,7 +198,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -232,7 +232,7 @@ jobs:
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: Brightdesk-suite
@@ -392,10 +392,10 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_CLIENT_ID: ${{ vars.BRIGHTDESK_APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
-          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+          if [[ -n "$APP_CLIENT_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
           else
             echo "available=false" >> "$GITHUB_OUTPUT"
@@ -406,7 +406,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          client-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
           owner: conz20
           repositories: ${{ matrix.project }}
