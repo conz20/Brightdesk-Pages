@@ -89,6 +89,10 @@ npm run verify:desktop:mac
 
 Use `win` on Windows or `linux` on Linux instead of `mac`.
 
+## WordCraft reference and feature roadmap
+
+The [WordCraft reference and parity plan](docs/WORDCRAFT_PARITY_PLAN.md) records the supplied eight-guide comparison, current Pages baseline, target feature set, visual direction and implementation order. It is a roadmap, not a claim that unimplemented features are available.
+
 ## Project files
 
 - `src/` — the Brightdesk Pages editor and supporting desktop code.
