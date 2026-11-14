@@ -1,9 +1,9 @@
 'use strict';
 
 function splitTextIntoChunks(value, maxChars = 3000) {
-  const text = String(value ?? '')
-    .replace(/\\r\\n?/g, '\\n')
-    .replace(/[ \\t]*\\n[ \\t]*/g, ' ')
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t]*\n[ \t]*/g, ' ')
+    .replace(/[ \t]{2,}/g, ' ')
     .replace(/[ \\t]{2,}/g, ' ')
     .trim();
   if (!text) return [];
