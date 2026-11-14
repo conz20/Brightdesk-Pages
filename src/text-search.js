@@ -58,4 +58,6 @@ function findTextMatches(segments, query, options = {}) {
   return matches;
 }
 
-module.exports = { findTextMatches, escapeRegExp };
+const api = { findTextMatches, escapeRegExp };
+if (typeof module !== 'undefined' && module.exports) module.exports = api;
+if (typeof window !== 'undefined') window.BrightdeskTextSearch = api;
