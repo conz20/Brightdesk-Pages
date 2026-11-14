@@ -12,27 +12,27 @@ test('Pages document ruler is present in the writing canvas', () => {
   for (const id of ['pages-ruler-wrap', 'pages-ruler', 'pages-ruler-left-margin', 'pages-ruler-right-margin', 'pages-ruler-ticks']) {
     assert.ok(html.includes('id="' + id + '"'), id + ' exists');
   }
-  assert.match(html, /aria-label="Horizontal ruler in centimetres"/);
+  assert.ok(html.includes('aria-label="Horizontal ruler in centimetres"'));
 });
 
 test('Pages ruler is built from the selected paper size and margin settings', () => {
   const app = read('app.js');
-  assert.match(app, /function updatePagesRuler/);
-  assert.match(app, /pageLayout\\.getRulerMarks\\(settings, 'cm'\\)/);
-  assert.match(app, /pageLayout\\.PAGE_MARGINS\\[settings\\.margin\\]/);
-  assert.match(app, /function applyPageLayout[\\s\\S]*?updatePagesRuler\\(\\)/);
+  assert.ok(app.includes('function updatePagesRuler()'));
+  assert.ok(app.includes("pageLayout.getRulerMarks(settings, 'cm')"));
+  assert.ok(app.includes('pageLayout.PAGE_MARGINS[settings.margin]'));
+  const applyLayout = app.slice(app.indexOf('function applyPageLayout()'), app.indexOf('function changeEditorZoom'));
+  assert.ok(applyLayout.includes('updatePagesRuler()'));
 });
 
 test('Pages View ribbon can show and hide the ruler accessibly', () => {
   const app = read('app.js');
-  assert.match(app, /showRuler: true/);
-  assert.match(app, /Show ruler/);
-  assert.match(app, /setAttribute\\('aria-pressed', String\\(state\\.showRuler\\)\\)/);
-  assert.match(app, /updatePagesRuler\\(\\)/);
+  assert.ok(app.includes('showRuler: true'));
+  assert.ok(app.includes('Show ruler'));
+  assert.ok(app.includes("setAttribute('aria-pressed', String(state.showRuler))"));
 });
 
 test('ruler is hidden outside Pages and when the user switches it off', () => {
   const app = read('app.js');
-  assert.match(app, /state\\.app === 'pages' && state\\.showRuler/);
-  assert.match(app, /wrap\\.hidden = !visible/);
+  assert.ok(app.includes("state.app === 'pages' && state.showRuler"));
+  assert.ok(app.includes('wrap.hidden = !visible'));
 });
