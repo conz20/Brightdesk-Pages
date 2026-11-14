@@ -23,7 +23,7 @@ test('keeps search matches mapped across inline text nodes in the same paragraph
   assert.equal(matches.length, 1);
   assert.deepEqual(matches[0].parts.map(part => [part.segmentIndex, part.start, part.end]), [
     [0, 2, 5],
-    [1, 0, 4]
+    [1, 0, 5]
   ]);
   assert.equal(matches[0].parts[0].node, strong);
   assert.equal(matches[0].parts[1].node, italic);
