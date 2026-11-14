@@ -214,7 +214,7 @@ function safeHtml(html) {
           const isHeadingId = ['H1','H2','H3'].includes(child.tagName) && attr.name === 'id' && pagesReferences.normalizeHeadingId(attr.value);
           const isTocClass = child.tagName === 'DIV' && attr.name === 'class' && attr.value === 'pages-toc';
           const isTocLevel = child.tagName === 'LI' && attr.name === 'class' && /^pages-toc-level-[23]$/.test(attr.value);
-          const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && attr.value.startsWith('#') && pagesReferences.normalizeHeadingId(attr.value.slice(1));
+          const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value);
           if (!isSpan && !isPageBreak && !isTitleStyle && !isHeadingId && !isTocClass && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
         });
         walk(child);
