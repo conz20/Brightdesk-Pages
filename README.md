@@ -73,7 +73,7 @@ Brightdesk Pages now includes a local recovery path for its current document wor
 
 ## Document navigation and paragraph styles
 
-The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon also includes paragraph-style shortcuts for Normal, Title, Heading 1 and Heading 2; Title is a distinct paragraph style and does not appear in the heading outline. The Design tab adds document-level Brightdesk, Editorial and Modern style-set previews, plus Draft and Confidential watermark options. A full Styles manager and editable paragraph/character styles remain future work.
+The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon now includes visible style samples for Normal, No Spacing, Heading 1, Title, Heading 2 and Subtitle; Heading 3 is also available through the paragraph-style command. Title is a distinct paragraph style and does not appear in the heading outline. The Design tab adds document-level Brightdesk, Editorial and Modern style-set previews, plus Draft and Confidential watermark options. A full Styles manager and editable paragraph/character styles remain future work.
 
 This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
 
