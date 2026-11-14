@@ -46,7 +46,9 @@ test('safe document import keeps only the exact page-break marker attribute on H
 test('PDF export respects the selected supported paper size', () => {
   const app = read('app.js');
   const main = read('main.js');
-  assert.ok(app.includes('pageSize: pageLayout.normalizePageLayout(activeDoc().pageSettings || {}).size'));
+  assert.ok(app.includes('const settings=pageLayout.normalizePageLayout(activeDoc().pageSettings||{})'));
+  assert.ok(app.includes('pageSize:settings.size'));
+  assert.ok(app.includes("landscape:settings.orientation==='landscape'"));
   assert.ok(main.includes("['A4', 'Letter', 'Legal'].includes(payload?.pageSize)"));
   assert.ok(main.includes("pageSize: requestedPageSize"));
   assert.ok(main.includes("landscape: payload?.landscape === true"));
