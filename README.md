@@ -151,3 +151,11 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+
+## Real application screenshots
+
+The `product-screenshot-capture.yml` workflow launches the actual Brightdesk Pages Electron application on the dedicated macOS product CI runner. It uses a temporary isolated profile, verifies that the Pages workspace has rendered, and captures the live application window through the browser debugging protocol.
+
+Each capture is accompanied by metadata containing the product, app version, source commit, platform, architecture and capture method. The screenshot and metadata are uploaded as a short-lived GitHub Actions artifact for review. A design preview, SVG illustration or social banner is never substituted for a running-application screenshot.
+
+The workflow does not build installers, publish a release, or use the runner's normal Brightdesk profile. A capture is not treated as release evidence until its source commit and successful workflow run have been reviewed.
