@@ -439,6 +439,7 @@ function applyPagesParagraphStyle(styleKey) {
   }
   persist();
   refreshPagesOutline();
+  schedulePagesPagination();
 }
 
 function addPagesStylesGallery(toolbar) {
