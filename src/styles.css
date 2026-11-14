@@ -258,3 +258,30 @@ html:not(.is-product-window) .sidebar.is-open-mobile {
 .recovery-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .recovery-actions .primary,.recovery-actions .secondary{font-size:11px;padding:8px 12px}
 @media(max-width:720px){.recovery-banner{align-items:flex-start;flex-direction:column}.recovery-actions{width:100%;flex-wrap:wrap}}
+
+
+/* Pages writing workspace: document outline and ribbon style gallery */
+.pages-editor-layout{display:flex;flex:1;min-height:0;min-width:0;overflow:hidden;background:#f4f5f9}
+.pages-navigation-pane{display:flex;flex:0 0 218px;flex-direction:column;gap:9px;min-height:0;overflow:auto;padding:17px 12px;background:#fff;border-right:1px solid #e4e6ed}
+.pages-navigation-heading{font-size:12px;font-weight:700;color:#33384c;padding:0 4px 3px}
+.pages-outline-search-label{font-size:10px;font-weight:650;color:#7d8293;padding:0 4px}
+.pages-outline-search{width:100%;height:31px;border:1px solid #e0e3eb;border-radius:5px;padding:6px 9px;background:#fff;color:#30354a;font:inherit;font-size:11px}
+.pages-outline-search:focus{outline:2px solid #bfc5f4;outline-offset:1px;border-color:#858fe0}
+.pages-outline{display:flex;flex-direction:column;align-items:stretch;gap:2px;min-height:0}
+.pages-outline-empty{font-size:10px;line-height:1.5;color:#9398a8;margin:6px 4px}
+.pages-outline-item{display:block;width:100%;min-height:29px;padding:6px 8px;border:0;border-radius:4px;background:transparent;color:#53596d;text-align:left;font:inherit;font-size:11px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.pages-outline-item:hover{background:#f2f3fa;color:#414da9}
+.pages-outline-item:focus-visible,.pages-style-preview:focus-visible{outline:2px solid #7985d8;outline-offset:1px}
+.pages-outline-item[data-level="h2"]{padding-left:18px}
+.pages-outline-item[data-level="h3"]{padding-left:28px;color:#73798a}
+.pages-editor-column{display:flex;flex:1;min-width:0;min-height:0;overflow:hidden;background:#f4f5f9}
+.pages-editor-column .editor{flex:1;min-width:0;min-height:0;overflow:auto}
+.pages-style-gallery{min-width:300px}
+.pages-style-options{gap:5px;flex-wrap:nowrap}
+.pages-style-preview{display:flex;align-items:center;justify-content:center;min-width:65px;height:42px;padding:5px 9px;border:1px solid #dfe2eb;border-radius:4px;background:#fff;color:#41465a;font:inherit;font-size:10px;white-space:nowrap;cursor:pointer;box-shadow:0 1px 2px #20284308}
+.pages-style-preview:hover{border-color:#9aa2df;background:#f8f8ff;color:#3d479e}
+.pages-style-preview[data-style="title"]{font-family:Georgia,serif;font-size:14px;font-weight:700;color:#343a56}
+.pages-style-preview[data-style="heading-one"]{font-size:12px;font-weight:750;color:#414da9}
+.pages-style-preview[data-style="heading-two"]{font-size:11px;font-weight:700;color:#626b9b}
+@media(max-width:1100px){.pages-navigation-pane{flex-basis:190px;padding:14px 9px}.pages-style-gallery{min-width:270px}.pages-style-preview{min-width:58px;padding-inline:6px}}
+@media(max-width:720px){.pages-navigation-pane{flex-basis:150px}.pages-style-gallery{min-width:255px}}
