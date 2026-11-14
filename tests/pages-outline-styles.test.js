@@ -42,3 +42,9 @@ test('document outline rebuilds after editing and is refreshed after a document 
   const outlineIndex = app.indexOf('refreshPagesOutline();', renderIndex);
   assert.ok(renderIndex >= 0 && outlineIndex > renderIndex);
 });
+
+test('safe document loading preserves only the approved Pages title paragraph class', () => {
+  const app = read('app.js');
+  assert.ok(app.includes("child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title'"));
+  assert.ok(app.includes('!isSpan && !isPageBreak && !isTitleStyle'));
+});
