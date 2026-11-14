@@ -83,3 +83,35 @@ test('recovery snapshots are removed only when explicitly deleted', async () => 
     assert.deepEqual(await service.listSnapshots(), []);
   });
 });
+
+
+test('recovery snapshots preserve validated Pages design settings', async () => {
+  await withRecoveryService(async service => {
+    const saved = await service.saveSnapshot({
+      id: 'pages-active',
+      productId: 'pages',
+      title: 'Styled report',
+      html: '<h1>Styled report</h1>',
+      styleSet: 'editorial',
+      watermark: 'draft'
+    });
+    assert.equal(saved.styleSet, 'editorial');
+    assert.equal(saved.watermark, 'draft');
+    assert.deepEqual(await service.readSnapshot('pages-active'), saved);
+  });
+});
+
+test('recovery snapshots safely default unknown visual settings', async () => {
+  await withRecoveryService(async service => {
+    const saved = await service.saveSnapshot({
+      id: 'pages-active',
+      productId: 'pages',
+      title: 'Safe defaults',
+      html: '<p>Local draft</p>',
+      styleSet: 'unknown',
+      watermark: 'external'
+    });
+    assert.equal(saved.styleSet, 'brightdesk');
+    assert.equal(saved.watermark, 'none');
+  });
+});
