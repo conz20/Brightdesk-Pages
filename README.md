@@ -97,6 +97,10 @@ This is the first multi-page layout slice, not yet full word-processor paginatio
 
 The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
 
+## Document design presets
+
+The next review-branch slice is planned to add three document-level design presets: Brightdesk, Editorial and Modern. The presets will adjust heading and body typography, spacing and accent treatments while retaining original Brightdesk branding. A separate document watermark option is planned for Draft and Confidential states. These visual settings will be stored with the local document; no document content will be sent to a service. This section describes planned work until the implementation and its checks are complete.
+
 ## Desktop installers
 
 Choose the installer for your computer:
