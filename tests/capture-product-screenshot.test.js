@@ -3,8 +3,22 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const path = require('node:path');
 const { identity, termsRecord, fileSlug, userDataDirectory } = require('../scripts/capture-product-screenshot');
+const { PRODUCT_SLUGS } = require('../src/desktop-downloads');
+
+test('Electron main imports the shared approved product catalogue before validating product identity', () => {
+  const mainSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'main.js'), 'utf8');
+  assert.match(
+    mainSource,
+    /const\s+\{\s*PRODUCT_SLUGS\s*\}\s*=\s*require\(['"]\.\/desktop-downloads['"]\);/
+  );
+  assert.deepEqual(Object.keys(PRODUCT_SLUGS).sort(), [
+    'database', 'forms', 'lists', 'loop', 'notes',
+    'pages', 'planner', 'sheets', 'slides', 'todo'
+  ]);
+});
 
 test('terms acceptance fixture is bound to the exact terms content', () => {
   const terms = Buffer.from('Brightdesk test terms v1\n', 'utf8');
