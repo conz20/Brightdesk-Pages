@@ -102,9 +102,9 @@ test('Pages Home Styles gallery offers real previews for six paragraph styles', 
   const styles = read('styles.css');
   assert.ok(app.includes("{ label: 'No Spacing', styleKey: 'noSpacing'"));
   assert.ok(app.includes("{ label: 'Subtitle', styleKey: 'subtitle'"));
-  assert.ok(app.includes("{ label: 'Heading 3', styleKey: 'heading3'"));
+  assert.ok(app.includes("heading3: { tag: 'H3' }"));
   assert.ok(app.includes("block.classList.remove('pages-doc-title', 'pages-doc-no-spacing', 'pages-doc-subtitle')"));
-  assert.ok(app.includes('className = `pages-style-sample ${choice.style}`'));
+  assert.ok(app.includes('sample.className = `pages-style-sample ${choice.style}`'));
   assert.ok(styles.includes('.pages-style-sample'));
   assert.ok(styles.includes('.editor .pages-doc-no-spacing'));
   assert.ok(styles.includes('.editor .pages-doc-subtitle'));
