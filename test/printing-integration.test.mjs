@@ -127,9 +127,9 @@ test("Brightdesk Forms exposes its existing question editor for content-only pri
     "forms-add-question-form"
   ]) assert.match(html, new RegExp(`id="${id}"`));
 
-  assert.match(app, /forms:\\s*"forms-wrap"/);
-  assert.match(css, /#brightdesk-print-root \\.forms-app/);
-  assert.match(css, /#brightdesk-print-root \\.forms-question-card/);
+  assert.match(app, /forms:\s*"forms-wrap"/);
+  assert.match(css, /#brightdesk-print-root \.forms-app/);
+  assert.match(css, /#brightdesk-print-root \.forms-question-card/);
 });
 
 
