@@ -62,5 +62,5 @@ test('search treats regex punctuation as literal document text', () => {
 
 test('whole-word search treats Unicode letters as word characters', () => {
   const matches = findTextMatches([segment('café caféine café')], 'café', { wholeWord: true });
-  assert.deepEqual(matches.map(match => match.start), [0, 12]);
+  assert.deepEqual(matches.map(match => match.start), [0, 13]);
 });
