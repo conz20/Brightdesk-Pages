@@ -53,3 +53,14 @@ test('empty queries and invalid segments return no results', () => {
   assert.deepEqual(findTextMatches([segment('Some text')], ''), []);
   assert.deepEqual(findTextMatches([null, segment(null)], 'text'), []);
 });
+
+
+test('search treats regex punctuation as literal document text', () => {
+  const matches = findTextMatches([segment('Use C++ and C#; not C.')], 'C++');
+  assert.deepEqual(matches.map(match => match.start), [4]);
+});
+
+test('whole-word search treats Unicode letters as word characters', () => {
+  const matches = findTextMatches([segment('café caféine café')], 'café', { wholeWord: true });
+  assert.deepEqual(matches.map(match => match.start), [0, 12]);
+});
