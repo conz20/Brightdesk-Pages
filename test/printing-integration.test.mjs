@@ -21,13 +21,17 @@ test("the private Printing snapshot is complete and dependency-free", () => {
   ]) assert.ok(fs.statSync(path.join(process.cwd(), "src/printing-package", file)).isFile(), file);
 });
 
-test("the Pages workspace shows the shared print actions", () => {
+test("the Pages workspace shows the shared print actions and respects page setup", () => {
   const html = read("src/index.html");
   const app = read("src/app.js");
   assert.match(html, /id="print-button"/);
   assert.match(html, /id="printer-settings-button"/);
-  assert.match(app, /window\.brightdesk\.printing\.print\(\{ printBackground: true \}\)/);
-  assert.match(app, /window\.brightdesk\.printing\.openPrinterSettings\(\)/);
+  assert.match(app, /const printRequest = \\{ printBackground: true \\}/);
+  assert.match(app, /pageLayout\\.normalizePageLayout\\(activeDoc\\(\\)\\.pageSettings \\|\\| \\{\\}\\)/);
+  assert.match(app, /printRequest\\.orientation = pageSettings\\.orientation/);
+  assert.match(app, /printRequest\\.pageSize = pageSettings\\.size/);
+  assert.match(app, /window\\.brightdesk\\.printing\\.print\\(printRequest\\)/);
+  assert.match(app, /window\\.brightdesk\\.printing\\.openPrinterSettings\\(\\)/);
 });
 
 test("all built-in language packs include printing action labels", () => {
