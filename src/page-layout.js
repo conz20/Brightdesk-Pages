@@ -28,6 +28,24 @@ function getPageDimensions(value = {}) {
     : { width: page.width, height: page.height };
 }
 
+function getRulerMarks(value = {}, unit = 'cm') {
+  const dimensions = getPageDimensions(value);
+  const selectedUnit = unit === 'in' ? 'in' : 'cm';
+  const pixelsPerUnit = selectedUnit === 'in' ? 96 : 96 / 2.54;
+  const halfUnitPixels = pixelsPerUnit / 2;
+  const count = Math.floor(dimensions.width / halfUnitPixels + 1e-9);
+  return Array.from({ length: count + 1 }, (_, index) => {
+    const measuredValue = index / 2;
+    const major = index % 2 === 0;
+    return {
+      value: measuredValue,
+      position: Math.min(dimensions.width, index * halfUnitPixels),
+      major,
+      label: major ? String(Math.round(measuredValue)) : ''
+    };
+  });
+}
+
 function getPageStyle(value = {}) {
   const layout = normalizePageLayout(value);
   const dimensions = getPageDimensions(layout);
@@ -43,6 +61,6 @@ function getPageStyle(value = {}) {
   };
 }
 
-const api = { PAGE_SIZES, PAGE_MARGINS, DEFAULT_PAGE_LAYOUT, normalizePageLayout, getPageDimensions, getPageStyle };
+const api = { PAGE_SIZES, PAGE_MARGINS, DEFAULT_PAGE_LAYOUT, normalizePageLayout, getPageDimensions, getRulerMarks, getPageStyle };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 if (typeof window !== 'undefined') window.BrightdeskPageLayout = api;

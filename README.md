@@ -59,6 +59,68 @@ These are configured build targets, not confirmation that a package has passed i
 - Save and reopen Brightdesk project data; use the supported document import and export options, including PDF export.
 
 **Known boundaries:** Pages is an early document-editor foundation, not complete Word feature parity. Advanced page-layout tools, macros, collaboration and perfect round-trip conversion are not promised.
+## Document recovery
+
+Brightdesk Pages now includes a local recovery path for its current document workspace:
+
+- When the Pages document has changed, a recovery snapshot is written at most once every 10 seconds. Pages also attempts a snapshot when its window loses focus or becomes hidden.
+- On the next launch, an available recovery copy is offered with **Recover copy** and **Discard** actions. The prompt is non-blocking, so the user can continue working without restoring it.
+- Recover opens a sanitised copy in the Pages workspace as an unsaved working document. It does not overwrite the original file; the user can export or save the recovered work separately.
+- Discard requires confirmation. Recovery copies are stored in the local Electron user-data folder and are not uploaded or synchronised.
+- A recovered copy remains available until the user restores and saves/exports it, or explicitly discards it. It is not subject to an automatic expiry.
+
+**Current boundary:** the Pages editor currently exposes one active document surface, so this recovery implementation keeps a copy of that active Pages document. Independent recovery for several simultaneously open documents is not yet supported. The last few seconds of typing may be lost if the computer or application stops before the next recovery write. This is a recovery aid, not a substitute for saving important documents.
+
+## Document navigation and paragraph styles
+
+The current WordCraft-inspired development branch adds a left-side document outline beside the Pages canvas. It lists Heading 1–3 paragraphs, indents nested headings, filters the outline as the user types, and moves the editor to a selected heading. The Home ribbon now includes visible style samples for Normal, No Spacing, Heading 1, Title, Heading 2 and Subtitle; Heading 3 is also available through the paragraph-style command. Title is a distinct paragraph style and does not appear in the heading outline. The Design tab adds document-level Brightdesk, Editorial and Modern style-set previews, plus Draft and Confidential watermark options. A full Styles manager and editable paragraph/character styles remain future work.
+
+This work remains in draft review. The new outline and style-gallery tests and the desktop checks must pass on the exact branch head, followed by visual inspection of the running Electron window, before the feature is considered verified or included in a release.
+
+## Find and Replace
+
+The Pages Home ribbon includes **Find & Replace** for the active document. Search is local to the open document and supports case-sensitive and whole-word matching, Find next, Replace and Replace all. Ctrl+F opens Find; Ctrl+H opens the Replace field on Windows and Linux. On macOS, Command+F opens Find; Command+H remains the normal macOS Hide shortcut. Matches can span inline formatting runs in the same paragraph; searches do not join separate paragraphs together. Replacements are saved to the local Pages document and update the Navigation outline when headings are affected.
+
+This is an early text-search workflow. Regular-expression search, match highlighting, search across multiple open documents and a dedicated full-size navigation/search pane are not yet included. The feature remains under draft review until its automated tests and real desktop interaction checks pass.
+
+## Multi-page document editing
+
+Pages now lays a document out as a vertical stack of paper pages. Content flows onto the next page at block boundaries, and an **Insert → Page break** command starts a new page at the current paragraph boundary. Page surfaces follow the selected paper size, orientation and margin preset. Temporary page containers are removed from the saved HTML, project data and document export payload, so page layout does not become extra document markup.
+
+PDF export now uses the selected A4, US Letter or US Legal paper size and portrait/landscape orientation. Print layout hides the editing controls and prints the page surfaces with page breaks between them.
+
+Press **Ctrl+Enter** on Windows/Linux or **Command+Enter** on macOS while editing to insert the same page break as the Insert ribbon command.
+
+This is the first multi-page layout slice, not yet full word-processor pagination. Automatic flow moves whole top-level blocks; it does not split a long paragraph, table or other single block between pages. An oversized block is kept intact and its on-screen page grows so content is not clipped. Section breaks, different page settings per section, draggable page margins and headers/footers remain future work. Real Electron and PDF output checks are still required.
+
+## Page ruler
+
+The Pages **View** tab includes a Show ruler toggle. When visible, a horizontal metric ruler is aligned to the selected paper width and orientation, with half-centimetre tick marks, centimetre labels and shaded page-margin areas. It updates when the paper size, orientation or margin preset changes. Hiding the ruler changes only the workspace view; it does not alter the document's page settings. This first ruler is a visual measurement aid: draggable indent and margin markers are not included yet.
+
+## Dark workspace
+
+The Pages **View** tab includes a Light/Dark workspace switch. Dark mode changes the application shell, ribbon, navigation pane, ruler and surrounding work area while keeping document pages light for comfortable reading. The preference is stored locally on this computer and does not change the appearance of the document itself.
+
+## Read Aloud
+
+The Pages **Review** tab offers Read Aloud controls for the current document. It selects a system voice marked as local by the operating system, supports pause/resume and stop, and splits long documents into manageable sentence-aware sections. Pages does not select online-only speech voices. If the computer has no local voice available, it explains that a local voice must be added in system settings.
+
+Read Aloud depends on the speech voices installed on the computer. Voice and language availability may differ across Windows, macOS and Linux.
+
+## Table of contents
+
+The Pages **References** tab can insert or update a linked table of contents from Heading 1–3 paragraphs in the current document. It creates internal links to those headings and refreshes the existing contents block when the command is used again. If the document has no usable headings, Pages explains what needs to be added first.
+
+On reload, Pages keeps only the approved internal heading IDs and links. External URLs and other unapproved link attributes are removed when document HTML is sanitised. The initial workflow is a document contents list; footnotes, citations, bibliography, captions, index and automatic page-number fields remain future work. The TOC block is a single layout block and is not yet split across pages.
+
+## Document design presets
+
+The Pages **Design** tab now offers three selectable document style sets: **Brightdesk**, **Editorial** and **Modern**. Each has a visible preview before selection. The presets change document typography, heading colours and paragraph rhythm while keeping Brightdesk’s own visual identity. The same tab offers optional **Draft** and **Confidential** watermarks, three page colours and three page-border choices.
+
+Style, watermark, page-colour and page-border choices are saved as local document metadata and are included in the local recovery snapshot. They do not add wrappers or styling attributes to the document's saved HTML. Unknown setting values safely fall back to Brightdesk styling and no watermark.
+
+This work is on the WordCraft-parity draft branch and is not yet part of a published release. The complete document Styles manager, user-defined style sets, and live paragraph/character style editing remain future work.
+
 ## Desktop installers
 
 Choose the installer for your computer:
@@ -88,6 +150,10 @@ npm run verify:desktop:mac
 ```
 
 Use `win` on Windows or `linux` on Linux instead of `mac`.
+
+## WordCraft reference and feature roadmap
+
+The [WordCraft reference and parity plan](docs/WORDCRAFT_PARITY_PLAN.md) records the supplied eight-guide comparison, current Pages baseline, target feature set, visual direction and implementation order. It is a roadmap, not a claim that unimplemented features are available.
 
 ## Project files
 

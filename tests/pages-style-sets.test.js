@@ -1,0 +1,46 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const styles = require('../src/pages-style-sets');
+
+test('Pages document style sets expose the approved Brightdesk, Editorial and Modern presets', () => {
+  assert.deepEqual(Object.keys(styles.STYLE_SETS), ['brightdesk', 'editorial', 'modern']);
+  assert.equal(styles.DEFAULT_STYLE_SET, 'brightdesk');
+  assert.equal(styles.STYLE_SETS.editorial.name, 'Editorial');
+  assert.equal(styles.STYLE_SETS.editorial.headingTone, 'plum');
+  assert.equal(styles.STYLE_SETS.modern.headingTone, 'teal');
+});
+
+test('document style set selection falls back safely for missing or unknown identifiers', () => {
+  assert.equal(styles.normalizeStyleSet('editorial'), 'editorial');
+  assert.equal(styles.normalizeStyleSet('modern'), 'modern');
+  assert.equal(styles.normalizeStyleSet('unknown'), 'brightdesk');
+  assert.equal(styles.normalizeStyleSet(null), 'brightdesk');
+});
+
+test('watermark choices are restricted to none, draft and confidential', () => {
+  assert.deepEqual(styles.WATERMARKS, ['none', 'draft', 'confidential']);
+  assert.deepEqual(styles.PAGE_COLORS, ['white', 'warm', 'mist']);
+  assert.deepEqual(styles.PAGE_BORDERS, ['none', 'subtle', 'double']);
+  assert.equal(styles.normalizeWatermark('draft'), 'draft');
+  assert.equal(styles.normalizeWatermark('confidential'), 'confidential');
+  assert.equal(styles.normalizeWatermark('external'), 'none');
+  assert.equal(styles.normalizeWatermark(undefined), 'none');
+  assert.equal(styles.normalizePageColor('warm'), 'warm');
+  assert.equal(styles.normalizePageColor('unknown'), 'white');
+  assert.equal(styles.normalizePageBorder('double'), 'double');
+  assert.equal(styles.normalizePageBorder('unknown'), 'subtle');
+});
+
+
+test('page appearance presets resolve to concrete page surfaces', () => {
+  assert.equal(styles.getPageColor('white'), '#ffffff');
+  assert.equal(styles.getPageColor('warm'), '#fffaf0');
+  assert.equal(styles.getPageColor('mist'), '#f7fafc');
+  assert.equal(styles.getPageColor('unexpected'), '#ffffff');
+  assert.equal(styles.getPageBorder('none'), '0');
+  assert.equal(styles.getPageBorder('subtle'), '1px solid #e7e8ee');
+  assert.equal(styles.getPageBorder('double'), '3px double #aeb1c5');
+  assert.equal(styles.getPageBorder('unexpected'), '1px solid #e7e8ee');
+});

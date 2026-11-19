@@ -6,6 +6,7 @@ const fs = require('node:fs/promises');
 const { openOfficeFile, exportOfficeFile, cleanFileName, ensureExtension } = require('./file-service');
 const { BUILTIN_LANGUAGES, validateLanguagePack, getBuiltinLanguage } = require('./language-service');
 const { DictionaryService } = require('./dictionary-service');
+const { RecoveryService } = require('./recovery-service');
 let mainWindow;
 let agreementWindow;
 let termsAccepted = false;
@@ -14,6 +15,7 @@ const updatePublishingConfigured = Array.isArray(packageConfig.build?.publish) &
 let updateCheckInProgress = false;
 let lastUpdateCheckAt = 0;
 let dictionaryService;
+let recoveryService;
 const productNames = {
   pages: 'Pages', sheets: 'Sheets', slides: 'Decks', notes: 'Notes',
   database: 'Database', forms: 'Forms', lists: 'Lists', planner: 'Planner',
@@ -303,12 +305,39 @@ ipcMain.handle('file:pdf', async (event, payload) => {
   const result = await dialog.showSaveDialog(mainWindow, { defaultPath: cleanFileName(payload?.title || 'Brightdesk document') + '.pdf', filters: [{ name: 'PDF document', extensions: ['pdf'] }] });
   if (result.canceled || !result.filePath) return { canceled: true };
   const filePath = ensureExtension(result.filePath, 'pdf');
-  const pdf = await mainWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4', margins: { top: 0.55, bottom: 0.55, left: 0.6, right: 0.6 } });
+  const requestedPageSize = ['A4', 'Letter', 'Legal'].includes(payload?.pageSize) ? payload.pageSize : 'A4';
+  const pdf = await mainWindow.webContents.printToPDF({
+    printBackground: true,
+    pageSize: requestedPageSize,
+    landscape: payload?.landscape === true,
+    margins: { top: 0, bottom: 0, left: 0, right: 0 }
+  });
   await fs.writeFile(filePath, pdf); return { canceled: false, filePath };
 });
+ipcMain.handle('recovery:list', async event => {
+  if (!senderIsMain(event)) throw new Error('Invalid sender.');
+  if (!recoveryService) throw new Error('Document recovery is not ready.');
+  return recoveryService.listSnapshots();
+});
+ipcMain.handle('recovery:save', async (event, snapshot) => {
+  if (!senderIsMain(event)) throw new Error('Invalid sender.');
+  if (!recoveryService) throw new Error('Document recovery is not ready.');
+  return recoveryService.saveSnapshot(snapshot);
+});
+ipcMain.handle('recovery:read', async (event, id) => {
+  if (!senderIsMain(event)) throw new Error('Invalid sender.');
+  if (!recoveryService) throw new Error('Document recovery is not ready.');
+  return recoveryService.readSnapshot(id);
+});
+ipcMain.handle('recovery:delete', async (event, id) => {
+  if (!senderIsMain(event)) throw new Error('Invalid sender.');
+  if (!recoveryService) throw new Error('Document recovery is not ready.');
+  return recoveryService.deleteSnapshot(id);
+});
+
 ipcMain.handle('updates:check', async event => { if (!senderIsMain(event)) throw new Error('Invalid sender.'); return checkForUpdates({ force: true }); });
 ipcMain.handle('updates:download', async event => { if (!senderIsMain(event)) throw new Error('Invalid sender.'); if (!autoUpdater) return { ok: false }; await autoUpdater.downloadUpdate(); return { ok: true }; });
 ipcMain.handle('updates:install', async event => { if (!senderIsMain(event)) throw new Error('Invalid sender.'); if (!autoUpdater) return { ok: false }; autoUpdater.quitAndInstall(); return { ok: true }; });
 
-app.whenReady().then(async () => { app.setName(packageConfig.productName || 'Brightdesk'); dictionaryService = new DictionaryService(app.getPath('userData')); Menu.setApplicationMenu(null); termsAccepted = await hasCurrentTermsAcceptance(); if (termsAccepted) { createWindow(); initUpdater(); } else { createAgreementWindow(); } app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) { if (termsAccepted) createWindow(); else createAgreementWindow(); } }); });
+app.whenReady().then(async () => { app.setName(packageConfig.productName || 'Brightdesk'); dictionaryService = new DictionaryService(app.getPath('userData')); recoveryService = new RecoveryService(app.getPath('userData')); Menu.setApplicationMenu(null); termsAccepted = await hasCurrentTermsAcceptance(); if (termsAccepted) { createWindow(); initUpdater(); } else { createAgreementWindow(); } app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) { if (termsAccepted) createWindow(); else createAgreementWindow(); } }); });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
