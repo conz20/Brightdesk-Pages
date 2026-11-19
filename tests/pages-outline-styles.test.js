@@ -26,7 +26,7 @@ test('Pages Home ribbon exposes real paragraph style commands', () => {
   assert.ok(app.includes('applyPagesParagraphStyle'));
   assert.ok(app.includes("document.execCommand('formatBlock'"));
   assert.ok(app.includes('pages-doc-title'));
-  assert.ok(app.includes("{ label: 'Title', styleKey: 'title', style: 'title' }"));
+  assert.match(app, /\{ label: 'Title', styleKey: 'title', style: 'title', sample: 'Document title' \}/);
   assert.ok(html.includes('class="pages-editor-layout"'));
   assert.ok(styles.includes('.pages-style-gallery'));
   assert.ok(styles.includes('.pages-navigation-pane'));
@@ -55,7 +55,7 @@ test('Pages Design ribbon offers selectable local style sets and watermark contr
   const html = read('index.html');
   const styles = read('styles.css');
   const model = read('pages-style-sets.js');
-  assert.ok(app.includes("pages: ['home', 'insert', 'design', 'layout', 'review', 'view']"));
+  assert.ok(app.includes("pages: ['home', 'insert', 'design', 'layout', 'references', 'review', 'view']"));
   assert.ok(app.includes('function addPagesDesignGallery(toolbar)'));
   assert.ok(app.includes('function setPagesStyleSet(styleSetId)'));
   assert.ok(app.includes('function addPagesWatermarkControl(toolbar)'));
