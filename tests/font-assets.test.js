@@ -18,6 +18,9 @@ test('loads the approved Inter faces from local files only', () => {
   assert.match(css, /url\("\.\/assets\/fonts\/inter\/Inter\[opsz,wght\]\.ttf"\)/);
   assert.match(css, /url\("\.\/assets\/fonts\/inter\/Inter-Italic\[opsz,wght\]\.ttf"\)/);
   assert.match(css, /font-optical-sizing:\s*auto/);
+  assert.match(css, /--brightdesk-font-family:\s*"Inter",\s*system-ui,\s*sans-serif/);
+  assert.match(css, /body\s*\{[^}]*font-family:\s*var\(--brightdesk-font-family\)/s);
+  assert.match(css, /button,\s*input,\s*select,\s*textarea\s*\{[^}]*font-family:\s*inherit/s);
   assert.doesNotMatch(css, /https?:\/\//);
 });
 
