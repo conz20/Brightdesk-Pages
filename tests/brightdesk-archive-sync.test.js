@@ -104,3 +104,52 @@ test('change-aware archive mode checks source branch and tag SHAs before cloning
   assert.ok(changeCheck >= 0 && noChangeExit > changeCheck && firstClone > noChangeExit, 'No-change exit must happen before any repository clone');
   assert.match(script, /refs\/heads\/\*.*refs\/tags\/\*/s);
 });
+
+test('unchanged five-minute check exits before cloning any repository', () => {
+  const os = require('node:os');
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'brightdesk-archive-noop-'));
+  const bin = path.join(temp, 'bin');
+  fs.mkdirSync(bin);
+  const callLog = path.join(temp, 'calls.log');
+  const summary = path.join(temp, 'summary.md');
+  const mockGit = path.join(bin, 'git');
+  const mock = [
+    '#!/bin/bash',
+    'set -euo pipefail',
+    'echo "$*" >> "$GIT_CALL_LOG"',
+    'if [[ "$1" == "ls-remote" ]]; then',
+    '  if [[ "$3" == *Brightdesk-Archives.git ]]; then',
+    '    pattern="$4"',
+    '    rest="${pattern#refs/archive/}"',
+    '    repository="${rest%%/*}"',
+    '    printf "%s\\trefs/archive/%s/heads/main\\n" "$GIT_TEST_SHA" "$repository"',
+    '  else',
+    '    printf "%s\\trefs/heads/main\\n" "$GIT_TEST_SHA"',
+    '  fi',
+    '  exit 0',
+    'fi',
+    'echo "Unexpected git command: $*" >&2',
+    'exit 99',
+  ].join('\n');
+  fs.writeFileSync(mockGit, mock);
+  fs.chmodSync(mockGit, 0o755);
+  try {
+    const result = spawnSync('bash', [path.join(root, 'scripts', 'brightdesk-archive', 'sync.sh')], {
+      encoding: 'utf8',
+      timeout: 30000,
+      env: { ...process.env, PATH: bin + path.delimiter + process.env.PATH, RUNNER_TEMP: path.join(temp, 'runner'),
+        GITHUB_STEP_SUMMARY: summary, GITHUB_RUN_ID: 'test-1', GITHUB_RUN_ATTEMPT: '1',
+        SOURCE_READ_TOKEN: 'placeholder-source', ARCHIVE_WRITE_TOKEN: 'placeholder-archive',
+        ONLY_CHANGED: 'true', GIT_TEST_SHA: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', GIT_CALL_LOG: callLog },
+    });
+    assert.equal(result.status, 0, result.stderr || result.stdout);
+    assert.match(result.stdout, /No source changes detected/);
+    assert.match(fs.readFileSync(summary, 'utf8'), /Repositories changed: 0/);
+    const calls = fs.readFileSync(callLog, 'utf8').trim().split('\n');
+    assert.equal(calls.length, 54);
+    assert.ok(calls.every(call => call.startsWith('ls-remote --refs ')));
+    assert.ok(!calls.some(call => call.includes('clone')));
+  } finally {
+    fs.rmSync(temp, { recursive: true, force: true });
+  }
+});
