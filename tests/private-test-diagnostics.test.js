@@ -206,3 +206,14 @@ test('private product PR diagnostics reject an unknown repository and missing to
   await assert.rejects(upsertPrivatePrDiagnostic(args),/approved private product/);
   await assert.rejects(upsertPrivatePrDiagnostic({...args,project:'Brightdesk-Planner',token:''}),/short-lived issue-scoped token/);
 });
+
+
+test('private test-name diagnostics redact absolute paths and URLs before publication', () => {
+  const names = parseTapFailureNames([
+    'not ok 1 - source /home/runner/work/private/src/app.js:42',
+    'not ok 2 - service https://internal.example.test/private/path'
+  ].join('\\n'));
+  assert.equal(names.length, 2);
+  assert.ok(names.every(name => !name.includes('/home/runner') && !name.includes('internal.example.test')));
+  assert.ok(names.every(name => name.length <= 200));
+});
