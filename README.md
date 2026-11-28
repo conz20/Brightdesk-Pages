@@ -73,7 +73,7 @@ Installers are published here after the release checks have passed and a release
 
 ## Run from source
 
-Use Node.js **24.22.2**.
+Use Node.js **24.22.3**.
 
 ```sh
 npm ci
