@@ -266,6 +266,8 @@ jobs:
                 fi
               fi
             fi
+            summary_file="$RUNNER_TEMP/brightdesk-engineering-failure-summary.md"
+            : > "$summary_file"
             {
               echo "## Private Brightdesk engineering validation"
               echo
@@ -278,7 +280,7 @@ jobs:
               fi
               echo
               echo "- Detailed output was kept only on the temporary runner."
-            } >> "$GITHUB_STEP_SUMMARY"
+            } | tee -a "$GITHUB_STEP_SUMMARY" "$summary_file" >/dev/null
             if [[ -n "$private_diagnostic" ]]; then
               echo "Sanitized failing test names (names only):"
               printf '%s\n' "$private_diagnostic"
@@ -311,6 +313,17 @@ jobs:
             echo "- Runtime: ${{ steps.node-version.outputs.value }}"
             echo "- Detailed output was kept only on the temporary runner."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Share sanitized engineering test names on the controller PR
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUMMARY_FILE: ${{ runner.temp }}/brightdesk-engineering-failure-summary.md
+        run: |
+          if [[ -s "$SUMMARY_FILE" ]]; then
+            gh pr comment "$PR_NUMBER" --repo conz20/Brightdesk-Pages --body-file "$SUMMARY_FILE"
+          fi
 
   suite-one-time-installer-smoke-tests:
     name: Build Brightdesk Suite for ${{ matrix.platform }}

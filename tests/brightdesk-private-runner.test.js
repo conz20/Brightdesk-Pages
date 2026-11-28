@@ -653,3 +653,13 @@ test('shared foundation test failures reveal only sanitised failing test names',
   assert.ok(diagnostics.includes('Failing test cases (names only; assertion messages and stack traces were withheld):'));
   assert.doesNotMatch(foundationJob, /cat .*brightdesk-foundation-validation\\.log/);
 });
+
+
+test('engineering failures share only sanitized names on the controller PR', () => {
+  const source = read('.github/workflows/brightdesk-private-maintenance.yml');
+  const job = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.match(job, /issues: write/);
+  assert.match(job, /Share sanitized engineering test names on the controller PR/);
+  assert.match(job, /--body-file "\\$SUMMARY_FILE"/);
+  assert.match(job, /Detailed output was kept only on the temporary runner/);
+});
