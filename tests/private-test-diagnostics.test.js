@@ -134,3 +134,75 @@ test('private diagnostic reporter refuses to send an empty report', async () => 
   );
 });
 
+
+
+const {
+  MARKER_PREFIX,
+  buildPrivatePrDiagnostic,
+  upsertPrivatePrDiagnostic
+} = require('../scripts/brightdesk-private-runner/report-private-pr-test-failure');
+
+test('private product PR diagnostics contain only cleaned failing test names', () => {
+  const body = buildPrivatePrDiagnostic({
+    project: 'Brightdesk-Planner',
+    prNumber: 8,
+    failedNames: ['planner smoke test', 'planner smoke test', 'source /home/runner/work/private/src/app.js:42']
+  });
+  assert.ok(body.includes('Brightdesk-Planner PR #8'));
+  assert.ok(body.includes('planner smoke test'));
+  assert.ok(body.includes(MARKER_PREFIX));
+  assert.doesNotMatch(body, /\/home\/runner|SECRET_SOURCE_CONTENT|assertion detail|stack trace/);
+});
+
+test('private product PR diagnostics create one marked comment in the matching private PR', async () => {
+  const calls = [];
+  const fetchImpl = async (url, options) => {
+    calls.push({url,options});
+    return calls.length === 1
+      ? {ok:true,json:async()=>[]}
+      : {ok:true,json:async()=>({id:902})};
+  };
+  const result = await upsertPrivatePrDiagnostic({
+    token:'test-token',
+    owner:'conz20',
+    project:'Brightdesk-Planner',
+    prNumber:8,
+    failedNames:['first safe test name'],
+    fetchImpl,
+    apiUrl:'https://api.example.test'
+  });
+  assert.equal(result,'created');
+  assert.ok(calls[0].url.endsWith('/repos/conz20/Brightdesk-Planner/issues/8/comments?per_page=100'));
+  assert.ok(calls[1].url.endsWith('/repos/conz20/Brightdesk-Planner/issues/8/comments'));
+  assert.equal(calls[1].options.method,'POST');
+  assert.ok(JSON.parse(calls[1].options.body).body.includes('first safe test name'));
+});
+
+test('private product PR diagnostics update an existing marked comment instead of creating duplicates', async () => {
+  const calls = [];
+  const marker = MARKER_PREFIX + 'Brightdesk-To-Do#7 -->';
+  const fetchImpl = async (url,options) => {
+    calls.push({url,options});
+    return calls.length === 1
+      ? {ok:true,json:async()=>[{id:903,body:marker + '\\nold'}]}
+      : {ok:true,json:async()=>({id:903})};
+  };
+  const result=await upsertPrivatePrDiagnostic({
+    token:'test-token',
+    owner:'conz20',
+    project:'Brightdesk-To-Do',
+    prNumber:7,
+    failedNames:['second safe test name'],
+    fetchImpl,
+    apiUrl:'https://api.example.test'
+  });
+  assert.equal(result,'updated');
+  assert.equal(calls[1].options.method,'PATCH');
+  assert.ok(calls[1].url.endsWith('/repos/conz20/Brightdesk-To-Do/issues/comments/903'));
+});
+
+test('private product PR diagnostics reject an unknown repository and missing token', async () => {
+  const args={token:'test-token',owner:'conz20',project:'Brightdesk-Pages',prNumber:1,failedNames:['safe'],fetchImpl:async()=>({ok:true,json:async()=>[]})};
+  await assert.rejects(upsertPrivatePrDiagnostic(args),/approved private product/);
+  await assert.rejects(upsertPrivatePrDiagnostic({...args,project:'Brightdesk-Planner',token:''}),/short-lived issue-scoped token/);
+});
