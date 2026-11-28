@@ -778,3 +778,26 @@ test('exact-head private PR request pins unique project/PR pairs within the appr
     '18a515bc0da867a0bf632b7821dd7f0e31435921'
   ]) assert.ok(request.projects.some(item => item.head_sha === expected), expected);
 });
+
+
+test('private exact-head tests save only names-only failure diagnostics to the matching private PR', () => {
+  const workflow = read('.github/workflows/brightdesk-exact-head-product-pr-validation.yml');
+  const runner = read('scripts/brightdesk-private-runner/run-private-project-check.sh');
+  assert.match(runner, /failure_log_file=/);
+  assert.match(workflow, /id: run-private-check/);
+  assert.match(workflow, /permission-issues: write/);
+  assert.match(workflow, /repositories: \$\{\{ matrix\.project \}\}/);
+  assert.match(workflow, /BRIGHTDESK_FAILURE_LOG_FILE/);
+  assert.match(workflow, /BRIGHTDESK_PR_NUMBER/);
+  assert.match(workflow, /report-private-pr-test-failure\.js/);
+  assert.match(workflow, /continue-on-error: true/);
+  assert.doesNotMatch(workflow, /upload-artifact/);
+});
+
+test('private PR diagnostic reporter keeps the raw log on the ephemeral runner', () => {
+  const reporter = read('scripts/brightdesk-private-runner/report-private-pr-test-failure.js');
+  assert.match(reporter, /parseTapFailureNames/);
+  assert.match(reporter, /upsertPrivatePrDiagnostic/);
+  assert.match(reporter, /issues\/\$\{prNumber\}\/comments/);
+  assert.doesNotMatch(reporter, /console\.log\(tapOutput|process\.stdout\.write\(tapOutput/);
+});
