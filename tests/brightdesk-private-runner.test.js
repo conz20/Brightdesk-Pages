@@ -18,6 +18,8 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, />> "\$LOG_FILE" 2>&1/);
   assert.match(source, /Detailed output was kept only on the temporary runner/);
   assert.doesNotMatch(source, /cat "\$LOG_FILE"/);
+  assert.match(source, /node --test --test-reporter=tap tests\/\*\.test\.js test\/\*\.test\.mjs/);
+  assert.match(source, /\.\/node_modules\/\.bin\/vitest run/);
   assert.match(source, /npm test -- --test-reporter=tap/);
   assert.match(source, /failure_summary_file/);
   assert.ok(source.includes('failure-summary.b64'));
@@ -33,13 +35,13 @@ test('controller grants only read access through the default workflow token', ()
 
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 5);
-  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 2);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 3);
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 6);
+  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 3);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 4);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
-  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 3);
+  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 4);
   assert.match(source, /vars\.BRIGHTDESK_APP_ID/);
   assert.match(source, /secrets\.BRIGHTDESK_APP_PRIVATE_KEY/);
   assert.match(source, /persist-credentials: false/);
@@ -60,9 +62,9 @@ test('private diagnostic reporter always runs its local guard after a job failur
 });
 test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/id: private-token/g) || []).length, 3);
-  assert.equal((source.match(/available=false/g) || []).length, 3);
-  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 12);
+  assert.equal((source.match(/id: private-token/g) || []).length, 4);
+  assert.equal((source.match(/available=false/g) || []).length, 4);
+  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 17);
 });
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
@@ -73,16 +75,16 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
 
-test('daily private project checkouts use each repository default branch', () => {
+test('daily Suite checks use the active independent branch while other private projects use main', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
-  assert.doesNotMatch(checkout, /^\s*ref:/m);
+  assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
 
-test('trusted controller updates trigger daily private checks but never start the installer matrix', () => {
+test('controller PRs and trusted pushes trigger daily private checks but never start the installer matrix', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
   assert.match(pushTrigger, /branches: \[main\]/);
@@ -91,7 +93,7 @@ test('trusted controller updates trigger daily private checks but never start th
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   assert.match(
     dailyJob,
-    /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'/
+    /if: github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'/
   );
 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
@@ -186,6 +188,7 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /build-brightdesk-suite-installers/);
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
   assert.match(concurrency, /brightdesk-private-project-maintenance/);
+  assert.match(concurrency, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
 });
 
 
@@ -540,34 +543,66 @@ test('macOS installer diagnostics expose only safe bundle and receipt messages',
   assert.doesNotMatch(runner, /Brightdesk\\.app/);
 });
 
-test('private maintenance validation uses the Mac runner and all installer jobs avoid paid hosted runners', () => {
+test('private maintenance controller uses GitHub-hosted runners for every project and platform', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const validateJob = source.split('  validate-controller:')[1]?.split('  daily-private-tests:')[0] ?? '';
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   const suiteInstallerJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   const weeklyInstallerJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
 
-  assert.match(validateJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
-  assert.match(dailyJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(validateJob, /runs-on: ubuntu-slim/);
+  assert.match(dailyJob, /runs-on: ubuntu-latest/);
+  assert.match(dailyJob, /if: github\\.event_name == 'pull_request' \\|\\| github\\.event_name == 'schedule'/);
   for (const job of [suiteInstallerJob, weeklyInstallerJob]) {
     assert.match(job, /runs-on: \$\{\{ matrix\.runner \}\}/);
-    assert.match(job, /runner: \["self-hosted", "Windows", "X64"\]/);
-    assert.match(job, /runner: \["self-hosted", "macOS", "ARM64"\]/);
-    assert.match(job, /runner: \["self-hosted", "Linux", "X64"\]/);
+    assert.match(job, /runner: windows-latest/);
+    assert.match(job, /runner: macos-latest/);
+    assert.match(job, /runner: ubuntu-latest/);
+    assert.doesNotMatch(job, /self-hosted/);
   }
-  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
-  assert.doesNotMatch(source, /connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
+});
+
+test('README freshness uses a pinned GitHub-hosted runner', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'readme-freshness.yml'), 'utf8');
+  assert.match(source, /runs-on: ubuntu-slim/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.doesNotMatch(source, /self-hosted/);
 });
 
 
-test('Pages installer workflow uses private runners for build, verification and release jobs', () => {
+test('Pages installer workflow uses the approved GitHub-hosted runner matrix', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
+  const testJob = source.split('  test:')[1]?.split('  build:')[0] ?? '';
   const build = source.split('  build:')[1]?.split('  publish:')[0] ?? '';
   const publish = source.split('  publish:')[1] ?? '';
 
-  assert.match(build, /runner: \["self-hosted", "Windows", "X64"\]/);
-  assert.match(build, /runner: \["self-hosted", "macOS", "ARM64"\]/);
-  assert.match(build, /runner: \["self-hosted", "Linux", "X64"\]/);
-  assert.match(publish, /runs-on: \[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
-  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+  assert.match(testJob, /runs-on: ubuntu-slim/);
+  assert.match(testJob, /node-version: 24\.22\.2/);
+  assert.match(build, /runner: windows-latest/);
+  assert.match(build, /runner: macos-latest/);
+  assert.match(build, /runner: ubuntu-latest/);
+  assert.match(build, /runs-on: \$\{\{ matrix\.runner \}\}/);
+  assert.match(publish, /runs-on: ubuntu-slim/);
+  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
+});
+
+
+test('private shared engineering repositories are tested through the hosted controller', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const job = source.split('  daily-private-foundation-tests:')[1] ?? '';
+  assert.ok(job.includes('Brightdesk-Common-Libs'), 'Common Libraries must be checked');
+  assert.ok(job.includes('Brightdesk-Developer-Tools'), 'Developer Tools must be checked');
+  assert.ok(job.includes('permission-contents: read'), 'private source tokens must remain read-only');
+  assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'), 'Node must follow each repository engine pin');
+  assert.ok(job.includes('npm run check:node'), 'Node runtime checks must run');
+  assert.ok(job.includes('npm run check'), 'syntax checks must run');
+  assert.ok(job.includes('npm test'), 'contract and regression tests must run');
+  assert.match(job, /RUNNER_TEMP/);
+  assert.match(job, /detailed output was kept only on the temporary runner/i);
+  assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
 });

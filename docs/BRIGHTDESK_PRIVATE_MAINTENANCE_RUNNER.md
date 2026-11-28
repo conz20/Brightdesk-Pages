@@ -4,7 +4,7 @@
 
 GitHub-hosted jobs in the private Brightdesk repositories have repeatedly failed before their first step starts. This controller centralises the checks and keeps source access scoped to short-lived, repository-specific read-only tokens.
 
-This controller runs from the Brightdesk Pages repository and uses its repository-scoped private macOS ARM64 runner for controller validation and daily orchestration. When a daily run is authorised, it checks out each private Brightdesk source repository using a short-lived, repository-specific read-only token. It does not copy private source files into Brightdesk Pages, publish them as artifacts, or print raw test/build logs.
+This controller runs from the Brightdesk Pages repository and uses GitHub-hosted Ubuntu runners for controller validation and daily orchestration. When a daily run is authorised, it checks out each private Brightdesk source repository using a short-lived, repository-specific read-only token. It does not copy private source files into Brightdesk Pages, publish them as artifacts, or print raw test/build logs.
 
 ## Private repository access (one-time setup)
 
@@ -60,11 +60,11 @@ If these two settings are already present and the App installation has the requi
 
 ## Run the checks
 
-Pull-request changes validate the controller automatically on the private Mac runner. The daily schedule runs the private-project checks when the required GitHub App settings and repository access are configured. Do not manually dispatch installer builds as a substitute for native platform acceptance.
+Pull-request changes validate the controller automatically on a GitHub-hosted Ubuntu runner. The daily schedule runs the private-project checks when the required GitHub App settings and repository access are configured. Do not manually dispatch installer builds as a substitute for native platform acceptance.
 
-The workflow also runs daily. A trusted push to the controller on `main` triggers the same ten-repository daily checks, while pull-request events validate the controller only and do not check out private projects. Its weekly schedule builds and verifies configured Windows, macOS and Linux packages after the daily checks pass. All jobs use repository-scoped self-hosted runners; no GitHub-hosted `*-latest` runners are selected. The Windows, macOS and Linux platform jobs remain queued until the matching runner is registered and online for the Brightdesk-Pages repository.
+The workflow also runs daily. A trusted push to the controller on `main` triggers the same ten-repository daily checks, while pull-request events validate the controller only and do not check out private projects. Its weekly schedule builds and verifies configured Windows, macOS and Linux packages after the daily checks pass. Controller validation runs on GitHub-hosted `ubuntu-slim`; daily private-project checks run on GitHub-hosted `ubuntu-latest`; cross-platform installer jobs run on `windows-latest`, `macos-latest`, and `ubuntu-latest`. Brightdesk-Pages is public, so standard hosted runners are free. Private project checkout remains scoped to short-lived read-only GitHub App tokens; no self-hosted runner or owner's MacBook is required.
 
-All build commands use the existing non-publishing scripts. The controller does not upload artifacts or publish a release.
+All build commands use the existing non-publishing scripts. The Suite's Node.js test runner is invoked with TAP output separately from Vitest, so the reporter flag cannot be misrouted to Vitest. The controller does not upload artifacts or publish a release.
 
 ## Privacy
 
@@ -77,8 +77,8 @@ Changes to the controller must be reviewed before merging. The GitHub App should
 - The controller requires `BRIGHTDESK_APP_ID` and `BRIGHTDESK_APP_PRIVATE_KEY` in Brightdesk-Pages and a matching GitHub App installation with Contents: Read-only access to all ten private repositories.
 - It checks code, dependencies, release readiness and whether the existing package build/verification scripts succeed. It does not install each package into a real Windows, macOS or Linux machine, launch the installed app, or verify uninstall cleanup yet.
 - This first controller does not write code, create update pull requests, respond to `/ai` comments in private repositories or publish user releases.
-- Controller validation and daily orchestration require the Brightdesk-Pages repository's private Mac runner with labels `self-hosted`, `macOS`, `ARM64`.
-- Native installer builds require separate repository-scoped runners with labels `self-hosted`, `Windows`, `X64`; `self-hosted`, `macOS`, `ARM64`; and `self-hosted`, `Linux`, `X64`. A missing/offline runner leaves its platform job queued; it is not replaced by a paid GitHub-hosted runner.
+- Controller validation and daily orchestration use GitHub-hosted Ubuntu runners.
+- Native installer builds use GitHub-hosted Windows, macOS and Linux runners; no self-hosted runner is required. If hosted capacity is temporarily unavailable, GitHub queues the job until capacity is available.
 - Windows ARM64 and Linux ARM64 are not included in the currently declared build matrix.
 - A passing controller/test run does not prove that installers were natively installed, launched, upgraded, repaired, uninstalled or that user data was preserved. Record those acceptance checks separately for each product and platform.
-- The workflow does not require a paid AI API, paid AI key, signing key or GitHub-hosted paid runner.
+- The workflow does not require a paid AI API, paid AI key, signing key or paid runner. Standard GitHub-hosted runners are free for the public Brightdesk-Pages repository.

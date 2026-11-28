@@ -103,7 +103,7 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 ## Private maintenance checks
 
-The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. For failed Suite tests, a separate Issues-only token can post bounded failing-test names to the private Suite maintenance issue. One-time Suite installer checks build Windows, macOS and Linux packages, verify expected files and SHA-256 checksums, then perform temporary native install, startup and uninstall checks. The launch check sets `BRIGHTDESK_STARTUP_SMOKE_TEST=1`; the installed desktop runtime validates its packaged version, protected terms and default language resources, loads its actual hidden main window, checks the required navigation panels, and exits with a result code. Launch checks fail if the process exits unsuccessfully or exceeds the platform timeout. For installer failures, a separate Suite-only Issues token can post only the platform, approved failed stage, exit code and allow-listed diagnostic details to the private issue. Raw logs, source files, file paths, stack traces, credentials and installer binaries are not published in this repository; build files remain on ephemeral runners.
+The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. The Suite's combined Node.js and Vitest test command is run in two parts so the TAP reporter option is passed only to Node's test runner, not to Vitest. For failed Suite tests, a separate Issues-only token can post bounded failing-test names to the private Suite maintenance issue. One-time Suite installer checks build Windows, macOS and Linux packages, verify expected files and SHA-256 checksums, then perform temporary native install, startup and uninstall checks. The launch check sets `BRIGHTDESK_STARTUP_SMOKE_TEST=1`; the installed desktop runtime validates its packaged version, protected terms and default language resources, loads its actual hidden main window, checks the required navigation panels, and exits with a result code. Launch checks fail if the process exits unsuccessfully or exceeds the platform timeout. For installer failures, a separate Suite-only Issues token can post only the platform, approved failed stage, exit code and allow-listed diagnostic details to the private issue. Raw logs, source files, file paths, stack traces, credentials and installer binaries are not published in this repository; build files remain on ephemeral runners.
 
 ## Identity and licence
 
@@ -142,7 +142,7 @@ The product build configuration defines desktop packages for all three supported
 
 The private installer smoke-test scripts are shared verification tooling. Their regression tests check that a test run uses product-specific names and unique temporary locations, refuses to overwrite an existing macOS installation or package receipt, and does not remove a pre-existing Linux package. These source and regression checks are not proof that a native installer has been executed on each operating system.
 
-The Pages maintenance and installer workflows use repository-scoped private runners only. Controller checks use the Mac runner labelled `self-hosted`, `macOS`, `ARM64`; native installer jobs require the matching `self-hosted`, `Windows`, `X64`, `macOS`, `ARM64`, or `Linux`, `X64` runner. A missing or offline runner remains queued; these workflows do not fall back to paid GitHub-hosted runners.
+The Pages maintenance controller uses GitHub-hosted runners on this public repository to check out the ten private Brightdesk projects with short-lived, repository-scoped read-only tokens. Daily checks run on hosted Linux; installer verification uses hosted Windows, macOS and Linux runners. No self-hosted runner or owner's MacBook is required, and standard hosted runners are free for public repositories.
 
 A platform is complete only after the matching current-version artifacts and SHA-256 records are verified, followed by actual install, first launch, upgrade, repair, uninstall and user-data-preservation checks on that platform. Wine compatibility checks must not be described as native Windows certification. A passing CI run or queued native job does not prove platform acceptance. No unverified platform is described as release-ready.
 
@@ -151,3 +151,8 @@ A platform is complete only after the matching current-version artifacts and SHA
 
 Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in local copy at `src/vendor/brightdesk-common-libs/json-storage.js`. The renderer loads it before `app.js`; no package registry, GitHub access or runtime network request is required. `src/vendor/brightdesk-common-libs/UPSTREAM.json` records the exact upstream revision and Git blob SHA. The consumer test verifies that provenance and the local storage contract.
 
+
+
+## Repository automation
+
+The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu.
