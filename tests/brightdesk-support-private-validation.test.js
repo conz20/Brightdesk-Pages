@@ -41,6 +41,15 @@ test('support checker uses an explicit project command allowlist', () => {
     'Brightdesk-Type-Preview', 'Brightdesk-Printing', 'Brightdesk-Voice'
   ]) assert.ok(script.includes(project), project);
   assert.doesNotMatch(script, /eval\s|bash\s+-c|sh\s+-c/);
+  for (const command of [
+    'npm run check:node', 'npm run check', 'npm run verify',
+    'npm run check:catalogue', 'npm run check:resources',
+    'npm run validate:readme-visuals', 'npm run native:build',
+    'npm run native:build:macos', 'npm run native:test:macos',
+    'npm run build:macos-discovery', 'npm run build:windows-discovery',
+    'npm run validate:languages', 'npm run validate:model-packs',
+    'cargo test --workspace --locked', 'cargo clippy'
+  ]) assert.ok(script.includes(command), command);
 });
 
 test('support checker keeps raw private output on the temporary runner', () => {
@@ -52,7 +61,7 @@ test('support checker keeps raw private output on the temporary runner', () => {
 
 test('support workflow is owner-main-triggered and uses only read-only repository tokens', () => {
   assert.match(workflow, /push:\s*\n\s*branches:\s*\[main\]/);
-  assert.match(workflow, /validate-support-policy-prs/);
+  assert.match(workflow, /validate-support-policy-prs/);\n  assert.match(workflow, /github\\.actor == github\\.repository_owner/);
   assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
   assert.match(workflow, /actions\/create-github-app-token/);
   assert.match(workflow, /permission-contents:\s*read/);
