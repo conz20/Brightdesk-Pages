@@ -213,7 +213,7 @@ test('private test-name diagnostics redact absolute paths and URLs before public
   const names = parseTapFailureNames([
     'not ok 1 - source /home/runner/work/private/src/app.js:42',
     'not ok 2 - service https://internal.example.test/private/path'
-  ].join('\\n'));
+  ].join('\n'));
   assert.equal(names.length, 2);
   assert.ok(names.every(name => !name.includes('/home/runner') && !name.includes('internal.example.test')));
   assert.ok(names.every(name => name.length <= 200));
