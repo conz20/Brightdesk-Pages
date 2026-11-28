@@ -107,7 +107,7 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     'brightdesk-ai-test-coverage-validation.yml'
   ]) {
     const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', name), 'utf8');
-    assert.match(source, /repository: connormolloy12\/Brightdesk-AI/);
+    assert.match(source, /repository: conz20\/Brightdesk-AI/);
     assert.match(source, /ref: main/);
     assert.doesNotMatch(source, /ref: [a-f0-9]{40}/);
     assert.match(source, /git -C private-ai rev-parse HEAD/);
@@ -605,4 +605,25 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.match(job, /RUNNER_TEMP/);
   assert.match(job, /detailed output was kept only on the temporary runner/i);
   assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
+});
+
+
+test('public Pages repository references use the current Brightdesk project owner', () => {
+  const files = [
+    'README.md',
+    'REPOSITORY_INFO.md',
+    '.github/workflows/brightdesk-ai-validation.yml',
+    '.github/workflows/brightdesk-ai-test-coverage-validation.yml',
+    'src/desktop-downloads.js',
+    'scripts/create-app-repository-seeds.js',
+    'scripts/brightdesk-private-runner/report-private-installer-failure.js',
+    'scripts/brightdesk-private-runner/report-private-test-failure.js'
+  ];
+  for (const file of files) {
+    const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
+    assert.doesNotMatch(source, /connormolloy12/, file + ' must not contain a stale GitHub owner');
+    if (file.endsWith('desktop-downloads.js')) {
+      assert.match(source, /github\\.com\\/conz20\\/Brightdesk-suite\\/releases/);
+    }
+  }
 });
