@@ -7,8 +7,12 @@ on:
       - '.github/workflows/brightdesk-archive-sync.yml'
       - 'scripts/brightdesk-archive/sync.sh'
       - 'tests/brightdesk-archive-sync.test.js'
+      - '.github/workflows/brightdesk-archive-self-recovery.yml'
+      - 'scripts/brightdesk-archive/backup-archive-repository.sh'
   schedule:
-    # Reconcile the portfolio four times per day; manual dispatch remains available.
+    # Detect source ref changes every five minutes; this job skips unchanged repositories.
+    - cron: "3/5 * * * *"
+    # Reconcile all 27 source repositories every six hours as a safety net.
     - cron: "17 */6 * * *"
   workflow_dispatch:
 
@@ -31,13 +35,28 @@ jobs:
           persist-credentials: false
       - name: Check Bash syntax
         run: bash -n scripts/brightdesk-archive/sync.sh
+      - name: Check archive self-recovery Bash syntax
+        run: bash -n scripts/brightdesk-archive/backup-archive-repository.sh
       - name: Test repository inventory, verification and token boundaries
         run: node --test tests/brightdesk-archive-sync.test.js
 
   mirror:
     name: Mirror 27 source repositories into Brightdesk Archives
     # Never expose backup secrets to pull requests or non-main branches.
-    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event_name == 'schedule' &&
+          github.event.schedule == '17 */6 * * *'
+        ) ||
+        (
+          github.event_name == 'schedule' &&
+          github.event.schedule == '3/5 * * * *' &&
+          vars.BRIGHTDESK_ARCHIVE_CHANGE_CHECKS_ENABLED == 'true'
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -52,4 +71,5 @@ jobs:
         env:
           SOURCE_READ_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_SOURCE_READ_TOKEN }}
           ARCHIVE_WRITE_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_WRITE_TOKEN }}
+          ONLY_CHANGED: ${{ github.event_name == 'schedule' && github.event.schedule == '3/5 * * * *' }}
         run: bash scripts/brightdesk-archive/sync.sh

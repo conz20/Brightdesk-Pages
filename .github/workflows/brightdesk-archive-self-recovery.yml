@@ -1,0 +1,36 @@
+name: Brightdesk archive self-recovery
+
+on:
+  # Store a second private recovery copy after the six-hour portfolio mirror.
+  schedule:
+    - cron: "17 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-archive-self-recovery
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Create and restore-test the private archive recovery bundle
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out the Brightdesk Pages backup controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check recovery script Bash syntax
+        run: bash -n scripts/brightdesk-archive/backup-archive-repository.sh
+
+      - name: Create private recovery release and verify a round-trip restore
+        shell: bash
+        env:
+          ARCHIVE_WRITE_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_WRITE_TOKEN }}
+          ARCHIVE_RECOVERY_WRITE_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_RECOVERY_WRITE_TOKEN }}
+        run: bash scripts/brightdesk-archive/backup-archive-repository.sh

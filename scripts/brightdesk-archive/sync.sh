@@ -55,38 +55,137 @@ private_repos=(
   Brightdesk-Printing Brightdesk-Voice
 )
 
+is_private_repo() {
+  local candidate="$1"
+  local private_repo
+  for private_repo in "${private_repos[@]}"; do
+    if [[ "$candidate" == "$private_repo" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
 # Include the workflow run and retry number so concurrent/manual reruns never
 # reuse a snapshot namespace. Earlier snapshots remain immutable.
 stamp="$(date -u +%Y%m%dT%H%M%SZ)-run${GITHUB_RUN_ID}-attempt${GITHUB_RUN_ATTEMPT}"
 printf '## Brightdesk archive sync %s\n\n' "$stamp" >> "$GITHUB_STEP_SUMMARY"
+
+source_base="https://github.com/conz20"
+archive_url="https://github.com/conz20/Brightdesk-Archives.git"
+only_changed="${ONLY_CHANGED:-false}"
+declare -A changed_lookup=()
+changed_repos=()
+
+# Scheduled fast-check mode compares source branch/tag SHAs with the archive's
+# stable refs before cloning. Unchanged repositories create no new snapshots.
+if [[ "$only_changed" == "true" ]]; then
+  echo "::group::Checking source refs for changes"
+  scan_failures=0
+
+  for repo in "${repos[@]}"; do
+    source_url="$source_base/$repo.git"
+    source_refs="$work/$repo.source-refs"
+    archive_refs="$work/$repo.archive-stable-refs"
+
+    if is_private_repo "$repo"; then
+      if ! GIT_ASKPASS="$work/source-askpass.sh" GIT_TERMINAL_PROMPT=0 git ls-remote --refs "$source_url" 'refs/heads/*' 'refs/tags/*' > "$source_refs"; then
+        echo "::error::Could not inspect current source refs for $repo."
+        scan_failures=$((scan_failures + 1))
+        continue
+      fi
+    elif ! GIT_TERMINAL_PROMPT=0 git ls-remote --refs "$source_url" 'refs/heads/*' 'refs/tags/*' > "$source_refs"; then
+      echo "::error::Could not inspect current source refs for $repo."
+      scan_failures=$((scan_failures + 1))
+      continue
+    fi
+
+    if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 git ls-remote --refs "$archive_url" "refs/archive/$repo/heads/*" "refs/archive/$repo/tags/*" > "$archive_refs"; then
+      echo "::error::Could not inspect stable archive refs for $repo."
+      scan_failures=$((scan_failures + 1))
+      continue
+    fi
+
+    source_count="$(wc -l < "$source_refs" | tr -d '[:space:]')"
+    if (( source_count == 0 )); then
+      echo "::error::No source branches or tags were returned for $repo; cannot safely declare it unchanged."
+      scan_failures=$((scan_failures + 1))
+      continue
+    fi
+
+    declare -A archived_refs=()
+    while read -r sha ref; do
+      [[ -n "$ref" ]] || continue
+      archived_refs["$ref"]="$sha"
+    done < "$archive_refs"
+
+    repo_changed=false
+    while read -r sha source_ref; do
+      [[ -n "$source_ref" ]] || continue
+      case "$source_ref" in
+        refs/heads/*) stable_ref="refs/archive/$repo/heads/${source_ref#refs/heads/}" ;;
+        refs/tags/*) stable_ref="refs/archive/$repo/tags/${source_ref#refs/tags/}" ;;
+        *) continue ;;
+      esac
+      if [[ "${archived_refs[$stable_ref]:-}" != "$sha" ]]; then
+        repo_changed=true
+        break
+      fi
+    done < "$source_refs"
+    unset archived_refs
+
+    if [[ "$repo_changed" == "true" ]]; then
+      changed_lookup["$repo"]=true
+      changed_repos+=("$repo")
+      printf -- '- CHANGED: %s (source refs differ from archive)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    else
+      printf -- '- UNCHANGED: %s (no clone or snapshot needed)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    fi
+  done
+
+  if (( scan_failures > 0 )); then
+    echo "::endgroup::"
+    echo "::error::$scan_failures repository ref check(s) failed. No repository was reported fully unchanged."
+    exit 1
+  fi
+
+  if (( ${#changed_repos[@]} == 0 )); then
+    echo "No source changes detected; no clones, pushes or new snapshots created."
+    printf '\n- Repositories checked: 27\n- Repositories changed: 0\n- Git clone and snapshot work: skipped (no changes)\n' >> "$GITHUB_STEP_SUMMARY"
+    echo "::endgroup::"
+    exit 0
+  fi
+
+  echo "Changed repositories: ${changed_repos[*]}"
+  echo "::endgroup::"
+fi
+
 failures=0
 succeeded=0
+unchanged=0
 
 for repo in "${repos[@]}"; do
   echo "::group::Archiving $repo"
   dir="$work/$repo.git"
   rm -rf "$dir"
 
-  is_private=false
-  for private_repo in "${private_repos[@]}"; do
-    if [[ "$repo" == "$private_repo" ]]; then
-      is_private=true
-      break
-    fi
-  done
-
-  clone_ok=true
-  if [[ "$is_private" == "true" ]]; then
-    if ! GIT_ASKPASS="$work/source-askpass.sh" GIT_TERMINAL_PROMPT=0 \
-      git clone --bare --quiet "https://github.com/conz20/$repo.git" "$dir"; then
-      clone_ok=false
-    fi
-  elif ! GIT_TERMINAL_PROMPT=0 \
-    git clone --bare --quiet "https://github.com/conz20/$repo.git" "$dir"; then
-    clone_ok=false
+  if [[ "$only_changed" == "true" && "${changed_lookup[$repo]:-false}" != "true" ]]; then
+    echo "No ref changes for $repo; clone and snapshot skipped."
+    unchanged=$((unchanged + 1))
+    printf -- '- UNCHANGED: %s (no clone or snapshot created)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    echo "::endgroup::"
+    continue
   fi
 
-  if [[ "$clone_ok" != "true" ]]; then
+  if is_private_repo "$repo"; then
+    if ! GIT_ASKPASS="$work/source-askpass.sh" GIT_TERMINAL_PROMPT=0 git clone --bare --quiet "$source_base/$repo.git" "$dir"; then
+      echo "::error::Could not clone $repo. Existing archive refs were not intentionally deleted."
+      printf -- '- FAILED: %s (clone)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+      failures=$((failures + 1))
+      echo "::endgroup::"
+      continue
+    fi
+  elif ! GIT_TERMINAL_PROMPT=0 git clone --bare --quiet "$source_base/$repo.git" "$dir"; then
     echo "::error::Could not clone $repo. Existing archive refs were not intentionally deleted."
     printf -- '- FAILED: %s (clone)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
@@ -131,14 +230,10 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  # Stable refs may advance; this run's timestamped snapshots are never force
-  # pushed. Deleted source refs are not pruned from the recovery archive.
-  git -C "$dir" remote add archive "https://github.com/conz20/Brightdesk-Archives.git"
-  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \
-    git -C "$dir" push --quiet archive \
-      "+refs/heads/*:refs/archive/$repo/heads/*" \
-      "+refs/tags/*:refs/archive/$repo/tags/*" \
-      "refs/archive/$repo/snapshots/$stamp/*:refs/archive/$repo/snapshots/$stamp/*"; then
+  # Stable refs may advance; timestamped snapshots are never force-pushed.
+  # Deleted source refs are not pruned from the recovery archive.
+  git -C "$dir" remote add archive "$archive_url"
+  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 git -C "$dir" push --quiet archive "+refs/heads/*:refs/archive/$repo/heads/*" "+refs/tags/*:refs/archive/$repo/tags/*" "refs/archive/$repo/snapshots/$stamp/*:refs/archive/$repo/snapshots/$stamp/*"; then
     echo "::error::Archive push failed for $repo. Existing archive refs were not intentionally deleted."
     printf -- '- FAILED: %s (push)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
@@ -146,11 +241,9 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  # Verify every ref written by this run by exact name and object SHA. Do not
-  # compare total namespace counts: earlier snapshots are intentionally kept.
+  # Verify every ref written by this run by exact name and object SHA.
   actual="$work/$repo.actual-refs"
-  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \
-    git -C "$dir" ls-remote --refs archive "refs/archive/$repo/*" > "$actual"; then
+  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 git -C "$dir" ls-remote --refs archive "refs/archive/$repo/*" > "$actual"; then
     echo "::error::Could not read back archived refs for $repo."
     printf -- '- FAILED: %s (remote verification read)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
@@ -182,7 +275,14 @@ done
 
 {
   echo
-  echo "- Repositories passed: $succeeded / 27"
+  if [[ "$only_changed" == "true" ]]; then
+    echo "- Repositories checked for changes: 27"
+    echo "- Repositories changed and archived: ${#changed_repos[@]}"
+    echo "- Repositories archived and SHA-verified: $succeeded"
+    echo "- Unchanged repositories skipped: $unchanged"
+  else
+    echo "- Repositories archived and verified: $succeeded / 27"
+  fi
   echo "- Repositories failed: $failures"
   echo "- Snapshot namespace: $stamp"
 } >> "$GITHUB_STEP_SUMMARY"
@@ -192,4 +292,8 @@ if (( failures > 0 )); then
   exit 1
 fi
 
-echo "All 27 source repositories (13 public and 14 private) were mirrored and every current-run archive ref was verified by exact SHA."
+if [[ "$only_changed" == "true" ]]; then
+  echo "All $succeeded changed source repositories were mirrored and every current-run archive ref was verified by exact SHA; $unchanged unchanged repositories were skipped."
+else
+  echo "All 27 source repositories (13 public and 14 private) were mirrored and every current-run archive ref was verified by exact SHA."
+fi
