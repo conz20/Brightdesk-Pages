@@ -1,6 +1,6 @@
 # Brightdesk Pages project notes
 
-The standing project requirement is exactly Node.js 24.22.2 LTS for development, testing and desktop installer builds.
+The standing project requirement is latest-stable-first: check official upstream release sources, current security advisories and support status before each runtime, toolchain or dependency update, then select the newest stable version that passes Brightdesk compatibility checks. The current tested local Node.js pin remains 24.22.2 LTS until its candidate update passes; Node.js 24.22.3 is the security-patch candidate and Node.js 26.13.1 requires a separate major-runtime compatibility trial. Keep exact tested pins and evidence in the shared Brightdesk Suite Version Compatibility Standard.
 
 The product in this repository is called **Brightdesk Pages**. Use that name on its own in customer-facing text, repository descriptions, installer names and release titles. Describe its distribution in terms of desktop installers.
 
