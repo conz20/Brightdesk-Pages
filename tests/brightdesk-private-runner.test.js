@@ -606,3 +606,46 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.match(job, /detailed output was kept only on the temporary runner/i);
   assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
 });
+
+
+test('manual private maintenance can target one approved project and exact branch ref', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dispatch = source.split('  workflow_dispatch:')[1]?.split('\n\npermissions:')[0] ?? '';
+  assert.match(dispatch, /project:/);
+  assert.match(dispatch, /type: choice/);
+  assert.match(dispatch, /default: all/);
+  for (const project of [
+    'Brightdesk-suite',
+    'Brightdesk-Sheets',
+    'Brightdesk-Decks',
+    'Brightdesk-Notes',
+    'Brightdesk-Database',
+    'Brightdesk-Forms',
+    'Brightdesk-Lists',
+    'Brightdesk-Planner',
+    'Brightdesk-To-Do',
+    'Brightdesk-Workspace'
+  ]) assert.ok(dispatch.includes('- ' + project), project + ' must be selectable');
+  assert.match(dispatch, /project_ref:/);
+  assert.match(dispatch, /type: string/);
+  assert.match(dispatch, /default: main/);
+});
+
+test('manual targeted private checks run only the selected project and use its requested ref', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  assert.match(dailyJob, /inputs\.project == 'all' \|\| matrix\.project == inputs\.project/);
+  const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node\.js runtime')[0] ?? '';
+  assert.match(checkout, /inputs\.project_ref/);
+  assert.match(checkout, /matrix\.project == inputs\.project/);
+  assert.match(checkout, /matrix\.project == 'Brightdesk-suite'/);
+});
+
+test('targeted manual project checks do not start the foundation or cross-platform installer matrices', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.match(foundationJob, /inputs\.project == 'all'/);
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  assert.match(weeklyJob, /inputs\.run_cross_platform_builds == true/);
+  assert.match(weeklyJob, /github\.event_name == 'workflow_dispatch'/);
+});
