@@ -14,7 +14,8 @@ function parseTapFailureNames(tapOutput) {
   const seen = new Set();
 
   for (const line of String(tapOutput).split(/\r?\n/)) {
-    const match = line.match(/^not ok \d+ - (.+)$/);
+    const normalizedLine = line.replace(/\u001b\[[0-9;]*m/g, '').trimStart();
+    const match = normalizedLine.match(/^not ok \d+ - (.+)$/);
     if (!match) continue;
 
     const name = cleanTestName(match[1]);
@@ -25,6 +26,30 @@ function parseTapFailureNames(tapOutput) {
   }
 
   return names;
+}
+
+function parseSpecFailureNames(specOutput) {
+  const names = [];
+  const seen = new Set();
+
+  for (const line of String(specOutput).split(/\r?\n/)) {
+    const normalizedLine = line.replace(/\u001b\[[0-9;]*m/g, '').trimStart();
+    const match = normalizedLine.match(/^✖\s+(.+?)(?:\s+\(\d+(?:\.\d+)?ms\))?$/u);
+    if (!match) continue;
+
+    const name = cleanTestName(match[1]);
+    if (!name || seen.has(name)) continue;
+
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
+}
+
+function parseFailureNames(output) {
+  const tapNames = parseTapFailureNames(output);
+  return tapNames.length > 0 ? tapNames : parseSpecFailureNames(output);
 }
 
 function escapeMarkdown(value) {
@@ -38,7 +63,7 @@ function formatPrivateFailureSummary(project, failedNames) {
     : [];
 
   if (names.length === 0) {
-    return `Automated tests failed for ${safeProject}, but the TAP reporter did not identify an individual failing test. Detailed output remains private on the temporary runner.`;
+    return `Automated tests failed for ${safeProject}, but the test reporters did not identify an individual failing test. Detailed output remains private on the temporary runner.`;
   }
 
   return [
@@ -54,9 +79,9 @@ if (require.main === module) {
   const logPath = process.argv[2];
   const project = process.argv[3] || 'unknown project';
   if (!logPath) process.exit(2);
-  const tapOutput = fs.readFileSync(logPath, 'utf8');
-  const summary = formatPrivateFailureSummary(project, parseTapFailureNames(tapOutput));
+  const output = fs.readFileSync(logPath, 'utf8');
+  const summary = formatPrivateFailureSummary(project, parseFailureNames(output));
   process.stdout.write(Buffer.from(summary, 'utf8').toString('base64'));
 }
 
-module.exports = { parseTapFailureNames, formatPrivateFailureSummary };
+module.exports = { parseTapFailureNames, parseSpecFailureNames, parseFailureNames, formatPrivateFailureSummary };

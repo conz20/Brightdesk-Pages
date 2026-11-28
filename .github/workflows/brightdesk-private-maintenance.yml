@@ -35,8 +35,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || 'brightdesk-private-project-maintenance' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || format('brightdesk-private-maintenance-{0}', github.event_name) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 jobs:
   validate-controller:
@@ -65,17 +65,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - Brightdesk-suite
-          - Brightdesk-Sheets
-          - Brightdesk-Decks
-          - Brightdesk-Notes
-          - Brightdesk-Database
-          - Brightdesk-Forms
-          - Brightdesk-Lists
-          - Brightdesk-Planner
-          - Brightdesk-To-Do
-          - Brightdesk-Workspace
+        include:
+          - project: Brightdesk-suite
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Sheets
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Decks
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Notes
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Database
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Forms
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Lists
+            ref: main
+          - project: Brightdesk-Planner
+            ref: main
+          - project: Brightdesk-To-Do
+            ref: main
+          - project: Brightdesk-Workspace
+            ref: ci/github-hosted-runners-independent-of-macbook
     steps:
       - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -109,15 +119,27 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
-          ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}
+          ref: ${{ matrix.ref }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
+      - name: Read the project's exact Node.js engine pin
+        id: node-version
+        if: steps.private-token.outputs.available == 'true'
+        working-directory: source
+        shell: bash
+        run: |
+          node_version="$(node -e "const p = require('./package.json'); process.stdout.write(p.engines?.node ?? '')")"
+          if [[ ! "$node_version" =~ ^24\.[0-9]+\.[0-9]+$ ]]; then
+            echo "The project must declare an exact Node.js 24 engine version." >&2
+            exit 1
+          fi
+          printf 'value=%s\n' "$node_version" >> "$GITHUB_OUTPUT"
       - name: Set up the required Node.js runtime
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: ${{ steps.node-version.outputs.value }}
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private project tests without publishing source logs
@@ -160,14 +182,18 @@ jobs:
   daily-private-foundation-tests:
     name: Test ${{ matrix.project }} on Linux
     if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - Brightdesk-Common-Libs
-          - Brightdesk-Developer-Tools
+        include:
+          - project: Brightdesk-Common-Libs
+            ref: feat/github-packages-npm-registry
+          - project: Brightdesk-Developer-Tools
+            ref: feature/dependency-package-audit
     steps:
       - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -201,6 +227,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
+          ref: ${{ matrix.ref }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
@@ -236,14 +263,42 @@ jobs:
           fail_stage() {
             local stage="$1"
             local status="$2"
+            local private_diagnostic=""
+            if [[ "$stage" == "contract and regression tests" && -f ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js ]]; then
+              local diagnostic_base64=""
+              diagnostic_base64="$(node ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js "$log_file" "$BRIGHTDESK_PROJECT" || true)"
+              if [[ -n "$diagnostic_base64" ]]; then
+                private_diagnostic="$(printf '%s' "$diagnostic_base64" | base64 --decode 2>/dev/null || true)"
+              fi
+              if [[ "$private_diagnostic" == *"did not identify an individual failing test"* ]]; then
+                local spec_log_file="$RUNNER_TEMP/brightdesk-foundation-validation-spec.log"
+                local spec_diagnostic_base64=""
+                npm test -- --test-reporter=spec > "$spec_log_file" 2>&1 || true
+                spec_diagnostic_base64="$(node ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js "$spec_log_file" "$BRIGHTDESK_PROJECT" || true)"
+                if [[ -n "$spec_diagnostic_base64" ]]; then
+                  private_diagnostic="$(printf '%s' "$spec_diagnostic_base64" | base64 --decode 2>/dev/null || true)"
+                fi
+              fi
+            fi
+            summary_file="$RUNNER_TEMP/brightdesk-engineering-failure-summary.md"
+            : > "$summary_file"
             {
               echo "## Private Brightdesk engineering validation"
               echo
               echo "- Project: $BRIGHTDESK_PROJECT"
               echo "- Result: **FAILED**"
               echo "- Failed stage: $stage"
+              if [[ -n "$private_diagnostic" ]]; then
+                echo
+                printf '%s\n' "$private_diagnostic"
+              fi
+              echo
               echo "- Detailed output was kept only on the temporary runner."
-            } >> "$GITHUB_STEP_SUMMARY"
+            } | tee -a "$GITHUB_STEP_SUMMARY" "$summary_file" >/dev/null
+            if [[ -n "$private_diagnostic" ]]; then
+              echo "Sanitized failing test names (names only):"
+              printf '%s\n' "$private_diagnostic"
+            fi
             echo "::error title=Private Brightdesk validation failed::$BRIGHTDESK_PROJECT failed during $stage. Detailed output was kept only on the temporary runner."
             exit "$status"
           }
@@ -260,7 +315,7 @@ jobs:
           run_safely "locked dependency installation" npm ci --no-audit --no-fund
           run_safely "Node.js runtime validation" npm run check:node
           run_safely "syntax validation" npm run check
-          run_safely "contract and regression tests" npm test
+          run_safely "contract and regression tests" npm test -- --test-reporter=tap
           if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-Developer-Tools" ]]; then
             run_safely "JSON diagnostic validation" bash -euc 'node bin/brightdesk-dev.mjs doctor --root . --json > "$RUNNER_TEMP/brightdesk-developer-tools-doctor.json"'
           fi
@@ -272,6 +327,18 @@ jobs:
             echo "- Runtime: ${{ steps.node-version.outputs.value }}"
             echo "- Detailed output was kept only on the temporary runner."
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Share sanitized engineering test names on the controller PR
+        if: failure() && github.event_name == 'pull_request'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SUMMARY_FILE: ${{ runner.temp }}/brightdesk-engineering-failure-summary.md
+        run: |
+          if [[ -s "$SUMMARY_FILE" ]]; then
+            gh pr comment "$PR_NUMBER" --repo conz20/Brightdesk-Pages --body-file "$SUMMARY_FILE"
+          fi
 
   suite-one-time-installer-smoke-tests:
     name: Build Brightdesk Suite for ${{ matrix.platform }}

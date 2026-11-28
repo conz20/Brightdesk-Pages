@@ -75,13 +75,43 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
 
-test('daily Suite checks use the active independent branch while other private projects use main', () => {
+test('daily private checks target the current runner-migration PR branches', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  const matrix = dailyJob.split('      matrix:')[1]?.split('    steps:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
+  const expected = [
+    ['Brightdesk-suite', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Sheets', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Decks', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Notes', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Database', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Forms', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Lists', 'main'],
+    ['Brightdesk-Planner', 'main'],
+    ['Brightdesk-To-Do', 'main'],
+    ['Brightdesk-Workspace', 'ci/github-hosted-runners-independent-of-macbook']
+  ];
+  for (const [project, ref] of expected) {
+    const entry = matrix.split('- project: ' + project)[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+    assert.ok(entry.includes('ref: ' + ref), project + ' must test the intended revision');
+  }
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
-  assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
-  assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
+  assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
+  assert.equal(dailyJob.includes('fix/suite-diagnostic-tests'), false);
+});
+
+test('shared foundation checks target the open Common-Libs and Developer-Tools PRs', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const matrix = foundationJob.split('      matrix:')[1]?.split('    steps:')[0] ?? '';
+  const checkout = foundationJob.split('      - name: Check out the private Brightdesk engineering project')[1]?.split('      - name: Read the exact Node.js version')[0] ?? '';
+  const commonLibs = matrix.split('- project: Brightdesk-Common-Libs')[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+  assert.ok(commonLibs.includes('ref: feat/github-packages-npm-registry'));
+  const developerTools = matrix.split('- project: Brightdesk-Developer-Tools')[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+  assert.ok(developerTools.includes('ref: feature/dependency-package-audit'));
+  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
+  assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
 });
 
 test('controller PRs and trusted pushes trigger daily private checks but never start the installer matrix', () => {
@@ -187,8 +217,9 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /brightdesk-private-maintenance-pr-/);
   assert.match(concurrency, /build-brightdesk-suite-installers/);
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
-  assert.match(concurrency, /brightdesk-private-project-maintenance/);
-  assert.match(concurrency, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
+  assert.match(concurrency, /format\('brightdesk-private-maintenance-\{0\}', github\.event_name\)/);
+  assert.doesNotMatch(concurrency, /brightdesk-private-project-maintenance/);
+  assert.match(concurrency, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \|\| github\.event_name == 'push' \}\}/);
 });
 
 
@@ -459,7 +490,7 @@ test('daily private tests cover all ten private Brightdesk projects', () => {
   ];
 
   for (const project of privateProjects) {
-    assert.ok(dailyJob.includes('- ' + project), project + ' is missing from daily private tests');
+    assert.ok(dailyJob.includes('project: ' + project), project + ' is missing from daily private tests');
   }
 });
 
@@ -605,4 +636,54 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.match(job, /RUNNER_TEMP/);
   assert.match(job, /detailed output was kept only on the temporary runner/i);
   assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
+});
+
+
+test('shared foundation test failures reveal only sanitised failing test names', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const diagnostics = fs.readFileSync(
+    path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'private-test-diagnostics.js'),
+    'utf8'
+  );
+
+  assert.ok(foundationJob.includes('private-test-diagnostics.js'));
+  assert.ok(foundationJob.includes('npm test -- --test-reporter=tap'), 'private Node test output must be parseable as TAP');
+  assert.ok(foundationJob.includes('base64 --decode'));
+  assert.ok(diagnostics.includes('Failing test cases (names only; assertion messages and stack traces were withheld):'));
+  assert.doesNotMatch(foundationJob, /cat .*brightdesk-foundation-validation\\.log/);
+});
+
+
+test('engineering failures share only sanitized names on the controller PR', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml'), 'utf8');
+  const job = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.doesNotMatch(job, /issues:\\s*write/);
+  const commentStep = job.split('      - name: Share sanitized engineering test names on the controller PR')[1] ?? '';
+  assert.ok(commentStep.includes('continue-on-error: true'));
+  assert.ok(commentStep.includes('--body-file "$SUMMARY_FILE"'));
+  assert.match(job, /Detailed output was kept only on the temporary runner/);
+});
+
+
+test('README freshness does not demand documentation changes for legal metadata only', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'readme-freshness.yml'), 'utf8');
+  assert.match(source, /LICENSE\\|LICENSE\.\*\\|NOTICE\\|NOTICE\.\*\\|COPYING\\|COPYING\.\*/);
+});
+
+
+test('private product validation uses the exact Node.js version declared by each project', () => {
+  const workflowSource = fs.readFileSync(
+    path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml'),
+    'utf8'
+  );
+  const job = workflowSource.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+
+  assert.ok(job.includes("require('./package.json')"));
+  assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'));
+  assert.ok(runner.includes('p.engines?.node'));
+  assert.ok(runner.includes('process.version'));
+  assert.ok(runner.includes('/^24\\.[0-9]+\\.[0-9]+$/'), 'Node version pattern must match semantic dots');
+  assert.doesNotMatch(runner, /engines\?\.node !== ['"]24\.22\.2/);
 });

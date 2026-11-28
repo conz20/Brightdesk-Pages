@@ -65,7 +65,7 @@ jobs:
             fi
 
             case "$file" in
-              *.md|*.mdx|.github/workflows/readme-freshness.yml)
+              *.md|*.mdx|LICENSE|LICENSE.*|NOTICE|NOTICE.*|COPYING|COPYING.*|.github/workflows/readme-freshness.yml)
                 ;;
               *)
                 non_markdown_changed=true
