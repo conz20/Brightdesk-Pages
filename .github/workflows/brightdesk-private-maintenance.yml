@@ -49,7 +49,7 @@ jobs:
       - name: Set up the required Node.js runtime
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
       - name: Check the private project runner script
         shell: bash
@@ -117,7 +117,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private project tests without publishing source logs
@@ -333,7 +333,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Build, verify and smoke-test the Suite installer
@@ -540,7 +540,7 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Build and verify the selected installer without publishing it
