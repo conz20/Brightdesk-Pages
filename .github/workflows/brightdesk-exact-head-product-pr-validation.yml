@@ -1,7 +1,7 @@
 name: Brightdesk exact-head private product PR validation
 
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
     paths:
       - '.github/workflows/brightdesk-exact-head-product-pr-validation.yml'
@@ -26,6 +26,7 @@ jobs:
       - name: Check out the validation controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           persist-credentials: false
 
       - name: Validate the exact-head request
@@ -84,6 +85,7 @@ jobs:
       - name: Check out the validation controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          ref: main
           path: controller
           persist-credentials: false
 
