@@ -109,6 +109,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
+          ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
@@ -257,12 +258,10 @@ jobs:
             fi
           }
           run_safely "locked dependency installation" npm ci --no-audit --no-fund
-          if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-Common-Libs" ]]; then
-            run_safely "shared library verification and contract tests" npm run verify
-          else
-            run_safely "Node.js runtime validation" npm run check:node
-            run_safely "syntax validation" npm run check
-            run_safely "developer-tool regression tests" npm test
+          run_safely "Node.js runtime validation" npm run check:node
+          run_safely "syntax validation" npm run check
+          run_safely "contract and regression tests" npm test
+          if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-Developer-Tools" ]]; then
             run_safely "JSON diagnostic validation" bash -euc 'node bin/brightdesk-dev.mjs doctor --root . --json > "$RUNNER_TEMP/brightdesk-developer-tools-doctor.json"'
           fi
           {
