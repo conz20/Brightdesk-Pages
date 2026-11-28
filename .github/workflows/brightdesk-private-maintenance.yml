@@ -249,12 +249,25 @@ jobs:
           fail_stage() {
             local stage="$1"
             local status="$2"
+            local private_diagnostic=""
+            if [[ "$stage" == "contract and regression tests" && -f ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js ]]; then
+              local diagnostic_base64=""
+              diagnostic_base64="$(node ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js "$log_file" "$BRIGHTDESK_PROJECT" || true)"
+              if [[ -n "$diagnostic_base64" ]]; then
+                private_diagnostic="$(printf '%s' "$diagnostic_base64" | base64 --decode 2>/dev/null || true)"
+              fi
+            fi
             {
               echo "## Private Brightdesk engineering validation"
               echo
               echo "- Project: $BRIGHTDESK_PROJECT"
               echo "- Result: **FAILED**"
               echo "- Failed stage: $stage"
+              if [[ -n "$private_diagnostic" ]]; then
+                echo
+                printf '%s\\n' "$private_diagnostic"
+              fi
+              echo
               echo "- Detailed output was kept only on the temporary runner."
             } >> "$GITHUB_STEP_SUMMARY"
             echo "::error title=Private Brightdesk validation failed::$BRIGHTDESK_PROJECT failed during $stage. Detailed output was kept only on the temporary runner."
