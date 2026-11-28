@@ -265,11 +265,15 @@ jobs:
               echo "- Failed stage: $stage"
               if [[ -n "$private_diagnostic" ]]; then
                 echo
-                printf '%s\\n' "$private_diagnostic"
+                printf '%s\n' "$private_diagnostic"
               fi
               echo
               echo "- Detailed output was kept only on the temporary runner."
             } >> "$GITHUB_STEP_SUMMARY"
+            if [[ -n "$private_diagnostic" ]]; then
+              echo "Sanitized failing test names (names only):"
+              printf '%s\n' "$private_diagnostic"
+            fi
             echo "::error title=Private Brightdesk validation failed::$BRIGHTDESK_PROJECT failed during $stage. Detailed output was kept only on the temporary runner."
             exit "$status"
           }
