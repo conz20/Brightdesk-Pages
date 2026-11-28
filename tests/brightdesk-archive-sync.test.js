@@ -153,3 +153,44 @@ test('unchanged five-minute check exits before cloning any repository', () => {
     fs.rmSync(temp, { recursive: true, force: true });
   }
 });
+
+
+test('Brightdesk-Archives is backed up as a private Git bundle in Brightdesk-Release-Tools', () => {
+  const backupPath = path.join(root, 'scripts', 'brightdesk-archive', 'backup-archive-repository.sh');
+  assert.ok(fs.existsSync(backupPath), 'A separate archive self-recovery script must exist');
+  const backup = fs.readFileSync(backupPath, 'utf8');
+  assert.match(backup, /ARCHIVE_WRITE_TOKEN/);
+  assert.match(backup, /ARCHIVE_RECOVERY_WRITE_TOKEN/);
+  assert.match(backup, /git clone --mirror/);
+  assert.match(backup, /git bundle create/);
+  assert.match(backup, /git bundle verify/);
+  assert.match(backup, /git fsck --full/);
+  assert.match(backup, /sha256sum/);
+  assert.match(backup, /Brightdesk-Release-Tools/);
+  assert.match(backup, /upload_url/);
+  assert.match(backup, /recovery.*read-back|read-back.*recovery/i);
+  assert.match(backup, /git clone --mirror.*bundle|bundle.*git clone --mirror/s);
+  assert.match(backup, /2147483647/);
+  assert.doesNotMatch(backup, /Brightdesk-Pages\/releases|github\.com\/conz20\/Brightdesk-Pages/);
+});
+
+test('private archive self-recovery runs daily and manually on GitHub-hosted runners only', () => {
+  const workflowPath = path.join(root, '.github', 'workflows', 'brightdesk-archive-self-recovery.yml');
+  assert.ok(fs.existsSync(workflowPath), 'The private archive self-recovery workflow must exist');
+  const source = fs.readFileSync(workflowPath, 'utf8');
+  assert.match(source, /cron: ["']17 1 \* \* \*["']/);
+  assert.match(source, /workflow_dispatch:/);
+  assert.match(source, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(source, /runs-on: ubuntu-latest/);
+  assert.match(source, /ARCHIVE_WRITE_TOKEN:/);
+  assert.match(source, /ARCHIVE_RECOVERY_WRITE_TOKEN:/);
+  assert.doesNotMatch(source, /pull_request:/);
+  assert.doesNotMatch(source, /self-hosted/);
+});
+
+test('archive self-recovery script validates Bash syntax', () => {
+  const backupPath = path.join(root, 'scripts', 'brightdesk-archive', 'backup-archive-repository.sh');
+  assert.ok(fs.existsSync(backupPath), 'The archive self-recovery script must exist');
+  const result = spawnSync('bash', ['-n', backupPath], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || 'archive self-recovery bash -n failed');
+});
