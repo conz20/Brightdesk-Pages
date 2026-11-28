@@ -684,5 +684,6 @@ test('private product validation uses the exact Node.js version declared by each
   assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'));
   assert.ok(runner.includes('p.engines?.node'));
   assert.ok(runner.includes('process.version'));
+  assert.ok(runner.includes('/^24\\.[0-9]+\\.[0-9]+$/'), 'Node version pattern must match semantic dots');
   assert.doesNotMatch(runner, /engines\?\.node !== ['"]24\.22\.2/);
 });
