@@ -692,7 +692,7 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(job, /git rev-parse HEAD/);
   assert.match(job, /git diff --name-only/);
   assert.match(job, /run-private-project-check\.sh/);
-  assert.match(job, /Detailed output was kept only on the temporary runner/);
+  assert.match(job, /Run private project tests without publishing source logs/);
   assert.doesNotMatch(job, /permission-contents:\s*write|permission-pull-requests:\s*write|upload-artifact|npm run dist:/);
 
   for (const project of [
@@ -709,4 +709,14 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
 
   assert.match(job, /pr_number: 26/);
   assert.match(job, /pr_number: 27/);
+
+  assert.equal((job.match(/^\s+- project:/gm) || []).length, 10);
+  assert.equal((job.match(/^\s+project: Brightdesk-Lists$/gm) || []).length, 2);
+  assert.equal((job.match(/^\s+pr_number: 48$/gm) || []).length, 2);
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  assert.match(dailyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.match(foundationJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  assert.match(weeklyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
 });
