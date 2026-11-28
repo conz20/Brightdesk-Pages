@@ -88,8 +88,7 @@ jobs:
     name: Test ${{ matrix.project }} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
-      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && (inputs.project == 'all' || matrix.project == inputs.project))) &&
-      !(github.event_name == 'push' && contains(github.event.head_commit.message, '[validate-reviewed-product-pr-matrix]'))
+      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && (inputs.project == 'all' || matrix.project == inputs.project)))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -189,12 +188,7 @@ jobs:
 
   reviewed-product-pr-tests:
     name: Validate ${{ matrix.project }} PR #${{ matrix.pr_number }} on Linux
-    if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.run_reviewed_product_pr_matrix == true) ||
-      (github.event_name == 'push' &&
-       github.ref == 'refs/heads/main' &&
-       github.actor == github.repository_owner &&
-       contains(github.event.head_commit.message, '[validate-reviewed-product-pr-matrix]'))
+    if: github.event_name == 'workflow_dispatch' && inputs.run_reviewed_product_pr_matrix == true
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -251,26 +245,6 @@ jobs:
             project_ref: security/official-dictionary-resources-only
             expected_head_sha: ea94a8acee1331321100c707151955698831c74c
             base_sha: 960bf3b99988842e44111b08a2194315d6c947e2
-          - project: Brightdesk-Notes
-            pr_number: 39
-            project_ref: ci/github-hosted-runners-independent-of-macbook
-            expected_head_sha: bcac6f5ade6c6b6b22d8d517294cba503b32d0fe
-            base_sha: d0f8a97112070808d5c1d5159abbac70aec547a3
-          - project: Brightdesk-Lists
-            pr_number: 7
-            project_ref: maintenance/use-private-runner-for-quality-2026-11-07
-            expected_head_sha: ccab697714c803c11f0cf3d32f934b56e1f64a
-            base_sha: a8d79ebf8597e739681b5c399104496971ac0931
-          - project: Brightdesk-Planner
-            pr_number: 8
-            project_ref: maintenance/use-private-runner-for-quality-2026-11-07
-            expected_head_sha: 55479bc485bf182adb197c74970859ff05e09086
-            base_sha: 9ef61a545beebed1843ebdef7447d9f9694039a6
-          - project: Brightdesk-To-Do
-            pr_number: 7
-            project_ref: maintenance/use-private-runner-for-quality-2026-11-07
-            expected_head_sha: 5639b1d44bdd32ed72acec6d2cf2d58927cef084
-            base_sha: c1e7f516db6e55aebadebd4a45ef6bb0eb763dd9
     steps:
       - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -364,8 +338,7 @@ jobs:
     name: Test ${{ matrix.project }} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
-      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && inputs.project == 'all')) &&
-      !(github.event_name == 'push' && contains(github.event.head_commit.message, '[validate-reviewed-product-pr-matrix]'))
+      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && inputs.project == 'all'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
