@@ -60,13 +60,13 @@ test('support checker keeps raw private output on the temporary runner', () => {
 });
 
 test('support workflow is owner-main-triggered and uses only read-only repository tokens', () => {
-  assert.match(workflow, /push:\\s*\\n\\s*branches:\\s*\\[main\\]/);
+  assert.match(workflow, /push:\s*\n\s*branches:\s*\[main\]/);
   assert.ok(workflow.includes('validate-support-policy-prs'));
   assert.ok(workflow.includes('if: github.actor == github.repository_owner'));
-  assert.match(workflow, /permissions:\\s*\\n\\s*contents:\\s*read/);
-  assert.match(workflow, /actions\\/create-github-app-token/);
-  assert.match(workflow, /permission-contents:\\s*read/);
-  assert.doesNotMatch(workflow, /permission-(?:issues|contents):\\s*write|upload-artifact|workflow_dispatch/);
+  assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
+  assert.match(workflow, /actions\/create-github-app-token/);
+  assert.match(workflow, /permission-contents:\s*read/);
+  assert.doesNotMatch(workflow, /permission-(?:issues|contents):\s*write|upload-artifact|workflow_dispatch/);
 });
 
 test('support workflow pins and verifies exact private PR heads before running checks', () => {
