@@ -125,14 +125,14 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: ${{ matrix.project }}
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: conz20/${{ matrix.project }}
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
           ref: ${{ github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
@@ -159,7 +159,7 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitized failure names to the private Suite issue
@@ -219,14 +219,14 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: ${{ matrix.project }}
           permission-contents: read
       - name: Check out the private Brightdesk engineering project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: conz20/${{ matrix.project }}
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
@@ -343,14 +343,14 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: Brightdesk-suite
           permission-contents: read
       - name: Check out Brightdesk Suite main
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: conz20/Brightdesk-suite
+          repository: ${{ github.repository_owner }}/Brightdesk-suite
           ref: main
           token: ${{ steps.app-token.outputs.token }}
           path: source
@@ -377,7 +377,7 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitised installer diagnostics to private Suite issue
@@ -551,14 +551,14 @@ jobs:
         with:
           app-id: ${{ vars.BRIGHTDESK_APP_ID }}
           private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: conz20
+          owner: ${{ github.repository_owner }}
           repositories: ${{ matrix.project }}
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: conz20/${{ matrix.project }}
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
