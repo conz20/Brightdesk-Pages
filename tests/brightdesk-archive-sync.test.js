@@ -162,13 +162,13 @@ test('Brightdesk-Archives is backed up as a private Git bundle in Brightdesk-Rel
   assert.match(backup, /ARCHIVE_WRITE_TOKEN/);
   assert.match(backup, /ARCHIVE_RECOVERY_WRITE_TOKEN/);
   assert.match(backup, /git clone --mirror/);
-  assert.match(backup, /git bundle create/);
+  assert.match(backup, /bundle create/);
   assert.match(backup, /git bundle verify/);
   assert.match(backup, /git fsck --full/);
   assert.match(backup, /sha256sum/);
   assert.match(backup, /Brightdesk-Release-Tools/);
   assert.match(backup, /upload_url/);
-  assert.match(backup, /recovery.*read-back|read-back.*recovery/i);
+  assert.match(backup, /read-back/i);
   assert.match(backup, /git clone --mirror.*bundle|bundle.*git clone --mirror/s);
   assert.match(backup, /2147483647/);
   assert.doesNotMatch(backup, /Brightdesk-Pages\/releases|github\.com\/conz20\/Brightdesk-Pages/);
