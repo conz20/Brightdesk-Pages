@@ -62,8 +62,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || 'brightdesk-private-project-maintenance' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ { github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0 }}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || 'brightdesk-private-project-maintenance' }}
+  cancel-in-progress: ${{ { github.event_name == 'pull_request' }}}
 
 jobs:
   validate-controller:
@@ -85,7 +85,7 @@ jobs:
           node --test tests/brightdesk-private-runner.test.js tests/private-test-diagnostics.test.js
 
   daily-private-tests:
-    name: Test ${{ matrix.project }} on Linux
+    name: Test ${{ { matrix.project }}} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
       (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && (inputs.project == 'all' || matrix.project == inputs.project)))
@@ -114,8 +114,8 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          APP_ID: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          APP_PRIVATE_KEY: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
         run: |
           if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
@@ -128,18 +128,18 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ matrix.project }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
+          repositories: ${{ { matrix.project }}}
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository_owner }}/${{ matrix.project }}
-          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}
-          token: ${{ steps.app-token.outputs.token }}
+          repository: ${{ { github.repository_owner }}}/${{ { matrix.project }}}
+          ref: ${{ { github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}}
+          token: ${{ { steps.app-token.outputs.token }}}
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
@@ -155,26 +155,26 @@ jobs:
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
-            test source "${{ matrix.project }}"
+            test source "${{ { matrix.project }}}"
       - name: Create an issue-only token for the private Suite diagnostic
         id: issue-token
         if: failure() && matrix.project == 'Brightdesk-suite' && steps.run-private-check.outputs.failure_summary_file != ''
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitized failure names to the private Suite issue
         if: always()
         continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ steps.issue-token.outputs.token }}
-          BRIGHTDESK_PROJECT: ${{ matrix.project }}
-          BRIGHTDESK_TEST_OUTCOME: ${{ steps.run-private-check.outcome }}
-          BRIGHTDESK_FAILURE_SUMMARY_FILE: ${{ steps.run-private-check.outputs.failure_summary_file }}
+          GITHUB_TOKEN: ${{ { steps.issue-token.outputs.token }}}
+          BRIGHTDESK_PROJECT: ${{ { matrix.project }}}
+          BRIGHTDESK_TEST_OUTCOME: ${{ { steps.run-private-check.outcome }}}
+          BRIGHTDESK_FAILURE_SUMMARY_FILE: ${{ { steps.run-private-check.outputs.failure_summary_file }}}
         shell: bash
         run: |
           if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-suite" &&
@@ -187,7 +187,7 @@ jobs:
           fi
 
   reviewed-product-pr-tests:
-    name: Validate ${ matrix.project } PR #${ matrix.pr_number } on Linux
+    name: Validate ${{ matrix.project }} PR #${{ matrix.pr_number }} on Linux
     if: github.event_name == 'workflow_dispatch' && inputs.run_reviewed_product_pr_matrix == true
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -254,8 +254,8 @@ jobs:
       - name: Require owner-configured private check credentials
         shell: bash
         env:
-          APP_ID: ${ vars.BRIGHTDESK_APP_ID }
-          APP_PRIVATE_KEY: ${ secrets.BRIGHTDESK_APP_PRIVATE_KEY }
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
         run: |
           if [[ -z "$APP_ID" || -z "$APP_PRIVATE_KEY" ]]; then
             echo "::error::The Brightdesk read-only GitHub App credentials are not configured."
@@ -265,27 +265,27 @@ jobs:
         id: app-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${ vars.BRIGHTDESK_APP_ID }
-          private-key: ${ secrets.BRIGHTDESK_APP_PRIVATE_KEY }
-          owner: ${ github.repository_owner }
-          repositories: ${ matrix.project }
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.project }}
           permission-contents: read
       - name: Check out the exact reviewed private PR head
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${ github.repository_owner }/${ matrix.project }
-          ref: ${ matrix.project_ref }
-          token: ${ steps.app-token.outputs.token }
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
+          ref: ${{ matrix.project_ref }}
+          token: ${{ steps.app-token.outputs.token }}
           path: source
           fetch-depth: 0
           persist-credentials: false
       - name: Verify the exact PR head and README freshness
         shell: bash
         env:
-          EXPECTED_HEAD_SHA: ${ matrix.expected_head_sha }
-          BASE_SHA: ${ matrix.base_sha }
-          PR_NUMBER: ${ matrix.pr_number }
-          PROJECT: ${ matrix.project }
+          EXPECTED_HEAD_SHA: ${{ matrix.expected_head_sha }}
+          BASE_SHA: ${{ matrix.base_sha }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PROJECT: ${{ matrix.project }}
         run: |
           set -Eeuo pipefail
           actual_head="$(git -C source rev-parse HEAD)"
@@ -335,10 +335,10 @@ jobs:
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
-            test source "${ matrix.project }"
+            test source "${{ matrix.project }}"
 
   daily-private-foundation-tests:
-    name: Test ${{ matrix.project }} on Linux
+    name: Test ${{ { matrix.project }}} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
       (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && inputs.project == 'all'))
@@ -359,8 +359,8 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          APP_ID: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          APP_PRIVATE_KEY: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
         run: |
           if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
@@ -373,17 +373,17 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ matrix.project }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
+          repositories: ${{ { matrix.project }}}
           permission-contents: read
       - name: Check out the private Brightdesk engineering project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository_owner }}/${{ matrix.project }}
-          token: ${{ steps.app-token.outputs.token }}
+          repository: ${{ { github.repository_owner }}}/${{ { matrix.project }}}
+          token: ${{ { steps.app-token.outputs.token }}}
           path: source
           persist-credentials: false
       - name: Read the exact Node.js version from the project manifest
@@ -402,15 +402,15 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: ${{ steps.node-version.outputs.value }}
+          node-version: ${{ { steps.node-version.outputs.value }}}
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private engineering checks without publishing source logs
         if: steps.private-token.outputs.available == 'true'
         working-directory: source
         env:
-          BRIGHTDESK_PROJECT: ${{ matrix.project }}
-          RUNNER_TEMP: ${{ runner.temp }}
+          BRIGHTDESK_PROJECT: ${{ { matrix.project }}}
+          RUNNER_TEMP: ${{ { runner.temp }}}
         shell: bash
         run: |
           set -Eeuo pipefail
@@ -451,15 +451,15 @@ jobs:
             echo
             echo "- Project: $BRIGHTDESK_PROJECT"
             echo "- Result: **PASSED**"
-            echo "- Runtime: ${{ steps.node-version.outputs.value }}"
+            echo "- Runtime: ${{ { steps.node-version.outputs.value }}}"
             echo "- Detailed output was kept only on the temporary runner."
           } >> "$GITHUB_STEP_SUMMARY"
 
   suite-one-time-installer-smoke-tests:
-    name: Build Brightdesk Suite for ${{ matrix.platform }}
+    name: Build Brightdesk Suite for ${{ { matrix.platform }}}
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]')
     needs: [daily-private-tests, daily-private-foundation-tests]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ { matrix.runner }}}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -483,8 +483,8 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          APP_ID: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          APP_PRIVATE_KEY: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
         run: |
           if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
@@ -497,18 +497,18 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
           repositories: Brightdesk-suite
           permission-contents: read
       - name: Check out Brightdesk Suite main
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository_owner }}/Brightdesk-suite
+          repository: ${{ { github.repository_owner }}}/Brightdesk-suite
           ref: main
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ { steps.app-token.outputs.token }}}
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
@@ -524,25 +524,25 @@ jobs:
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
-            build source "Brightdesk-suite" "${{ matrix.platform }}" "${{ matrix.verify_script }}"
+            build source "Brightdesk-suite" "${{ { matrix.platform }}}" "${{ { matrix.verify_script }}}"
       - name: Create an issue-only token for the private installer diagnostic
         id: installer-issue-token
         if: failure() && steps.build-installer.outputs.installer_failure_summary_file != ''
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
           repositories: Brightdesk-suite
           permission-issues: write
       - name: Save sanitised installer diagnostics to private Suite issue
         if: always()
         continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ steps.installer-issue-token.outputs.token }}
-          BRIGHTDESK_INSTALLER_FAILURE_SUMMARY_FILE: ${{ steps.build-installer.outputs.installer_failure_summary_file }}
-          BRIGHTDESK_INSTALLER_PLATFORM: ${{ matrix.platform }}
+          GITHUB_TOKEN: ${{ { steps.installer-issue-token.outputs.token }}}
+          BRIGHTDESK_INSTALLER_FAILURE_SUMMARY_FILE: ${{ { steps.build-installer.outputs.installer_failure_summary_file }}}
+          BRIGHTDESK_INSTALLER_PLATFORM: ${{ { matrix.platform }}}
         shell: bash
         run: |
           if [[ -n "$GITHUB_TOKEN" && -s "$BRIGHTDESK_INSTALLER_FAILURE_SUMMARY_FILE" ]]; then
@@ -551,12 +551,12 @@ jobs:
             echo "No sanitised installer diagnostic needs to be posted."
           fi
   weekly-private-installer-builds:
-    name: Build ${{ matrix.project }} for ${{ matrix.platform }}
+    name: Build ${{ { matrix.project }}} for ${{ { matrix.platform }}}
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
       (github.event_name == 'workflow_dispatch' && inputs.project == 'all' && inputs.run_cross_platform_builds == true && inputs.run_reviewed_product_pr_matrix != true)
     needs: [daily-private-tests, daily-private-foundation-tests]
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ { matrix.runner }}}
     timeout-minutes: 60
     strategy:
       fail-fast: false
@@ -691,8 +691,8 @@ jobs:
         id: private-token
         shell: bash
         env:
-          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
-          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          APP_ID: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          APP_PRIVATE_KEY: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
         run: |
           if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
             echo "available=true" >> "$GITHUB_OUTPUT"
@@ -705,17 +705,17 @@ jobs:
         if: steps.private-token.outputs.available == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
-          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          repositories: ${{ matrix.project }}
+          app-id: ${{ { vars.BRIGHTDESK_APP_ID }}}
+          private-key: ${{ { secrets.BRIGHTDESK_APP_PRIVATE_KEY }}}
+          owner: ${{ { github.repository_owner }}}
+          repositories: ${{ { matrix.project }}}
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: ${{ github.repository_owner }}/${{ matrix.project }}
-          token: ${{ steps.app-token.outputs.token }}
+          repository: ${{ { github.repository_owner }}}/${{ { matrix.project }}}
+          token: ${{ { steps.app-token.outputs.token }}}
           path: source
           persist-credentials: false
       - name: Set up the required Node.js runtime
@@ -730,4 +730,4 @@ jobs:
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
-            build source "${{ matrix.project }}" "${{ matrix.platform }}" "${{ matrix.verify_script }}"
+            build source "${{ { matrix.project }}}" "${{ { matrix.platform }}}" "${{ { matrix.verify_script }}}"
