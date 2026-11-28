@@ -3,6 +3,8 @@ set -Eeuo pipefail
 
 : "${RUNNER_TEMP:?RUNNER_TEMP is required}"
 : "${GITHUB_STEP_SUMMARY:?GITHUB_STEP_SUMMARY is required}"
+: "${GITHUB_RUN_ID:?GITHUB_RUN_ID is required}"
+: "${GITHUB_RUN_ATTEMPT:?GITHUB_RUN_ATTEMPT is required}"
 
 if [[ -z "${SOURCE_READ_TOKEN:-}" || -z "${ARCHIVE_WRITE_TOKEN:-}" ]]; then
   echo "::error::Configure BRIGHTDESK_ARCHIVE_SOURCE_READ_TOKEN and BRIGHTDESK_ARCHIVE_WRITE_TOKEN in Brightdesk-Pages Actions secrets."
@@ -14,7 +16,7 @@ rm -rf "$work"
 mkdir -p "$work"
 trap 'rm -rf "$work"' EXIT
 
-# Askpass reads tokens from this process environment. Token values are never
+# Askpass reads credentials from the process environment. Tokens are never
 # written to disk, URLs, Git config, outputs or workflow logs.
 cat > "$work/source-askpass.sh" <<'ASKPASS'
 #!/bin/sh
@@ -53,7 +55,9 @@ private_repos=(
   Brightdesk-Printing Brightdesk-Voice
 )
 
-stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+# Include the workflow run and retry number so concurrent/manual reruns never
+# reuse a snapshot namespace. Earlier snapshots remain immutable.
+stamp="$(date -u +%Y%m%dT%H%M%SZ)-run${GITHUB_RUN_ID}-attempt${GITHUB_RUN_ATTEMPT}"
 printf '## Brightdesk archive sync %s\n\n' "$stamp" >> "$GITHUB_STEP_SUMMARY"
 failures=0
 succeeded=0
@@ -90,7 +94,7 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  # Verify the local object database before publishing any refs.
+  # Verify the complete cloned object database before publishing refs.
   if ! git -C "$dir" fsck --full --no-reflogs > "$work/fsck-$repo.log" 2>&1; then
     echo "::error::Git object integrity check failed for $repo. No refs were pushed."
     printf -- '- FAILED: %s (git fsck)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
@@ -99,22 +103,42 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  # Preserve timestamped pointers for every fetched source branch and tag.
+  expected="$work/$repo.expected-refs"
+  : > "$expected"
   while IFS= read -r ref; do
     [[ -n "$ref" ]] || continue
     short="${ref#refs/}"
     sha="$(git -C "$dir" rev-parse "$ref")"
-    git -C "$dir" update-ref "refs/archive/$repo/snapshots/$stamp/$short" "$sha"
+    snapshot_ref="refs/archive/$repo/snapshots/$stamp/$short"
+    if [[ "$ref" == refs/heads/* ]]; then
+      stable_ref="refs/archive/$repo/heads/${ref#refs/heads/}"
+    elif [[ "$ref" == refs/tags/* ]]; then
+      stable_ref="refs/archive/$repo/tags/${ref#refs/tags/}"
+    else
+      continue
+    fi
+    git -C "$dir" update-ref "$snapshot_ref" "$sha"
+    printf '%s %s\n' "$sha" "$stable_ref" >> "$expected"
+    printf '%s %s\n' "$sha" "$snapshot_ref" >> "$expected"
   done < <(git -C "$dir" for-each-ref --format='%(refname)' refs/heads refs/tags)
 
-  # Keep a namespaced current view plus immutable timestamped snapshots.
-  # Deliberately do not prune: deleted source refs remain recoverable.
+  expected_count="$(wc -l < "$expected" | tr -d '[:space:]')"
+  if (( expected_count == 0 )); then
+    echo "::error::No source branches or tags were found for $repo. Nothing will be marked backed up."
+    printf -- '- FAILED: %s (no source refs)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    failures=$((failures + 1))
+    echo "::endgroup::"
+    continue
+  fi
+
+  # Stable refs may advance; this run's timestamped snapshots are never force
+  # pushed. Deleted source refs are not pruned from the recovery archive.
   git -C "$dir" remote add archive "https://github.com/conz20/Brightdesk-Archives.git"
   if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \
     git -C "$dir" push --quiet archive \
       "+refs/heads/*:refs/archive/$repo/heads/*" \
       "+refs/tags/*:refs/archive/$repo/tags/*" \
-      "+refs/archive/$repo/snapshots/*:refs/archive/$repo/snapshots/*"; then
+      "refs/archive/$repo/snapshots/$stamp/*:refs/archive/$repo/snapshots/$stamp/*"; then
     echo "::error::Archive push failed for $repo. Existing archive refs were not intentionally deleted."
     printf -- '- FAILED: %s (push)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
@@ -122,24 +146,36 @@ for repo in "${repos[@]}"; do
     continue
   fi
 
-  expected_refs="$(git -C "$dir" for-each-ref --format='%(refname)' refs/heads refs/tags "refs/archive/$repo/snapshots" | wc -l | tr -d '[:space:]')"
-  if ! actual_refs="$(GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 git -C "$dir" ls-remote --refs archive "refs/archive/$repo/*" | wc -l | tr -d '[:space:]')"; then
-    echo "::error::Could not verify archived refs for $repo."
-    printf -- '- FAILED: %s (remote verification)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+  # Verify every ref written by this run by exact name and object SHA. Do not
+  # compare total namespace counts: earlier snapshots are intentionally kept.
+  actual="$work/$repo.actual-refs"
+  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \
+    git -C "$dir" ls-remote --refs archive "refs/archive/$repo/*" > "$actual"; then
+    echo "::error::Could not read back archived refs for $repo."
+    printf -- '- FAILED: %s (remote verification read)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
   fi
 
-  if [[ "$actual_refs" != "$expected_refs" ]]; then
-    echo "::error::Archived ref count did not match for $repo (expected $expected_refs, found $actual_refs)."
-    printf -- '- FAILED: %s (ref count mismatch)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+  verify_failed=0
+  while read -r expected_sha expected_ref; do
+    [[ -n "$expected_ref" ]] || continue
+    actual_sha="$(awk -v target="$expected_ref" '$2 == target { print $1; exit }' "$actual")"
+    if [[ "$actual_sha" != "$expected_sha" ]]; then
+      echo "::error::Archived ref verification failed for $repo: $expected_ref"
+      verify_failed=1
+    fi
+  done < "$expected"
+
+  if (( verify_failed > 0 )); then
+    printf -- '- FAILED: %s (remote ref SHA mismatch)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
   fi
 
-  printf -- '- OK: %s (%s refs verified)\n' "$repo" "$actual_refs" >> "$GITHUB_STEP_SUMMARY"
+  printf -- '- OK: %s (%s refs verified by exact SHA)\n' "$repo" "$expected_count" >> "$GITHUB_STEP_SUMMARY"
   succeeded=$((succeeded + 1))
   echo "::endgroup::"
 done
@@ -148,7 +184,7 @@ done
   echo
   echo "- Repositories passed: $succeeded / 27"
   echo "- Repositories failed: $failures"
-  echo "- Snapshot timestamp: $stamp"
+  echo "- Snapshot namespace: $stamp"
 } >> "$GITHUB_STEP_SUMMARY"
 
 if (( failures > 0 )); then
@@ -156,4 +192,4 @@ if (( failures > 0 )); then
   exit 1
 fi
 
-echo "All 27 source repositories (13 public and 14 private) were mirrored and their archive ref counts verified."
+echo "All 27 source repositories (13 public and 14 private) were mirrored and every current-run archive ref was verified by exact SHA."
