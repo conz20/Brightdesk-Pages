@@ -658,9 +658,10 @@ test('shared foundation test failures reveal only sanitised failing test names',
 test('engineering failures share only sanitized names on the controller PR', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml'), 'utf8');
   const job = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
-  assert.match(job, /issues: write/);
-  assert.match(job, /Share sanitized engineering test names on the controller PR/);
-  assert.ok(job.includes('--body-file "$SUMMARY_FILE"'));
+  assert.doesNotMatch(job, /issues:\\s*write/);
+  const commentStep = job.split('      - name: Share sanitized engineering test names on the controller PR')[1] ?? '';
+  assert.ok(commentStep.includes('continue-on-error: true'));
+  assert.ok(commentStep.includes('--body-file "$SUMMARY_FILE"'));
   assert.match(job, /Detailed output was kept only on the temporary runner/);
 });
 
