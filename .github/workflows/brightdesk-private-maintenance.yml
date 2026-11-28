@@ -25,6 +25,28 @@ on:
     - cron: '17 17 * * 0'
   workflow_dispatch:
     inputs:
+      project:
+        description: Private project to test, or all private projects
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - Brightdesk-suite
+          - Brightdesk-Sheets
+          - Brightdesk-Decks
+          - Brightdesk-Notes
+          - Brightdesk-Database
+          - Brightdesk-Forms
+          - Brightdesk-Lists
+          - Brightdesk-Planner
+          - Brightdesk-To-Do
+          - Brightdesk-Workspace
+      project_ref:
+        description: Branch, tag or commit to test for the selected project (ignored when all projects are selected)
+        type: string
+        required: true
+        default: main
       run_cross_platform_builds:
         description: Build and verify all private project installers on Windows, macOS and Linux
         type: boolean
@@ -59,7 +81,9 @@ jobs:
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: >-
+      (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
+      (github.event_name != 'workflow_dispatch' || inputs.project == 'all' || matrix.project == inputs.project)
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -109,7 +133,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
-          ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
@@ -159,7 +183,9 @@ jobs:
 
   daily-private-foundation-tests:
     name: Test ${{ matrix.project }} on Linux
-    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: >-
+      (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
+      (github.event_name != 'workflow_dispatch' || inputs.project == 'all')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -372,7 +398,7 @@ jobs:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
-      (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true)
+      (github.event_name == 'workflow_dispatch' && inputs.project == 'all' && inputs.run_cross_platform_builds == true)
     needs: [daily-private-tests, daily-private-foundation-tests]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
