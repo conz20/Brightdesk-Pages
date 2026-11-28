@@ -670,3 +670,43 @@ test('public Pages repository references use the current Brightdesk project owne
     }
   }
 });
+
+
+test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and read-only', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dispatch = source.split('  workflow_dispatch:')[1]?.split('\n\npermissions:')[0] ?? '';
+  assert.match(dispatch, /run_reviewed_product_pr_matrix:/);
+  assert.match(dispatch, /type: boolean/);
+  assert.match(dispatch, /default: false/);
+
+  const job = source.split('  reviewed-product-pr-tests:')[1] ?? '';
+  assert.match(job, /github\.event_name == 'workflow_dispatch'/);
+  assert.match(job, /inputs\.run_reviewed_product_pr_matrix == true/);
+  assert.match(job, /runs-on: ubuntu-latest/);
+  assert.match(job, /matrix:\s*\n\s*include:/);
+  assert.match(job, /permission-contents: read/);
+  assert.match(job, /persist-credentials: false/);
+  assert.match(job, /fetch-depth: 0/);
+  assert.match(job, /expected_head_sha/);
+  assert.match(job, /base_sha/);
+  assert.match(job, /git rev-parse HEAD/);
+  assert.match(job, /git diff --name-only/);
+  assert.match(job, /run-private-project-check\.sh/);
+  assert.match(job, /Detailed output was kept only on the temporary runner/);
+  assert.doesNotMatch(job, /permission-contents:\s*write|permission-pull-requests:\s*write|upload-artifact|npm run dist:/);
+
+  for (const project of [
+    'Brightdesk-Sheets',
+    'Brightdesk-Decks',
+    'Brightdesk-Notes',
+    'Brightdesk-Database',
+    'Brightdesk-Forms',
+    'Brightdesk-Lists',
+    'Brightdesk-Planner',
+    'Brightdesk-To-Do',
+    'Brightdesk-Workspace'
+  ]) assert.ok(job.includes(project), project + ' must be covered by the reviewed PR batch');
+
+  assert.match(job, /pr_number: 26/);
+  assert.match(job, /pr_number: 27/);
+});
