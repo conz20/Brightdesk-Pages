@@ -107,7 +107,7 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     'brightdesk-ai-test-coverage-validation.yml'
   ]) {
     const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', name), 'utf8');
-    assert.match(source, /repository: connormolloy12\/Brightdesk-AI/);
+    assert.match(source, /repository: conz20\/Brightdesk-AI/);
     assert.match(source, /ref: main/);
     assert.doesNotMatch(source, /ref: [a-f0-9]{40}/);
     assert.match(source, /git -C private-ai rev-parse HEAD/);
@@ -560,7 +560,7 @@ test('private maintenance controller uses GitHub-hosted runners for every projec
     assert.match(job, /runner: ubuntu-latest/);
     assert.doesNotMatch(job, /self-hosted/);
   }
-  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|conz20/);
   assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
@@ -586,7 +586,7 @@ test('Pages installer workflow uses the approved GitHub-hosted runner matrix', (
   assert.match(build, /runner: ubuntu-latest/);
   assert.match(build, /runs-on: \$\{\{ matrix\.runner \}\}/);
   assert.match(publish, /runs-on: ubuntu-slim/);
-  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|conz20/);
   assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
