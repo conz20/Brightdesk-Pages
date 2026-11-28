@@ -14,7 +14,8 @@ function parseTapFailureNames(tapOutput) {
   const seen = new Set();
 
   for (const line of String(tapOutput).split(/\r?\n/)) {
-    const match = line.match(/^not ok \d+ - (.+)$/);
+    const normalizedLine = line.replace(/\u001b\[[0-9;]*m/g, '').trimStart();
+    const match = normalizedLine.match(/^not ok \d+ - (.+)$/);
     if (!match) continue;
 
     const name = cleanTestName(match[1]);
