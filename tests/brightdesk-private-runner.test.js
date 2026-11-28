@@ -669,3 +669,19 @@ test('README freshness does not demand documentation changes for legal metadata 
   const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'readme-freshness.yml'), 'utf8');
   assert.match(source, /LICENSE\\|LICENSE\.\*\\|NOTICE\\|NOTICE\.\*\\|COPYING\\|COPYING\.\*/);
 });
+
+
+test('private product validation uses the exact Node.js version declared by each project', () => {
+  const workflowSource = fs.readFileSync(
+    path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml'),
+    'utf8'
+  );
+  const job = workflowSource.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  const runner = fs.readFileSync(runnerScript, 'utf8');
+
+  assert.ok(job.includes("require('./package.json')"));
+  assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'));
+  assert.ok(runner.includes('p.engines?.node'));
+  assert.ok(runner.includes('process.version'));
+  assert.doesNotMatch(runner, /engines\?\.node !== ['"]24\.22\.2/);
+});
