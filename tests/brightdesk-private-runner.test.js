@@ -660,7 +660,7 @@ test('engineering failures share only sanitized names on the controller PR', () 
   const job = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   assert.match(job, /issues: write/);
   assert.match(job, /Share sanitized engineering test names on the controller PR/);
-  assert.match(job, /--body-file "\\$SUMMARY_FILE"/);
+  assert.ok(job.includes('--body-file "$SUMMARY_FILE"'));
   assert.match(job, /Detailed output was kept only on the temporary runner/);
 });
 
