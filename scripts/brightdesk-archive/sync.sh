@@ -19,16 +19,16 @@ trap 'rm -rf "$work"' EXIT
 cat > "$work/source-askpass.sh" <<'ASKPASS'
 #!/bin/sh
 case "$1" in
-  *Username*) printf '%s\\n' 'x-access-token' ;;
-  *Password*) printf '%s\\n' "$SOURCE_READ_TOKEN" ;;
+  *Username*) printf '%s\n' 'x-access-token' ;;
+  *Password*) printf '%s\n' "$SOURCE_READ_TOKEN" ;;
   *) exit 1 ;;
 esac
 ASKPASS
 cat > "$work/archive-askpass.sh" <<'ASKPASS'
 #!/bin/sh
 case "$1" in
-  *Username*) printf '%s\\n' 'x-access-token' ;;
-  *Password*) printf '%s\\n' "$ARCHIVE_WRITE_TOKEN" ;;
+  *Username*) printf '%s\n' 'x-access-token' ;;
+  *Password*) printf '%s\n' "$ARCHIVE_WRITE_TOKEN" ;;
   *) exit 1 ;;
 esac
 ASKPASS
@@ -54,7 +54,7 @@ private_repos=(
 )
 
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-printf '## Brightdesk archive sync %s\\n\\n' "$stamp" >> "$GITHUB_STEP_SUMMARY"
+printf '## Brightdesk archive sync %s\n\n' "$stamp" >> "$GITHUB_STEP_SUMMARY"
 failures=0
 succeeded=0
 
@@ -73,18 +73,18 @@ for repo in "${repos[@]}"; do
 
   clone_ok=true
   if [[ "$is_private" == "true" ]]; then
-    if ! GIT_ASKPASS="$work/source-askpass.sh" GIT_TERMINAL_PROMPT=0 \\
+    if ! GIT_ASKPASS="$work/source-askpass.sh" GIT_TERMINAL_PROMPT=0 \
       git clone --bare --quiet "https://github.com/conz20/$repo.git" "$dir"; then
       clone_ok=false
     fi
-  elif ! GIT_TERMINAL_PROMPT=0 \\
+  elif ! GIT_TERMINAL_PROMPT=0 \
     git clone --bare --quiet "https://github.com/conz20/$repo.git" "$dir"; then
     clone_ok=false
   fi
 
   if [[ "$clone_ok" != "true" ]]; then
     echo "::error::Could not clone $repo. Existing archive refs were not intentionally deleted."
-    printf -- '- FAILED: %s (clone)\\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- FAILED: %s (clone)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
@@ -93,7 +93,7 @@ for repo in "${repos[@]}"; do
   # Verify the local object database before publishing any refs.
   if ! git -C "$dir" fsck --full --no-reflogs > "$work/fsck-$repo.log" 2>&1; then
     echo "::error::Git object integrity check failed for $repo. No refs were pushed."
-    printf -- '- FAILED: %s (git fsck)\\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- FAILED: %s (git fsck)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
@@ -110,13 +110,13 @@ for repo in "${repos[@]}"; do
   # Keep a namespaced current view plus immutable timestamped snapshots.
   # Deliberately do not prune: deleted source refs remain recoverable.
   git -C "$dir" remote add archive "https://github.com/conz20/Brightdesk-Archives.git"
-  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \\
-    git -C "$dir" push --quiet archive \\
-      "+refs/heads/*:refs/archive/$repo/heads/*" \\
-      "+refs/tags/*:refs/archive/$repo/tags/*" \\
+  if ! GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 \
+    git -C "$dir" push --quiet archive \
+      "+refs/heads/*:refs/archive/$repo/heads/*" \
+      "+refs/tags/*:refs/archive/$repo/tags/*" \
       "+refs/archive/$repo/snapshots/*:refs/archive/$repo/snapshots/*"; then
     echo "::error::Archive push failed for $repo. Existing archive refs were not intentionally deleted."
-    printf -- '- FAILED: %s (push)\\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- FAILED: %s (push)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
@@ -125,7 +125,7 @@ for repo in "${repos[@]}"; do
   expected_refs="$(git -C "$dir" for-each-ref --format='%(refname)' refs/heads refs/tags "refs/archive/$repo/snapshots" | wc -l | tr -d '[:space:]')"
   if ! actual_refs="$(GIT_ASKPASS="$work/archive-askpass.sh" GIT_TERMINAL_PROMPT=0 git -C "$dir" ls-remote --refs archive "refs/archive/$repo/*" | wc -l | tr -d '[:space:]')"; then
     echo "::error::Could not verify archived refs for $repo."
-    printf -- '- FAILED: %s (remote verification)\\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- FAILED: %s (remote verification)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
@@ -133,13 +133,13 @@ for repo in "${repos[@]}"; do
 
   if [[ "$actual_refs" != "$expected_refs" ]]; then
     echo "::error::Archived ref count did not match for $repo (expected $expected_refs, found $actual_refs)."
-    printf -- '- FAILED: %s (ref count mismatch)\\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
+    printf -- '- FAILED: %s (ref count mismatch)\n' "$repo" >> "$GITHUB_STEP_SUMMARY"
     failures=$((failures + 1))
     echo "::endgroup::"
     continue
   fi
 
-  printf -- '- OK: %s (%s refs verified)\\n' "$repo" "$actual_refs" >> "$GITHUB_STEP_SUMMARY"
+  printf -- '- OK: %s (%s refs verified)\n' "$repo" "$actual_refs" >> "$GITHUB_STEP_SUMMARY"
   succeeded=$((succeeded + 1))
   echo "::endgroup::"
 done
