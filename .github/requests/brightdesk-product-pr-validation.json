@@ -57,5 +57,5 @@
       "base_sha": "8da2f34b0d4636e65a473dd61e4942a55929ac78"
     }
   ],
-  "validation_round": "current-main-runner-migration-validation-2026-11-29"
+  "validation_round": "private-names-only-diagnostics-2026-11-29"
 }
