@@ -1,6 +1,6 @@
 # Brightdesk Pages
 
-<p align="center"><img src="assets/brand/brightdesk-logo.svg" alt="Brightdesk Office Suite" width="420"></p>
+<p align="center"><img src="assets/brand/brightdesk-logo.svg" alt="Brightdesk logo" width="420"></p>
 <p align="center"><img src="assets/icons/pages.svg" alt="Brightdesk Pages application icon" width="112" height="112"></p>
 
 <p align="center"><strong>Create letters, reports and formatted documents.</strong></p>
@@ -105,9 +105,11 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 The Brightdesk-Pages maintenance controller checks each approved private project from its default `main` branch. It uses short-lived, repository-scoped Contents: read-only tokens. The Suite's combined Node.js and Vitest test command is run in two parts so the TAP reporter option is passed only to Node's test runner, not to Vitest. For failed Suite tests, a separate Issues-only token can post bounded failing-test names to the private Suite maintenance issue. One-time Suite installer checks build Windows, macOS and Linux packages, verify expected files and SHA-256 checksums, then perform temporary native install, startup and uninstall checks. The launch check sets `BRIGHTDESK_STARTUP_SMOKE_TEST=1`; the installed desktop runtime validates its packaged version, protected terms and default language resources, loads its actual hidden main window, checks the required navigation panels, and exits with a result code. Launch checks fail if the process exits unsuccessfully or exceeds the platform timeout. For installer failures, a separate Suite-only Issues token can post only the platform, approved failed stage, exit code and allow-listed diagnostic details to the private issue. Raw logs, source files, file paths, stack traces, credentials and installer binaries are not published in this repository; build files remain on ephemeral runners.
 
-## Identity and licence
+## Licence and project identity
 
-Brightdesk is independent and is not affiliated with Microsoft. It uses original product names, code, interface design and artwork. See [LICENSE](LICENSE), [TERMS_AND_CONDITIONS.txt](TERMS_AND_CONDITIONS.txt), and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Brightdesk Pages source code is licensed under the standard MIT License in [LICENSE](LICENSE). MIT permits use, modification and redistribution of covered code, including commercial use and sale, provided the required notices are retained. Official Brightdesk downloads remain free of charge; that distribution policy does not narrow the MIT rights already granted.
+
+MIT does not grant a general right to present a modified build as an official Brightdesk release or to use Brightdesk branding misleadingly. Third-party dependencies, fonts and other bundled resources retain their own terms; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). The portfolio-wide [licensing and brand standard](https://github.com/conz20/Brightdesk-suite/blob/main/docs/LICENSING_AND_BRAND_STANDARD.md) and [official release identity policy](https://github.com/conz20/Brightdesk-suite/blob/main/BRAND-AND-RELEASE-IDENTITY.md) explain those boundaries.
 
 ## Documentation freshness
 
