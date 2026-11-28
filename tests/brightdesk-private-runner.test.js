@@ -75,13 +75,40 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
 
-test('daily Suite checks use the active independent branch while other private projects use main', () => {
+test('daily private checks target the current runner-migration PR branches', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  const matrix = dailyJob.split('      matrix:')[1]?.split('    steps:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
+  const expected = [
+    ['Brightdesk-suite', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Sheets', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Decks', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Notes', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Database', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Forms', 'ci/github-hosted-runners-independent-of-macbook'],
+    ['Brightdesk-Lists', 'main'],
+    ['Brightdesk-Planner', 'main'],
+    ['Brightdesk-To-Do', 'main'],
+    ['Brightdesk-Workspace', 'ci/github-hosted-runners-independent-of-macbook']
+  ];
+  for (const [project, ref] of expected) {
+    assert.ok(matrix.includes('project: ' + project + '\\n            ref: ' + ref), project + ' must test the intended revision');
+  }
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
-  assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
-  assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
+  assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
+  assert.doesNotMatch(dailyJob, /fix\\/suite-diagnostic-tests/);
+});
+
+test('shared foundation checks target the open Common-Libs and Developer-Tools PRs', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  const matrix = foundationJob.split('      matrix:')[1]?.split('    steps:')[0] ?? '';
+  const checkout = foundationJob.split('      - name: Check out the private Brightdesk engineering project')[1]?.split('      - name: Read the exact Node.js version')[0] ?? '';
+  assert.ok(matrix.includes('project: Brightdesk-Common-Libs\\n            ref: feat/github-packages-npm-registry'));
+  assert.ok(matrix.includes('project: Brightdesk-Developer-Tools\\n            ref: feature/dependency-package-audit'));
+  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
+  assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
 });
 
 test('controller PRs and trusted pushes trigger daily private checks but never start the installer matrix', () => {
