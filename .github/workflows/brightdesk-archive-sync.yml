@@ -7,6 +7,8 @@ on:
       - '.github/workflows/brightdesk-archive-sync.yml'
       - 'scripts/brightdesk-archive/sync.sh'
       - 'tests/brightdesk-archive-sync.test.js'
+      - '.github/workflows/brightdesk-archive-self-recovery.yml'
+      - 'scripts/brightdesk-archive/backup-archive-repository.sh'
   schedule:
     # Detect source ref changes every five minutes; this job skips unchanged repositories.
     - cron: "3/5 * * * *"
@@ -33,6 +35,8 @@ jobs:
           persist-credentials: false
       - name: Check Bash syntax
         run: bash -n scripts/brightdesk-archive/sync.sh
+      - name: Check archive self-recovery Bash syntax
+        run: bash -n scripts/brightdesk-archive/backup-archive-repository.sh
       - name: Test repository inventory, verification and token boundaries
         run: node --test tests/brightdesk-archive-sync.test.js
 
