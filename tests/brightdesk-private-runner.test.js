@@ -93,7 +93,8 @@ test('daily private checks target the current runner-migration PR branches', () 
     ['Brightdesk-Workspace', 'ci/github-hosted-runners-independent-of-macbook']
   ];
   for (const [project, ref] of expected) {
-    assert.ok(matrix.includes('project: ' + project + '\\n            ref: ' + ref), project + ' must test the intended revision');
+    const entry = matrix.split('- project: ' + project)[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+    assert.ok(entry.includes('ref: ' + ref), project + ' must test the intended revision');
   }
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
   assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
@@ -105,8 +106,10 @@ test('shared foundation checks target the open Common-Libs and Developer-Tools P
   const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   const matrix = foundationJob.split('      matrix:')[1]?.split('    steps:')[0] ?? '';
   const checkout = foundationJob.split('      - name: Check out the private Brightdesk engineering project')[1]?.split('      - name: Read the exact Node.js version')[0] ?? '';
-  assert.ok(matrix.includes('project: Brightdesk-Common-Libs\\n            ref: feat/github-packages-npm-registry'));
-  assert.ok(matrix.includes('project: Brightdesk-Developer-Tools\\n            ref: feature/dependency-package-audit'));
+  const commonLibs = matrix.split('- project: Brightdesk-Common-Libs')[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+  assert.ok(commonLibs.includes('ref: feat/github-packages-npm-registry'));
+  const developerTools = matrix.split('- project: Brightdesk-Developer-Tools')[1]?.split(String.fromCharCode(10) + '          - project:')[0] ?? '';
+  assert.ok(developerTools.includes('ref: feature/dependency-package-audit'));
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
   assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
 });
@@ -486,7 +489,7 @@ test('daily private tests cover all ten private Brightdesk projects', () => {
   ];
 
   for (const project of privateProjects) {
-    assert.ok(dailyJob.includes('- ' + project), project + ' is missing from daily private tests');
+    assert.ok(dailyJob.includes('project: ' + project), project + ' is missing from daily private tests');
   }
 });
 
@@ -645,6 +648,6 @@ test('shared foundation test failures reveal only sanitised failing test names',
 
   assert.ok(foundationJob.includes('private-test-diagnostics.js'));
   assert.ok(foundationJob.includes('base64 --decode'));
-  assert.ok(diagnostics.includes('failing test cases (names only; assertion messages and stack traces were withheld)'));
+  assert.ok(diagnostics.includes('Failing test cases (names only; assertion messages and stack traces were withheld):'));
   assert.doesNotMatch(foundationJob, /cat .*brightdesk-foundation-validation\\.log/);
 });
