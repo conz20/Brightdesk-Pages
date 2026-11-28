@@ -152,7 +152,8 @@ test('private product PR diagnostics contain only cleaned failing test names', (
   assert.ok(body.includes('Pull request: #8'));
   assert.ok(body.includes('planner smoke test'));
   assert.ok(body.includes(MARKER_PREFIX));
-  assert.doesNotMatch(body, /\/home\/runner|SECRET_SOURCE_CONTENT|assertion detail|stack trace/);
+  assert.doesNotMatch(body, /\/home\/runner|SECRET_SOURCE_CONTENT|assertion detail/);
+  assert.match(body, /stack traces are intentionally withheld/);
 });
 
 test('private product PR diagnostics create one marked comment in the matching private PR', async () => {
