@@ -716,6 +716,19 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.equal((job.match(/^\s+- project:/gm) || []).length, 10);
   assert.equal((job.match(/^\s+project: Brightdesk-Lists$/gm) || []).length, 2);
   assert.equal((job.match(/^\s+pr_number: 48$/gm) || []).length, 2);
+  for (const sha of [
+    '9063fd07abe275016bf894a68af1d7a77f57a8ed',
+    '1a7d7eed376addec3c0867b8cef5ac6e2f27bb3f',
+    'c1eb924171bad1ffa9d1c74fa69a979dc23ae7db',
+    '3978ff39a901478c7193f797e6f0659b2c763eee',
+    'cad084c26b925db6748117b63651538b3b24df5d',
+    '4eee7ae0fffbdcdc5df8a021c767a79dc1825fea',
+    '5324585a8c7a03cad7f418b2e115d194189c2219',
+    'f1e072500717cb494ff2c2b6de7347c2aa321a5f',
+    'b500fc5a386d02d0e0b710582a61e923315a24ea',
+    'ea94a8acee1331321100c707151955698831c74c'
+  ]) assert.ok(job.includes('expected_head_sha: ' + sha), sha + ' must stay pinned');
+
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   assert.match(dailyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
   const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
