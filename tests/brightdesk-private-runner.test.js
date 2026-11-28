@@ -80,7 +80,7 @@ test('daily Suite checks use the active independent branch while other private p
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
-  assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
+  assert.ok(checkout.includes("ref: ${{ github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}"));
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
 
@@ -93,7 +93,7 @@ test('controller PRs and trusted pushes trigger daily private checks but never s
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   assert.match(
     dailyJob,
-    /if: github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'/
+    /if:\s*\|-\s*\(github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\) &&\s*\(github\.event_name != 'workflow_dispatch' \|\| inputs\.project == 'all' \|\| matrix\.project == inputs\.project\)/
   );
 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
