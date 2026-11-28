@@ -693,6 +693,7 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(job, /base_sha/);
   assert.match(job, /git rev-parse HEAD/);
   assert.match(job, /git diff --name-only/);
+  assert.doesNotMatch(job, /git -C source fetch/);
   assert.match(job, /run-private-project-check\.sh/);
   assert.match(job, /Run private project tests without publishing source logs/);
   assert.doesNotMatch(job, /permission-contents:\s*write|permission-pull-requests:\s*write|upload-artifact|npm run dist:/);
