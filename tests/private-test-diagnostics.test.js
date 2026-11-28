@@ -25,6 +25,11 @@ test('private test diagnostics extracts failed test names from TAP output', () =
 
   assert.deepEqual(parseTapFailureNames(tap), ['first feature']);
 });
+test('private test diagnostics handles ANSI-coloured and indented TAP failure lines', () => {
+  const tap = '  \u001b[31mnot ok 2 - highlighted failing case\u001b[0m';
+  assert.deepEqual(parseTapFailureNames(tap), ['highlighted failing case']);
+});
+
 test('private test diagnostics never includes raw errors, source paths, or stack traces', () => {
   const tap = [
     'not ok 1 - failing feature',
