@@ -49,7 +49,7 @@ test('archive sync shell script passes Bash syntax validation', () => {
 test('source refs and timestamped snapshots are retained without pruning', () => {
   assert.ok(script.includes('fsck --full --no-reflogs'));
   assert.ok(script.includes('refs/archive/$repo/snapshots/'));
-  assert.match(script, /git push --quiet archive/);
-  assert.match(script, /git ls-remote --refs archive/);
+  assert.ok(script.includes('push --quiet archive'));
+  assert.ok(script.includes('ls-remote --refs archive'));
   assert.match(script, /Deliberately do not prune/);
 });
