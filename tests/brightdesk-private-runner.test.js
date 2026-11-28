@@ -623,7 +623,7 @@ test('public Pages repository references use the current Brightdesk project owne
     const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
     assert.doesNotMatch(source, /connormolloy12/, file + ' must not contain a stale GitHub owner');
     if (file.endsWith('desktop-downloads.js')) {
-      assert.match(source, /github\\.com\\/conz20\\/Brightdesk-suite\\/releases/);
+      assert.match(source, /github\.com\/conz20\/Brightdesk-suite\/releases/);
     }
   }
 });
