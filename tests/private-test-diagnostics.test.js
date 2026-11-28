@@ -218,3 +218,20 @@ test('private test-name diagnostics redact absolute paths and URLs before public
   assert.ok(names.every(name => !name.includes('/home/runner') && !name.includes('internal.example.test')));
   assert.ok(names.every(name => name.length <= 200));
 });
+
+
+test('private PR reporter sanitizes test names before formatting a comment', () => {
+  const body = buildPrivatePrDiagnostic({
+    project: 'Brightdesk-Planner',
+    prNumber: 8,
+    failedNames: [
+      'planner smoke test',
+      'source /home/runner/work/private/src/app.js:42',
+      'service https://internal.example.test/private/path'
+    ]
+  });
+  assert.ok(body.includes('planner smoke test'));
+  assert.ok(!body.includes('/home/runner'));
+  assert.ok(!body.includes('internal.example.test'));
+  assert.ok(body.includes('Assertion messages, source contents, local paths, URLs'));
+});
