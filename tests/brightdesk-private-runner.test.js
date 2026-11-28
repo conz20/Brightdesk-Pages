@@ -772,7 +772,7 @@ test('exact-head private PR request pins unique project/PR pairs within the appr
   assert.equal(request.projects.length, 13);
   for (const expected of [
     'bcac6f5ade6c6b6b22d8d517294cba503b32d0fe',
-    'ccab697714c803c11f0cf3d32f934b56e1f64a',
+    'ccab697714c803c11f0cf3a5c9ce5274178ce94b',
     '55479bc485bf182adb197c74970859ff05e09086',
     '5639b1d44bdd32ed72acec6d2cf2d58927cef084'
   ]) assert.ok(request.projects.some(item => item.head_sha === expected), expected);
