@@ -256,6 +256,15 @@ jobs:
               if [[ -n "$diagnostic_base64" ]]; then
                 private_diagnostic="$(printf '%s' "$diagnostic_base64" | base64 --decode 2>/dev/null || true)"
               fi
+              if [[ "$private_diagnostic" == *"did not identify an individual failing test"* ]]; then
+                local spec_log_file="$RUNNER_TEMP/brightdesk-foundation-validation-spec.log"
+                local spec_diagnostic_base64=""
+                npm test -- --test-reporter=spec > "$spec_log_file" 2>&1 || true
+                spec_diagnostic_base64="$(node ../controller/scripts/brightdesk-private-runner/private-test-diagnostics.js "$spec_log_file" "$BRIGHTDESK_PROJECT" || true)"
+                if [[ -n "$spec_diagnostic_base64" ]]; then
+                  private_diagnostic="$(printf '%s' "$spec_diagnostic_base64" | base64 --decode 2>/dev/null || true)"
+                fi
+              fi
             fi
             {
               echo "## Private Brightdesk engineering validation"

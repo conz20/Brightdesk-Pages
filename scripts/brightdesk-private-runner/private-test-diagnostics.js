@@ -9,7 +9,7 @@ function cleanTestName(value) {
     .slice(0, 200);
 }
 
-function parseTapFailureNames(tapOutput) {
+function parseFailureNames(tapOutput) {
   const names = [];
   const seen = new Set();
 
@@ -28,6 +28,30 @@ function parseTapFailureNames(tapOutput) {
   return names;
 }
 
+function parseSpecFailureNames(specOutput) {
+  const names = [];
+  const seen = new Set();
+
+  for (const line of String(specOutput).split(/\\r?\\n/)) {
+    const normalizedLine = line.replace(/\\u001b\\[[0-9;]*m/g, '').trimStart();
+    const match = normalizedLine.match(/^✖\\s+(.+?)(?:\\s+\\(\\d+(?:\\.\\d+)?ms\\))?$/u);
+    if (!match) continue;
+
+    const name = cleanTestName(match[1]);
+    if (!name || seen.has(name)) continue;
+
+    seen.add(name);
+    names.push(name);
+  }
+
+  return names;
+}
+
+function parseFailureNames(output) {
+  const tapNames = parseTapFailureNames(output);
+  return tapNames.length > 0 ? tapNames : parseSpecFailureNames(output);
+}
+
 function escapeMarkdown(value) {
   return value.replace(/[\\`*_{}\[\]()#+.!|<>~-]/g, '\\$&');
 }
@@ -39,7 +63,7 @@ function formatPrivateFailureSummary(project, failedNames) {
     : [];
 
   if (names.length === 0) {
-    return `Automated tests failed for ${safeProject}, but the TAP reporter did not identify an individual failing test. Detailed output remains private on the temporary runner.`;
+    return `Automated tests failed for ${safeProject}, but the test reporters did not identify an individual failing test. Detailed output remains private on the temporary runner.`;
   }
 
   return [
@@ -60,4 +84,4 @@ if (require.main === module) {
   process.stdout.write(Buffer.from(summary, 'utf8').toString('base64'));
 }
 
-module.exports = { parseTapFailureNames, formatPrivateFailureSummary };
+module.exports = { parseTapFailureNames, parseSpecFailureNames, parseFailureNames, formatPrivateFailureSummary };
