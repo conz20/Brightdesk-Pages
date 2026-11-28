@@ -64,7 +64,7 @@ test('both private jobs safely skip when App credentials are missing', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/id: private-token/g) || []).length, 4);
   assert.equal((source.match(/available=false/g) || []).length, 4);
-  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 17);
+  assert.equal((source.match(/if: steps\.private-token\.outputs\.available == 'true'/g) || []).length, 18);
 });
 
 test('weekly build matrix includes Windows, macOS and Linux for every private project', () => {
@@ -580,7 +580,7 @@ test('Pages installer workflow uses the approved GitHub-hosted runner matrix', (
   const publish = source.split('  publish:')[1] ?? '';
 
   assert.match(testJob, /runs-on: ubuntu-slim/);
-  assert.match(testJob, /node-version: 24\.22\.2/);
+  assert.match(testJob, /node-version: 24\.22\.3/);
   assert.match(build, /runner: windows-latest/);
   assert.match(build, /runner: macos-latest/);
   assert.match(build, /runner: ubuntu-latest/);
@@ -591,6 +591,23 @@ test('Pages installer workflow uses the approved GitHub-hosted runner matrix', (
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
 
+
+test('daily private project tests use each checked-out project Node.js pin', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+
+  assert.match(dailyJob, /name: Read the exact Node.js version from the project manifest/);
+  assert.match(dailyJob, /manifest\.engines\?\.node/);
+  assert.match(dailyJob, /node-version: \$\{\{ steps\.node-version\.outputs\.value \}\}/);
+});
+
+test('private project runner validates the actual runtime against package.json engines.node', () => {
+  const source = fs.readFileSync(runnerScript, 'utf8');
+
+  assert.match(source, /p\.engines\?\.node/);
+  assert.match(source, /process\.versions\.node/);
+  assert.doesNotMatch(source, /p\.engines\?\.node !== '24\.22\.3'/);
+});
 
 test('private shared engineering repositories are tested through the hosted controller', () => {
   const source = fs.readFileSync(workflow, 'utf8');

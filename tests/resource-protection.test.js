@@ -58,7 +58,7 @@ test('Windows installer displays the Brightdesk licence and offers a normal setu
 
 test('desktop installer workflow verifies native products and keeps release publishing opt-in', () => {
   const workflow = read('.github/workflows/desktop-installers.yml');
-  assert.ok(workflow.includes('node-version: 24.22.2'));
+  assert.ok(workflow.includes('node-version: 24.22.3'));
   assert.ok(workflow.includes('run: npm ci --no-audit --no-fund'));
   assert.ok(workflow.includes('run: npm test'));
   assert.ok(workflow.includes('npm run dist:desktop:'));

@@ -73,7 +73,7 @@ Installers are published here after the release checks have passed and a release
 
 ## Run from source
 
-Use Node.js **24.22.2**.
+Use Node.js **24.22.3**.
 
 ```sh
 npm ci
@@ -160,3 +160,7 @@ The `brightdesk-archive-sync.yml` workflow is the scheduled/manual controller fo
 ## Repository automation
 
 The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu.
+
+## Dependency updates
+
+Brightdesk checks npm packages and GitHub Actions for stable updates weekly. Update proposals are reviewed and tested before acceptance; they are not merged or published automatically.

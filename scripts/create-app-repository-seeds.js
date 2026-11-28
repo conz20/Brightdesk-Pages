@@ -146,7 +146,7 @@ The complete ten-app desktop suite remains available from [Brightdesk-suite](htt
 
 ## Run from source
 
-Use Node.js **24.22.2**.
+Use Node.js **24.22.3**.
 
 \`\`\`sh
 npm ci
@@ -212,7 +212,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm test
@@ -236,7 +236,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: 24.22.3
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run dist:app:\${{ matrix.platform }}
