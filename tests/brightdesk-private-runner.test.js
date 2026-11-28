@@ -647,6 +647,7 @@ test('shared foundation test failures reveal only sanitised failing test names',
   );
 
   assert.ok(foundationJob.includes('private-test-diagnostics.js'));
+  assert.ok(foundationJob.includes('npm test -- --test-reporter=tap'), 'private Node test output must be parseable as TAP');
   assert.ok(foundationJob.includes('base64 --decode'));
   assert.ok(diagnostics.includes('Failing test cases (names only; assertion messages and stack traces were withheld):'));
   assert.doesNotMatch(foundationJob, /cat .*brightdesk-foundation-validation\\.log/);
