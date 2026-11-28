@@ -1,6 +1,6 @@
 # Brightdesk Pages
 
-<p align="center"><img src="assets/brand/brightdesk-logo.svg" alt="Brightdesk Office Suite" width="420"></p>
+<p align="center"><img src="assets/brand/brightdesk-logo.svg" alt="Brightdesk logo" width="420"></p>
 <p align="center"><img src="assets/icons/pages.svg" alt="Brightdesk Pages application icon" width="112" height="112"></p>
 
 <p align="center"><strong>Create letters, reports and formatted documents.</strong></p>
