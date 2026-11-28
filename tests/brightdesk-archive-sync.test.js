@@ -9,9 +9,13 @@ const script = fs.readFileSync(
 );
 
 function readList(name) {
-  const match = script.match(new RegExp(name + '=\\\\(\\\\s*([\\\\s\\\\S]*?)\\\\s*\\\\)'));
-  assert.ok(match, 'Missing ' + name + ' list');
-  return match[1].trim().split(/\\\\s+/);
+  const prefix = name + '=(';
+  const start = script.indexOf(prefix);
+  assert.notEqual(start, -1, 'Missing ' + name + ' list');
+  const open = start + prefix.length;
+  const close = script.indexOf(')', open);
+  assert.notEqual(close, -1, 'Unclosed ' + name + ' list');
+  return script.slice(open, close).trim().split(/\s+/);
 }
 
 test('archive job covers exactly the 27 non-archive repositories', () => {
@@ -32,12 +36,12 @@ test('separate tokens are used for source reads and archive writes', () => {
   assert.match(script, /SOURCE_READ_TOKEN/);
   assert.match(script, /ARCHIVE_WRITE_TOKEN/);
   assert.match(script, /GIT_ASKPASS/);
-  assert.doesNotMatch(script, /x-access-token:[^\\s@]+@github\\.com/);
+  assert.doesNotMatch(script, /x-access-token:[^\s@]+@github\.com/);
 });
 
 test('source refs and timestamped snapshots are retained without pruning', () => {
   assert.match(script, /git fsck --full --no-reflogs/);
-  assert.match(script, /refs\\/archive\\/\$repo\\/snapshots/);
+  assert.ok(script.includes('refs/archive/$repo/snapshots/'));
   assert.match(script, /git push --quiet archive/);
   assert.match(script, /git ls-remote --refs archive/);
   assert.match(script, /Deliberately do not prune/);
