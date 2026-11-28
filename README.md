@@ -142,7 +142,7 @@ The product build configuration defines desktop packages for all three supported
 
 The private installer smoke-test scripts are shared verification tooling. Their regression tests check that a test run uses product-specific names and unique temporary locations, refuses to overwrite an existing macOS installation or package receipt, and does not remove a pre-existing Linux package. These source and regression checks are not proof that a native installer has been executed on each operating system.
 
-The Pages maintenance and installer workflows use repository-scoped private runners only. Controller checks use the Mac runner labelled `self-hosted`, `macOS`, `ARM64`; native installer jobs require the matching `self-hosted`, `Windows`, `X64`, `macOS`, `ARM64`, or `Linux`, `X64` runner. A missing or offline runner remains queued; these workflows do not fall back to paid GitHub-hosted runners.
+The Pages maintenance controller uses GitHub-hosted runners on this public repository to check out the ten private Brightdesk projects with short-lived, repository-scoped read-only tokens. Daily checks run on hosted Linux; installer verification uses hosted Windows, macOS and Linux runners. No self-hosted runner or owner's MacBook is required, and standard hosted runners are free for public repositories.
 
 A platform is complete only after the matching current-version artifacts and SHA-256 records are verified, followed by actual install, first launch, upgrade, repair, uninstall and user-data-preservation checks on that platform. Wine compatibility checks must not be described as native Windows certification. A passing CI run or queued native job does not prove platform acceptance. No unverified platform is described as release-ready.
 

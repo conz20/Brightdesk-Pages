@@ -42,12 +42,12 @@ jobs:
   validate-controller:
     name: Validate the Brightdesk maintenance controller
     if: github.event_name == 'pull_request' || github.event_name == 'push'
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-slim
     steps:
       - name: Check out Brightdesk Pages
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up the required Node.js runtime
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           cache: npm
@@ -60,7 +60,7 @@ jobs:
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
-    runs-on: [self-hosted, macOS, ARM64]
+    runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
@@ -78,7 +78,7 @@ jobs:
           - Brightdesk-Workspace
     steps:
       - name: Check out the Brightdesk Pages controller
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: controller
       - name: Check whether read-only GitHub App credentials are configured
@@ -106,7 +106,7 @@ jobs:
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
           token: ${{ steps.app-token.outputs.token }}
@@ -114,7 +114,7 @@ jobs:
           persist-credentials: false
       - name: Set up the required Node.js runtime
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           cache: npm
@@ -167,17 +167,17 @@ jobs:
       matrix:
         include:
           - platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: release:verify:win
           - platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: release:verify:mac
           - platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: release:verify:linux
     steps:
       - name: Check out the Brightdesk Pages controller
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: controller
       - name: Check whether read-only GitHub App credentials are configured
@@ -205,7 +205,7 @@ jobs:
           permission-contents: read
       - name: Check out Brightdesk Suite main
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/Brightdesk-suite
           ref: main
@@ -214,7 +214,7 @@ jobs:
           persist-credentials: false
       - name: Set up the required Node.js runtime
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           cache: npm
@@ -265,127 +265,127 @@ jobs:
         include:
           - project: Brightdesk-suite
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: release:verify:win
           - project: Brightdesk-suite
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: release:verify:mac
           - project: Brightdesk-suite
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: release:verify:linux
           - project: Brightdesk-Sheets
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:product:win
           - project: Brightdesk-Sheets
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:product:mac
           - project: Brightdesk-Sheets
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:product:linux
           - project: Brightdesk-Decks
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:product:win
           - project: Brightdesk-Decks
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:product:mac
           - project: Brightdesk-Decks
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:product:linux
           - project: Brightdesk-Notes
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:product:win
           - project: Brightdesk-Notes
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:product:mac
           - project: Brightdesk-Notes
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:product:linux
           - project: Brightdesk-Database
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:product:win
           - project: Brightdesk-Database
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:product:mac
           - project: Brightdesk-Database
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:product:linux
           - project: Brightdesk-Forms
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:product:win
           - project: Brightdesk-Forms
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:product:mac
           - project: Brightdesk-Forms
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:product:linux
           - project: Brightdesk-Lists
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:desktop:win
           - project: Brightdesk-Lists
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:desktop:mac
           - project: Brightdesk-Lists
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:desktop:linux
           - project: Brightdesk-Planner
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:desktop:win
           - project: Brightdesk-Planner
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:desktop:mac
           - project: Brightdesk-Planner
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:desktop:linux
           - project: Brightdesk-To-Do
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:desktop:win
           - project: Brightdesk-To-Do
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:desktop:mac
           - project: Brightdesk-To-Do
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:desktop:linux
           - project: Brightdesk-Workspace
             platform: win
-            runner: ["self-hosted", "Windows", "X64"]
+            runner: windows-latest
             verify_script: verify:desktop:win
           - project: Brightdesk-Workspace
             platform: mac
-            runner: ["self-hosted", "macOS", "ARM64"]
+            runner: macos-latest
             verify_script: verify:desktop:mac
           - project: Brightdesk-Workspace
             platform: linux
-            runner: ["self-hosted", "Linux", "X64"]
+            runner: ubuntu-latest
             verify_script: verify:desktop:linux
     steps:
       - name: Check out the Brightdesk Pages controller
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           path: controller
       - name: Check whether read-only GitHub App credentials are configured
@@ -413,7 +413,7 @@ jobs:
           permission-contents: read
       - name: Check out the private Brightdesk project
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
           token: ${{ steps.app-token.outputs.token }}
@@ -421,7 +421,7 @@ jobs:
           persist-credentials: false
       - name: Set up the required Node.js runtime
         if: steps.private-token.outputs.available == 'true'
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 24.22.2
           cache: npm

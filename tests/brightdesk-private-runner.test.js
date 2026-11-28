@@ -540,23 +540,32 @@ test('macOS installer diagnostics expose only safe bundle and receipt messages',
   assert.doesNotMatch(runner, /Brightdesk\\.app/);
 });
 
-test('private maintenance validation uses the Mac runner and all installer jobs avoid paid hosted runners', () => {
+test('private maintenance controller uses GitHub-hosted runners for every project and platform', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const validateJob = source.split('  validate-controller:')[1]?.split('  daily-private-tests:')[0] ?? '';
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   const suiteInstallerJob = source.split('  suite-one-time-installer-smoke-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   const weeklyInstallerJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
 
-  assert.match(validateJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
-  assert.match(dailyJob, /runs-on: \[self-hosted, macOS, ARM64\]/);
+  assert.match(validateJob, /runs-on: ubuntu-slim/);
+  assert.match(dailyJob, /runs-on: ubuntu-latest/);
   for (const job of [suiteInstallerJob, weeklyInstallerJob]) {
     assert.match(job, /runs-on: \$\{\{ matrix\.runner \}\}/);
-    assert.match(job, /runner: \["self-hosted", "Windows", "X64"\]/);
-    assert.match(job, /runner: \["self-hosted", "macOS", "ARM64"\]/);
-    assert.match(job, /runner: \["self-hosted", "Linux", "X64"\]/);
+    assert.match(job, /runner: windows-latest/);
+    assert.match(job, /runner: macos-latest/);
+    assert.match(job, /runner: ubuntu-latest/);
+    assert.doesNotMatch(job, /self-hosted/);
   }
-  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
-  assert.doesNotMatch(source, /connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
+});
+
+test('README freshness uses a pinned GitHub-hosted runner', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'readme-freshness.yml'), 'utf8');
+  assert.match(source, /runs-on: ubuntu-slim/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.doesNotMatch(source, /self-hosted/);
 });
 
 
