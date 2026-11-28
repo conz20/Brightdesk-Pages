@@ -290,7 +290,7 @@ jobs:
           run_safely "locked dependency installation" npm ci --no-audit --no-fund
           run_safely "Node.js runtime validation" npm run check:node
           run_safely "syntax validation" npm run check
-          run_safely "contract and regression tests" npm test
+          run_safely "contract and regression tests" npm test -- --test-reporter=tap
           if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-Developer-Tools" ]]; then
             run_safely "JSON diagnostic validation" bash -euc 'node bin/brightdesk-dev.mjs doctor --root . --json > "$RUNNER_TEMP/brightdesk-developer-tools-doctor.json"'
           fi
