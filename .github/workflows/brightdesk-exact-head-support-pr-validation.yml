@@ -1,0 +1,209 @@
+name: Brightdesk exact-head private support PR validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-exact-head-support-pr-validation.yml'
+      - '.github/requests/brightdesk-support-pr-validation.json'
+      - 'scripts/brightdesk-private-runner/run-support-project-check.sh'
+      - 'tests/brightdesk-support-private-validation.test.js'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-exact-head-support-pr-validation-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Validate the owner-approved support PR request
+    if: github.actor == github.repository_owner && contains(github.event.head_commit.message, '[validate-support-policy-prs]')
+    runs-on: ubuntu-slim
+    outputs:
+      matrix: ${{ steps.request.outputs.matrix }}
+    steps:
+      - name: Check out trusted Pages main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up pinned Node.js for controller validation
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+
+      - name: Check support validation script syntax and controller test
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n scripts/brightdesk-private-runner/run-support-project-check.sh
+          node --test tests/brightdesk-support-private-validation.test.js
+
+      - name: Validate the support PR request
+        id: request
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const allowed = {
+            'Brightdesk-AI': ['mac'],
+            'Brightdesk-Fonts': ['linux'],
+            'Brightdesk-Localization': ['linux'],
+            'Brightdesk-Engine': ['mac'],
+            'Brightdesk-Common-Libs': ['linux'],
+            'Brightdesk-Common-Actions': ['linux'],
+            'Brightdesk-Developer-Tools': ['linux'],
+            'Brightdesk-Release-Tools': ['linux'],
+            'Brightdesk-Services': ['linux'],
+            'Brightdesk-Type-Preview': ['mac'],
+            'Brightdesk-Printing': ['mac', 'win'],
+            'Brightdesk-Voice': ['mac']
+          };
+          const request = JSON.parse(fs.readFileSync('.github/requests/brightdesk-support-pr-validation.json', 'utf8'));
+          if (request.schema !== 1 || !Array.isArray(request.projects)) {
+            throw new Error('Invalid support validation request schema.');
+          }
+          const seen = new Set();
+          const projects = new Set();
+          const include = request.projects.map(item => {
+            if (!item || !Object.hasOwn(allowed, item.project) ||
+                !allowed[item.project].includes(item.platform)) {
+              throw new Error('Unknown support project or platform in the approved request.');
+            }
+            if (!Number.isSafeInteger(item.pr) || item.pr < 1 ||
+                !/^[a-f0-9]{40}$/.test(item.head_sha || '') ||
+                !/^[a-f0-9]{40}$/.test(item.base_sha || '')) {
+              throw new Error('Each support PR must have an exact 40-character base and head SHA.');
+            }
+            const key = item.project + ':' + item.platform;
+            if (seen.has(key)) throw new Error('Duplicate support project/platform entry.');
+            seen.add(key);
+            projects.add(item.project);
+            const runner = item.platform === 'linux' ? 'ubuntu-latest'
+              : item.platform === 'mac' ? 'macos-latest' : 'windows-latest';
+            return { ...item, runner };
+          });
+          if (projects.size !== Object.keys(allowed).length ||
+              include.length !== 13 ||
+              !include.some(x => x.project === 'Brightdesk-Printing' && x.platform === 'mac') ||
+              !include.some(x => x.project === 'Brightdesk-Printing' && x.platform === 'win')) {
+            throw new Error('The request must include all twelve approved support projects and both Printing native platforms.');
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix=' + JSON.stringify({ include }) + '\n');
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+            '## Support PR validation request\n\n- Twelve approved repositories\n- Thirteen platform-specific jobs\n- Exact base and head SHAs required\n- Read-only repository access only\n');
+          NODE
+
+  validate:
+    name: Test ${{ matrix.project }} PR #${{ matrix.pr }} (${{ matrix.platform }})
+    needs: prepare
+    if: needs.prepare.result == 'success'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+
+    steps:
+      - name: Check out trusted Pages controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          path: controller
+          persist-credentials: false
+
+      - name: Mask private commit identifiers
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ matrix.head_sha }}
+          EXPECTED_BASE: ${{ matrix.base_sha }}
+        run: |
+          echo "::add-mask::$EXPECTED_HEAD"
+          echo "::add-mask::$EXPECTED_BASE"
+
+      - name: Set up pinned Node.js 24.22.2
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+
+      - name: Set up pinned Rust 1.99.1 for Rust projects
+        if: matrix.project == 'Brightdesk-AI' || matrix.project == 'Brightdesk-Engine'
+        uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8
+        with:
+          toolchain: 1.99.1
+          components: rustfmt, clippy
+
+      - name: Create a short-lived Contents read-only token for this support repository
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.project }}
+          permission-contents: read
+
+      - name: Check out the exact private support PR commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
+          ref: ${{ matrix.head_sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          fetch-depth: 0
+          submodules: ${{ matrix.project == 'Brightdesk-Engine' }}
+          persist-credentials: false
+
+      - name: Verify exact head, base ancestry and README freshness
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ matrix.head_sha }}
+          EXPECTED_BASE: ${{ matrix.base_sha }}
+          PROJECT: ${{ matrix.project }}
+          PR_NUMBER: ${{ matrix.pr }}
+        run: |
+          set -Eeuo pipefail
+          actual_head="$(git -C source rev-parse HEAD)"
+          if [[ "$actual_head" != "$EXPECTED_HEAD" ]]; then
+            echo "::error::$PROJECT PR #$PR_NUMBER is not at its requested exact head."
+            exit 1
+          fi
+          git -C source cat-file -e "$EXPECTED_BASE^{commit}"
+          if ! git -C source merge-base --is-ancestor "$EXPECTED_BASE" "$EXPECTED_HEAD"; then
+            echo "::error::$PROJECT PR #$PR_NUMBER base is not an ancestor of its exact head."
+            exit 1
+          fi
+          changed_files="$(git -C source diff --name-only "$EXPECTED_BASE...$EXPECTED_HEAD")"
+          readme_changed=false
+          non_markdown_changed=false
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            if [[ "$file" == "README.md" ]]; then readme_changed=true; fi
+            case "$file" in
+              *.md|*.mdx|.github/workflows/readme-freshness.yml) ;;
+              *) non_markdown_changed=true ;;
+            esac
+          done <<< "$changed_files"
+          if [[ "$non_markdown_changed" == "true" && "$readme_changed" != "true" ]]; then
+            echo "::error::$PROJECT PR #$PR_NUMBER changes non-Markdown files without a root README update."
+            exit 1
+          fi
+          if [[ -d source/.github/workflows ]] &&
+             grep -R -E '^[[:space:]]*runs-on:[[:space:]]*(self-hosted|\[.*self-hosted)' source/.github/workflows --include='*.yml' --include='*.yaml' >/dev/null 2>&1; then
+            echo "::error::$PROJECT PR #$PR_NUMBER still contains a self-hosted workflow runner."
+            exit 1
+          fi
+          echo "Exact head, base ancestry, README freshness and hosted-runner policy verified."
+
+      - name: Run private support checks without publishing source logs
+        shell: bash
+        env:
+          RUNNER_TEMP: ${{ runner.temp }}
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-support-project-check.sh \
+            source "${{ matrix.project }}" "${{ matrix.platform }}"

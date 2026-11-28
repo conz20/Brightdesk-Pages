@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "round": "exact-head-support-policy-validation-2026-11-29",
+  "purpose": "Verify exact current support-repository security-policy PR heads without personal devices or private-repository runner dependency.",
+  "projects": [
+    {
+      "project": "Brightdesk-AI",
+      "pr": 38,
+      "head_sha": "6ac8f517ee135ff18134fbfaf779471aacb237bd",
+      "base_sha": "328a0c410eb72e847b0aaa68a548dae824c0a469",
+      "platform": "mac"
+    },
+    {
+      "project": "Brightdesk-Fonts",
+      "pr": 7,
+      "head_sha": "70fac1f5f5a92fe8f02a821a61b80d4689a67847",
+      "base_sha": "65da4be9c44d5a60139f6f6ce5eba7eef972b8c6",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Localization",
+      "pr": 10,
+      "head_sha": "0e88873ccad5ca636192f85b6ad4ad477e7b6e08",
+      "base_sha": "d03aad60ad1258740b1a6649bd9cbadfb7d75b1c",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Engine",
+      "pr": 12,
+      "head_sha": "a0244af0c7f5106cb3454f25b1a00047df8b1837",
+      "base_sha": "d004442a176ce4bb8debbcebb71cf81554d8e7e2",
+      "platform": "mac"
+    },
+    {
+      "project": "Brightdesk-Common-Libs",
+      "pr": 9,
+      "head_sha": "a8171288e4a0cb5e6d07013317463993e2d130e1",
+      "base_sha": "480ba7fb1593f2c7f261636dbf83bc2f0a0eb2f5",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Common-Actions",
+      "pr": 8,
+      "head_sha": "74c43f452833cf29b2d239d6e2b7ed83b7b4b191",
+      "base_sha": "21740f0007d92fd644735043835fe764fb3cf8d9",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Developer-Tools",
+      "pr": 10,
+      "head_sha": "0eb22e617e65953af6a191197759d5085c848e0f",
+      "base_sha": "e5b4acdbda7f90f16a1a299544406b2da672faa8",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Release-Tools",
+      "pr": 5,
+      "head_sha": "2fb9c461733fbd286e9f22443f40140ab895b1f3",
+      "base_sha": "535d3c3e8aa038af08142060f0974e4c0a22c243",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Services",
+      "pr": 6,
+      "head_sha": "230fa04c279414a0464db3dd48aff88ac4d7b4ed",
+      "base_sha": "3e3d9f68072dab85813db5cdb6c5c6d75dea4109",
+      "platform": "linux"
+    },
+    {
+      "project": "Brightdesk-Type-Preview",
+      "pr": 6,
+      "head_sha": "ad72949581cfb01bd3a2031207dec97462410275",
+      "base_sha": "65423f9ad65ac32979c3bd984cb5a04ad03c3d53",
+      "platform": "mac"
+    },
+    {
+      "project": "Brightdesk-Printing",
+      "pr": 4,
+      "head_sha": "1f89131a908536b10026dcf8f9953caf8af33139",
+      "base_sha": "028dd21adbc85b8f441a03158363426107058923",
+      "platform": "mac"
+    },
+    {
+      "project": "Brightdesk-Printing",
+      "pr": 4,
+      "head_sha": "1f89131a908536b10026dcf8f9953caf8af33139",
+      "base_sha": "028dd21adbc85b8f441a03158363426107058923",
+      "platform": "win"
+    },
+    {
+      "project": "Brightdesk-Voice",
+      "pr": 32,
+      "head_sha": "13f85b1df3e18866bd89529e4ff4b8bd622ff110",
+      "base_sha": "1d64905736f9f7cc63429de6049c7f8019b5fba4",
+      "platform": "mac"
+    }
+  ]
+}
