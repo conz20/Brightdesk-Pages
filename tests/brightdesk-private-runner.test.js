@@ -35,8 +35,8 @@ test('controller grants only read access through the default workflow token', ()
 
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 6);
-  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 3);
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 7);
+  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 5);
   assert.equal((source.match(/permission-contents: read/g) || []).length, 5);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
@@ -714,7 +714,7 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(job, /pr_number: 27/);
 
   assert.equal((job.match(/^\s+- project:/gm) || []).length, 10);
-  assert.equal((job.match(/^\s+project: Brightdesk-Lists$/gm) || []).length, 2);
+  assert.equal((job.match(/^\s+- project: Brightdesk-Lists$/gm) || []).length, 2);
   assert.equal((job.match(/^\s+pr_number: 48$/gm) || []).length, 2);
   for (const sha of [
     '9063fd07abe275016bf894a68af1d7a77f57a8ed',
