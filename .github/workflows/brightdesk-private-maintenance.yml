@@ -57,8 +57,8 @@ permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || 'brightdesk-private-project-maintenance' }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ${{ github.event_name == 'pull_request' && format('brightdesk-private-maintenance-pr-{0}', github.event.pull_request.number) || (github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]') && format('brightdesk-suite-installer-request-{0}', github.sha)) || format('brightdesk-private-maintenance-{0}', github.event_name) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
 
 jobs:
   validate-controller:

@@ -161,4 +161,4 @@ The `brightdesk-archive-sync.yml` workflow is the scheduled/manual controller fo
 
 ## Repository automation
 
-The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu.
+The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu. Controller concurrency is separated by event type; newer pull-request and push runs cancel stale predecessors so old queued runs cannot block current checks.
