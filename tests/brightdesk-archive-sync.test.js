@@ -79,3 +79,20 @@ test('portfolio backups are scheduled every six hours on GitHub-hosted runners',
   assert.ok(workflow.includes('cron: "17 */6 * * *"'), 'Expected a six-hour UTC schedule');
   assert.match(workflow, /runs-on: ubuntu-latest/);
 });
+
+
+test('scheduled archive checks poll for changes every five minutes and retain the six-hour reconciliation', () => {
+  assert.ok(workflow.includes('cron: "3/5 * * * *"'), 'Expected a five-minute change check');
+  assert.ok(workflow.includes('cron: "17 */6 * * *"'), 'Expected the six-hour safety reconciliation');
+  assert.match(workflow, /ONLY_CHANGED:/);
+  assert.match(workflow, /github\.event_name == 'schedule'/);
+});
+
+test('change-aware archive mode checks source branch and tag SHAs before cloning', () => {
+  assert.match(script, /ONLY_CHANGED/);
+  assert.match(script, /git ls-remote --refs/);
+  assert.match(script, /refs\/archive\/\$repo\/heads/);
+  assert.match(script, /refs\/archive\/\$repo\/tags/);
+  assert.match(script, /No source changes detected/);
+  assert.match(script, /UNCHANGED/);
+});
