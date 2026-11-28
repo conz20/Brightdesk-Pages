@@ -187,6 +187,36 @@ jobs:
           cache-dependency-path: source/package-lock.json
 
       - name: Run private tests, licence checks and release preflight
+        id: run-private-check
         shell: bash
         run: |
           bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh test source "${{ matrix.project }}"
+
+      - name: Create a short-lived issue-only token for private test diagnostics
+        id: private-test-issue-token
+        if: failure() && steps.run-private-check.outputs.failure_log_file != ''
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: conz20
+          repositories: ${{ matrix.project }}
+          permission-issues: write
+
+      - name: Save names-only diagnostic to the private product PR
+        if: always()
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ steps.private-test-issue-token.outputs.token }}
+          BRIGHTDESK_FAILURE_LOG_FILE: ${{ steps.run-private-check.outputs.failure_log_file }}
+          BRIGHTDESK_PROJECT: ${{ matrix.project }}
+          BRIGHTDESK_PR_NUMBER: ${{ matrix.pr }}
+          GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
+        shell: bash
+        run: |
+          if [[ -n "$GITHUB_TOKEN" && -s "$BRIGHTDESK_FAILURE_LOG_FILE" ]]; then
+            node controller/scripts/brightdesk-private-runner/report-private-pr-test-failure.js
+          else
+            echo "No private test diagnostic needs to be saved."
+          fi
