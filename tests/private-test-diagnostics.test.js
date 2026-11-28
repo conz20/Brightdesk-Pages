@@ -21,6 +21,11 @@ test('private diagnostics extract Node spec reporter failure names', () => {
   assert.deepEqual(parseFailureNames(output), ['Linux path normalization remains portable']);
 });
 
+test('private diagnostics tolerate ANSI-coloured and indented TAP failures', () => {
+  const output = '  \u001b[31mnot ok 2 - highlighted failing case\u001b[0m\n';
+  assert.deepEqual(parseTapFailureNames(output), ['highlighted failing case']);
+});
+
 test('private diagnostics never include raw assertion messages or stack traces', () => {
   const summary = formatPrivateFailureSummary('Brightdesk-Developer-Tools', ['Linux path normalization remains portable']);
   assert.match(summary, /Linux path normalization remains portable/);
