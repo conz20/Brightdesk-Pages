@@ -79,7 +79,7 @@ test('daily Suite checks use the active independent branch while other private p
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
-  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
+  assert.ok(checkout.includes('repository: ${{ github.repository_owner }}/${{ matrix.project }}'));
   assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
