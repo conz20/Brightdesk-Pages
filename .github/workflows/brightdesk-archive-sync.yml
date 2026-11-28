@@ -30,12 +30,13 @@ jobs:
           persist-credentials: false
       - name: Check Bash syntax
         run: bash -n scripts/brightdesk-archive/sync.sh
-      - name: Test repository inventory and token boundaries
+      - name: Test repository inventory, verification and token boundaries
         run: node --test tests/brightdesk-archive-sync.test.js
 
   mirror:
     name: Mirror 27 source repositories into Brightdesk Archives
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    # Never expose backup secrets to pull requests or non-main branches.
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
