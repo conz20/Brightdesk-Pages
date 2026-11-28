@@ -65,17 +65,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - Brightdesk-suite
-          - Brightdesk-Sheets
-          - Brightdesk-Decks
-          - Brightdesk-Notes
-          - Brightdesk-Database
-          - Brightdesk-Forms
-          - Brightdesk-Lists
-          - Brightdesk-Planner
-          - Brightdesk-To-Do
-          - Brightdesk-Workspace
+        include:
+          - project: Brightdesk-suite
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Sheets
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Decks
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Notes
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Database
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Forms
+            ref: ci/github-hosted-runners-independent-of-macbook
+          - project: Brightdesk-Lists
+            ref: main
+          - project: Brightdesk-Planner
+            ref: main
+          - project: Brightdesk-To-Do
+            ref: main
+          - project: Brightdesk-Workspace
+            ref: ci/github-hosted-runners-independent-of-macbook
     steps:
       - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -109,7 +119,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
-          ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}
+          ref: ${{ matrix.ref }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
@@ -165,9 +175,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project:
-          - Brightdesk-Common-Libs
-          - Brightdesk-Developer-Tools
+        include:
+          - project: Brightdesk-Common-Libs
+            ref: feat/github-packages-npm-registry
+          - project: Brightdesk-Developer-Tools
+            ref: feature/dependency-package-audit
     steps:
       - name: Check out the Brightdesk Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -201,6 +213,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: conz20/${{ matrix.project }}
+          ref: ${{ matrix.ref }}
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
