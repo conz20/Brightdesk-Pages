@@ -148,7 +148,8 @@ test('private product PR diagnostics contain only cleaned failing test names', (
     prNumber: 8,
     failedNames: ['planner smoke test', 'planner smoke test', 'source /home/runner/work/private/src/app.js:42']
   });
-  assert.ok(body.includes('Brightdesk-Planner PR #8'));
+  assert.ok(body.includes('Brightdesk-Planner'));
+  assert.ok(body.includes('Pull request: #8'));
   assert.ok(body.includes('planner smoke test'));
   assert.ok(body.includes(MARKER_PREFIX));
   assert.doesNotMatch(body, /\/home\/runner|SECRET_SOURCE_CONTENT|assertion detail|stack trace/);
