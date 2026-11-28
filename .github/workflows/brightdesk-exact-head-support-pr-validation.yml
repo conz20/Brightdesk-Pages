@@ -189,7 +189,7 @@ jobs:
             exit 1
           fi
           if [[ -d source/.github/workflows ]] &&
-             grep -R -E '^[[:space:]]*runs-on:[[:space:]]*(self-hosted|\\[.*self-hosted)' source/.github/workflows --include='*.yml' --include='*.yaml' >/dev/null 2>&1; then
+             grep -R -E '^[[:space:]]*runs-on:[[:space:]]*(self-hosted|\[.*self-hosted)' source/.github/workflows --include='*.yml' --include='*.yaml' >/dev/null 2>&1; then
             echo "::error::$PROJECT PR #$PR_NUMBER still contains a self-hosted workflow runner."
             exit 1
           fi
