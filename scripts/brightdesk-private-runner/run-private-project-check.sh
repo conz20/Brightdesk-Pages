@@ -113,6 +113,11 @@ run_private_tests() {
         printf 'failure_summary_file=%s\n' "$summary_file" >> "$GITHUB_OUTPUT"
       fi
     fi
+    if [[ "$PROJECT_NAME" != "Brightdesk-suite" && -n "${GITHUB_OUTPUT:-}" ]]; then
+      # Raw TAP stays in this ephemeral runner's temp directory.
+      # A separate private-repository token is required before names-only reporting.
+      printf 'failure_log_file=%s\n' "$LOG_FILE" >> "$GITHUB_OUTPUT"
+    fi
     fail_check "$status"
   fi
 }

@@ -769,7 +769,7 @@ test('exact-head private PR request pins unique project/PR pairs within the appr
     assert.match(item.head_sha, /^[a-f0-9]{40}$/);
     assert.match(item.base_sha, /^[a-f0-9]{40}$/);
   }
-  assert.equal(request.projects.length, 5);
+  assert.equal(request.projects.length, 9);
   for (const expected of [
     'd5cf0d95758809378ecb379e5d917fe696d9477e',
     '30261c8efc145f8b33e1540d64298bb5c86be225',
@@ -777,4 +777,27 @@ test('exact-head private PR request pins unique project/PR pairs within the appr
     '89425d726d7518c173886af8027cad3ee3bb9710',
     '18a515bc0da867a0bf632b7821dd7f0e31435921'
   ]) assert.ok(request.projects.some(item => item.head_sha === expected), expected);
+});
+
+
+test('private exact-head tests save only names-only failure diagnostics to the matching private PR', () => {
+  const workflow = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-exact-head-product-pr-validation.yml'), 'utf8');
+  const runner = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'run-private-project-check.sh'), 'utf8');
+  assert.match(runner, /failure_log_file=/);
+  assert.match(workflow, /id: run-private-check/);
+  assert.match(workflow, /permission-issues: write/);
+  assert.match(workflow, /repositories: \$\{\{ matrix\.project \}\}/);
+  assert.match(workflow, /BRIGHTDESK_FAILURE_LOG_FILE/);
+  assert.match(workflow, /BRIGHTDESK_PR_NUMBER/);
+  assert.match(workflow, /report-private-pr-test-failure\.js/);
+  assert.match(workflow, /continue-on-error: true/);
+  assert.doesNotMatch(workflow, /upload-artifact/);
+});
+
+test('private PR diagnostic reporter keeps the raw log on the ephemeral runner', () => {
+  const reporter = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'report-private-pr-test-failure.js'), 'utf8');
+  assert.match(reporter, /parseTapFailureNames/);
+  assert.match(reporter, /upsertPrivatePrDiagnostic/);
+  assert.match(reporter, /issues\/\$\{prNumber\}\/comments/);
+  assert.doesNotMatch(reporter, /console\.log\(tapOutput|process\.stdout\.write\(tapOutput/);
 });
