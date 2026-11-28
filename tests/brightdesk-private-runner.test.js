@@ -691,8 +691,8 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.ok(job.includes('ref: ${{ matrix.project_ref }}'));
   assert.match(job, /expected_head_sha/);
   assert.match(job, /base_sha/);
-  assert.match(job, /git rev-parse HEAD/);
-  assert.match(job, /git diff --name-only/);
+  assert.match(job, /git -C source rev-parse HEAD/);
+  assert.match(job, /git -C source diff --name-only/);
   assert.doesNotMatch(job, /git -C source fetch/);
   assert.match(job, /run-private-project-check\.sh/);
   assert.match(job, /Run private project tests without publishing source logs/);
