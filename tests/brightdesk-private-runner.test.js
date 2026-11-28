@@ -672,7 +672,7 @@ test('public Pages repository references use the current Brightdesk project owne
 });
 
 
-test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and read-only', () => {
+test('reviewed-product PR batch is owner-triggered by dispatch or approved push and remains exact-head pinned', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const dispatch = source.split('  workflow_dispatch:')[1]?.split('\n\npermissions:')[0] ?? '';
   assert.match(dispatch, /run_reviewed_product_pr_matrix:/);
@@ -682,6 +682,9 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   const job = source.split('  reviewed-product-pr-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   assert.match(job, /github\.event_name == 'workflow_dispatch'/);
   assert.match(job, /inputs\.run_reviewed_product_pr_matrix == true/);
+  assert.match(job, /github\.event_name == 'push'/);
+  assert.match(job, /github\.actor == github\.repository_owner/);
+  assert.match(job, /validate-reviewed-product-pr-matrix/);
   assert.match(job, /runs-on: ubuntu-latest/);
   assert.match(job, /matrix:\s*\n\s*include:/);
   assert.match(job, /permission-contents: read/);
@@ -713,8 +716,8 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(job, /pr_number: 26/);
   assert.match(job, /pr_number: 27/);
 
-  assert.equal((job.match(/^\s+- project:/gm) || []).length, 10);
-  assert.equal((job.match(/^\s+- project: Brightdesk-Lists$/gm) || []).length, 2);
+  assert.equal((job.match(/^\s+- project:/gm) || []).length, 14);
+  assert.equal((job.match(/^\s+- project: Brightdesk-Lists$/gm) || []).length, 3);
   assert.equal((job.match(/^\s+pr_number: 48$/gm) || []).length, 2);
   for (const sha of [
     '9063fd07abe275016bf894a68af1d7a77f57a8ed',
@@ -726,13 +729,19 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
     '5324585a8c7a03cad7f418b2e115d194189c2219',
     'f1e072500717cb494ff2c2b6de7347c2aa321a5f',
     '4fc0e4cc984491d98d6cede2b0a61855f1d38b63',
-    'ea94a8acee1331321100c707151955698831c74c'
+    'ea94a8acee1331321100c707151955698831c74c',
+    '5639b1d44bdd32ed72acec6d2cf2d58927cef084',
+    '55479bc485bf182adb197c74970859ff05e09086',
+    'ccab697714c803c11f0cf3d32f934b56e1f64a',
+    'bcac6f5ade6c6b6b22d8d517294cba503b32d0fe'
   ]) assert.ok(job.includes('expected_head_sha: ' + sha), sha + ' must stay pinned');
 
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   assert.match(dailyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  assert.match(dailyJob, /validate-reviewed-product-pr-matrix/);
   const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   assert.match(foundationJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  assert.match(foundationJob, /validate-reviewed-product-pr-matrix/);
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
   assert.match(weeklyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
 });
