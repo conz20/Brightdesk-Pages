@@ -7,18 +7,28 @@ on:
       - '.github/workflows/brightdesk-exact-head-product-pr-validation.yml'
       - '.github/requests/brightdesk-product-pr-validation.json'
       - 'README.md'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-exact-head-product-pr-validation.yml'
+      - '.github/requests/brightdesk-product-pr-validation.json'
+      - 'README.md'
 
 permissions:
   contents: read
 
 concurrency:
-  group: brightdesk-exact-head-private-product-pr-validation-${{ github.event.pull_request.number }}
+  group: brightdesk-exact-head-private-product-pr-validation-${{ github.event_name == 'push' && github.sha || github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   prepare:
     name: Validate approved private product request
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+       github.actor == github.repository_owner &&
+       contains(github.event.head_commit.message, '[validate-exact-head-private-prs]'))
     runs-on: ubuntu-slim
     outputs:
       matrix: ${{ steps.request.outputs.matrix }}
@@ -26,7 +36,7 @@ jobs:
       - name: Check out the validation controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.event_name == 'push' && github.sha || 'main' }}
           persist-credentials: false
 
       - name: Validate the exact-head request
@@ -51,20 +61,21 @@ jobs:
           const file = '.github/requests/brightdesk-product-pr-validation.json';
           const request = JSON.parse(fs.readFileSync(file, 'utf8'));
           if (request.schema !== 1 || !Array.isArray(request.projects) ||
-              request.projects.length < 1 || request.projects.length > 10) {
+              request.projects.length < 1 || request.projects.length > 20) {
             throw new Error('The private product validation request has an invalid schema or project count.');
           }
           const seen = new Set();
           for (const item of request.projects) {
-            if (!item || !allowed.has(item.project) || seen.has(item.project)) {
-              throw new Error('The request contains an unknown or duplicate product.');
+            const key = item && `${item.project}#${item.pr}`;
+            if (!item || !allowed.has(item.project) || seen.has(key)) {
+              throw new Error('The request contains an unknown or duplicate project/PR pair.');
             }
             if (!Number.isSafeInteger(item.pr) || item.pr < 1 ||
                 !/^[a-f0-9]{40}$/.test(item.head_sha || '') ||
                 !/^[a-f0-9]{40}$/.test(item.base_sha || '')) {
               throw new Error('Every entry must contain a valid PR number and exact 40-character base/head commit SHA.');
             }
-            seen.add(item.project);
+            seen.add(key);
           }
           const matrix = JSON.stringify({ include: request.projects });
           fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix=' + matrix + '\n');
@@ -73,7 +84,11 @@ jobs:
   validate:
     name: Test ${{ matrix.project }} PR #${{ matrix.pr }}
     needs: prepare
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: >-
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+       github.actor == github.repository_owner &&
+       contains(github.event.head_commit.message, '[validate-exact-head-private-prs]'))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -85,7 +100,7 @@ jobs:
       - name: Check out the validation controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.event_name == 'push' && github.sha || 'main' }}
           path: controller
           persist-credentials: false
 
