@@ -79,7 +79,7 @@ test('daily Suite checks use the active independent branch while other private p
   const source = fs.readFileSync(workflow, 'utf8');
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
-  assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
+  assert.ok(checkout.includes('repository: ${{ github.repository_owner }}/${{ matrix.project }}'));
   assert.ok(checkout.includes("ref: ${{ github.event_name == 'workflow_dispatch' && inputs.project != 'all' && matrix.project == inputs.project && inputs.project_ref || (matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main') }}"));
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
@@ -107,7 +107,7 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     'brightdesk-ai-test-coverage-validation.yml'
   ]) {
     const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', name), 'utf8');
-    assert.match(source, /repository: conz20\/Brightdesk-AI/);
+    assert.match(source, /repository: \$\{\{ github\.repository_owner \}\}\/Brightdesk-AI/);
     assert.match(source, /ref: main/);
     assert.doesNotMatch(source, /ref: [a-f0-9]{40}/);
     assert.match(source, /git -C private-ai rev-parse HEAD/);
@@ -173,7 +173,7 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.match(oneTimeJob, /github\.event_name == 'push'/);
   assert.match(oneTimeJob, /github\.event\.head_commit\.message/);
   assert.match(oneTimeJob, /\[build-brightdesk-suite-installers\]/);
-  assert.ok(oneTimeJob.includes('repository: conz20/Brightdesk-suite'));
+  assert.ok(oneTimeJob.includes('repository: ${{ github.repository_owner }}/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
@@ -560,7 +560,7 @@ test('private maintenance controller uses GitHub-hosted runners for every projec
     assert.match(job, /runner: ubuntu-latest/);
     assert.doesNotMatch(job, /self-hosted/);
   }
-  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|conz20/);
   assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
@@ -586,7 +586,7 @@ test('Pages installer workflow uses the approved GitHub-hosted runner matrix', (
   assert.match(build, /runner: ubuntu-latest/);
   assert.match(build, /runs-on: \$\{\{ matrix\.runner \}\}/);
   assert.match(publish, /runs-on: ubuntu-slim/);
-  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.doesNotMatch(source, /self-hosted|conz20/);
   assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
