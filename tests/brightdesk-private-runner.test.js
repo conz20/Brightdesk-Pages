@@ -590,3 +590,20 @@ test('Pages installer workflow uses the approved GitHub-hosted runner matrix', (
   assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
   assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
+
+
+test('private shared engineering repositories are tested through the hosted controller', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const job = source.split('  daily-private-foundation-tests:')[1] ?? '';
+  assert.ok(job.includes('Brightdesk-Common-Libs'), 'Common Libraries must be checked');
+  assert.ok(job.includes('Brightdesk-Developer-Tools'), 'Developer Tools must be checked');
+  assert.ok(job.includes('permission-contents: read'), 'private source tokens must remain read-only');
+  assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'), 'Node must follow each repository engine pin');
+  assert.ok(job.includes('npm run verify'), 'Common Libraries contract verification must run');
+  assert.ok(job.includes('npm run check:node'), 'Developer Tools runtime validation must run');
+  assert.ok(job.includes('npm run check'), 'Developer Tools syntax validation must run');
+  assert.ok(job.includes('npm test'), 'Developer Tools regression tests must run');
+  assert.match(job, /RUNNER_TEMP/);
+  assert.match(job, /detailed output was kept only on the temporary runner/i);
+  assert.doesNotMatch(job, /cat .*\.log|upload-artifact/);
+});
