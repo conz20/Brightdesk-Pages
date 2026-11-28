@@ -156,3 +156,7 @@ Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in loca
 ## Repository automation
 
 The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu.
+
+## Dependency updates
+
+Brightdesk checks npm packages and GitHub Actions for stable updates weekly. Update proposals are reviewed and tested before acceptance; they are not merged or published automatically.
