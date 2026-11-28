@@ -123,11 +123,23 @@ jobs:
           token: ${{ steps.app-token.outputs.token }}
           path: source
           persist-credentials: false
+      - name: Read the project's exact Node.js engine pin
+        id: node-version
+        if: steps.private-token.outputs.available == 'true'
+        working-directory: source
+        shell: bash
+        run: |
+          node_version="$(node -e "const p = require('./package.json'); process.stdout.write(p.engines?.node ?? '')")"
+          if [[ ! "$node_version" =~ ^24\\.[0-9]+\\.[0-9]+$ ]]; then
+            echo "The project must declare an exact Node.js 24 engine version." >&2
+            exit 1
+          fi
+          printf 'value=%s\\n' "$node_version" >> "$GITHUB_OUTPUT"
       - name: Set up the required Node.js runtime
         if: steps.private-token.outputs.available == 'true'
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: 24.22.2
+          node-version: ${{ steps.node-version.outputs.value }}
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Run private project tests without publishing source logs
