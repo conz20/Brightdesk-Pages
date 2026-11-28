@@ -93,7 +93,7 @@ test('controller PRs and trusted pushes trigger daily private checks but never s
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   assert.match(
     dailyJob,
-    /if:\s*>\-\s*\(github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\) &&\s*\(github\.event_name != 'workflow_dispatch' \|\| inputs\.project == 'all' \|\| matrix\.project == inputs\.project\)/
+    /if:\s*>\-\s*\(github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\) &&\s*\(github\.event_name != 'workflow_dispatch' \|\| \(inputs\.run_reviewed_product_pr_matrix != true && \(inputs\.project == 'all' \|\| matrix\.project == inputs\.project\)\)\)/
   );
 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
