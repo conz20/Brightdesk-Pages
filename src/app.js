@@ -1,7 +1,7 @@
 const $ = (id) => document.getElementById(id);
 const t = (key) => window.BrightdeskI18n.t(key);
 const defaults = {
-  pages: { title: 'Untitled document', html: '' },
+  pages: { title: 'Untitled document', html: '', styleSet: 'brightdesk', watermark: 'none', pageColor: 'white', pageBorder: 'subtle' },
   sheets: { title: 'Untitled spreadsheet', cells: Array.from({ length: 20 }, () => Array(12).fill('')) },
   slides: { title: 'Untitled presentation', slides: [{ title: 'Your presentation title', body: 'Add a subtitle or a few words to introduce your idea.' }], current: 0 },
   notes: { title: 'Untitled note', text: '' },
@@ -35,22 +35,160 @@ const state = {
   todoView: 'my-day', todoQuery: '',
   selectedCell: { row: 0, col: 0 }, update: null, ribbonTab: 'home',
   installedApps: [], setupComplete: false, firstRunSelection: new Set(installableCatalog.map(item => item.id)),
-  slideTheme: 'lavender', focusMode: false, editorZoom: 100, sheetZoom: 100,
+  slideTheme: 'lavender', focusMode: false, showRuler: true, theme: 'light', editorZoom: 100, sheetZoom: 100,
   languageCatalog: [], installedLanguagePacks: [], spellCheckerLanguages: [], usesNativeMacSpellChecker: false,
   displayLanguage: 'en-AU', proofingLanguage: 'en-AU',
   installedDictionaries: [], dictionaryCatalogue: [], selectedDictionary: localStorage.getItem('brightdesk-selected-dictionary') || ''
 };
+let recoveryCandidate = null;
+let recoveryDismissed = false;
+let pageRecoveryDirty = false;
+let pageRecoveryHasSnapshot = false;
+let pageRecoveryRevision = 0;
+let pageRecoveryInFlight = null;
+let pagesReadAloudQueue = [];
+let pagesReadAloudIndex = 0;
+let pagesReadAloudVoice = null;
+let pagesReadAloudRunId = 0;
 const editor = $('editor'), sheetWrap = $('sheet-wrap'), slideWrap = $('slide-wrap'), notesWrap = $('notes-wrap');
 const pageLayout = window.BrightdeskPageLayout;
+const pagePagination = window.BrightdeskPagePagination;
+const pagesStyleSets = window.BrightdeskPagesStyleSets;
+const pagesReferences = window.BrightdeskPagesReferences;
+const pagesReadAloud = window.BrightdeskPagesReadAloud;
+const pagesTheme = window.BrightdeskPagesTheme;
 const commonJsonStorage = window.BrightdeskCommonLibs;
 if (!commonJsonStorage) throw new Error('Brightdesk common storage helper was not loaded.');
+if (!pagesStyleSets) throw new Error('Brightdesk Pages style-set definitions were not loaded.');
+if (!pagesReferences) throw new Error('Brightdesk Pages references helpers were not loaded.');
+if (!pagesReadAloud) throw new Error('Brightdesk Pages Read Aloud helpers were not loaded.');
+if (!pagesTheme) throw new Error('Brightdesk Pages theme helpers were not loaded.');
 
 function clone(value) { return commonJsonStorage.cloneJsonValue(value); }
 function activeDoc() { return state.docs[state.app]; }
 function setStatus(message) { $('save-status').textContent = message; }
+function applyPagesTheme() {
+  state.theme = pagesTheme.normalizeTheme(state.theme);
+  const dark = state.app === 'pages' && state.view === 'workspace' && state.theme === 'dark';
+  document.documentElement.classList.toggle('pages-dark-mode', dark);
+}
+function togglePagesTheme() {
+  state.theme = pagesTheme.normalizeTheme(state.theme) === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('brightdesk-pages-theme', state.theme);
+  applyPagesTheme();
+  renderToolbar();
+  setStatus(state.theme === 'dark'
+    ? 'Dark workspace enabled. Document pages remain light.'
+    : 'Light workspace enabled.');
+}
+function pageHasRecoverableState(doc) {
+  const layout = pageLayout.normalizePageLayout(doc.pageSettings || {});
+  const defaultLayout = pageLayout.normalizePageLayout();
+  return Boolean(String(doc.html || '').trim())
+    || (doc.title || defaults.pages.title) !== defaults.pages.title
+    || Object.keys(defaultLayout).some(key => layout[key] !== defaultLayout[key])
+    || pagesStyleSets.normalizeStyleSet(doc.styleSet) !== pagesStyleSets.DEFAULT_STYLE_SET
+    || pagesStyleSets.normalizeWatermark(doc.watermark) !== 'none'
+    || pagesStyleSets.normalizePageColor(doc.pageColor) !== 'white'
+    || pagesStyleSets.normalizePageBorder(doc.pageBorder) !== 'subtle';
+}
+function markPageRecoveryDirty() {
+  const doc = state.docs.pages;
+  if (state.app !== 'pages' || !doc || (recoveryCandidate && !recoveryDismissed)) return;
+  if (!pageHasRecoverableState(doc) && !pageRecoveryHasSnapshot) return;
+  pageRecoveryDirty = true;
+  pageRecoveryRevision++;
+}
+function renderRecoveryBanner() {
+  const banner = $('recovery-banner');
+  if (!banner) return;
+  const visible = state.view === 'workspace' && state.app === 'pages' && Boolean(recoveryCandidate) && !recoveryDismissed;
+  banner.hidden = !visible;
+  if (!visible) return;
+  const savedAt = new Date(recoveryCandidate.savedAt);
+  const dateText = Number.isNaN(savedAt.getTime()) ? 'Saved previously' : `Saved ${savedAt.toLocaleString()}`;
+  $('recovery-summary').textContent = `${recoveryCandidate.title} · ${dateText}. This copy is stored only on this device.`;
+}
+async function refreshRecoveryCandidate() {
+  if (!window.brightdesk.listRecoveries) return;
+  try {
+    const snapshots = await window.brightdesk.listRecoveries();
+    recoveryCandidate = snapshots.find(item => item.productId === 'pages') || null;
+    pageRecoveryHasSnapshot = Boolean(recoveryCandidate);
+    recoveryDismissed = false;
+    renderRecoveryBanner();
+  } catch (error) {
+    console.warn('Local recovery copies could not be checked.', error);
+  }
+}
+async function flushPageRecovery() {
+  if (!pageRecoveryDirty || pageRecoveryInFlight || state.app !== 'pages' || !window.brightdesk.saveRecovery) return;
+  const doc = state.docs.pages || defaults.pages;
+  const revision = pageRecoveryRevision;
+  if (!pageHasRecoverableState(doc)) {
+    try {
+      await window.brightdesk.deleteRecovery('pages-active');
+      pageRecoveryHasSnapshot = false;
+      pageRecoveryDirty = false;
+      recoveryCandidate = null;
+      renderRecoveryBanner();
+    } catch (error) {
+      console.warn('The empty Pages recovery copy could not be cleared.', error);
+    }
+    return;
+  }
+  const payload = {
+    id: 'pages-active',
+    productId: 'pages',
+    title: String(doc.title || defaults.pages.title),
+    html: String(doc.html || ''),
+    pageSettings: doc.pageSettings || {},
+    styleSet: pagesStyleSets.normalizeStyleSet(doc.styleSet),
+    watermark: pagesStyleSets.normalizeWatermark(doc.watermark),
+    pageColor: pagesStyleSets.normalizePageColor(doc.pageColor),
+    pageBorder: pagesStyleSets.normalizePageBorder(doc.pageBorder)
+  };
+  const pending = window.brightdesk.saveRecovery(payload);
+  pageRecoveryInFlight = pending;
+  try {
+    await pending;
+    pageRecoveryHasSnapshot = true;
+    if (revision === pageRecoveryRevision) pageRecoveryDirty = false;
+  } catch (error) {
+    console.warn('The local recovery copy could not be saved.', error);
+    setStatus('Recovery copy could not be saved');
+  } finally {
+    if (pageRecoveryInFlight === pending) pageRecoveryInFlight = null;
+  }
+}
+async function clearPageRecoverySnapshot() {
+  if (recoveryCandidate && !recoveryDismissed) return;
+  pageRecoveryDirty = false;
+  pageRecoveryRevision++;
+  const pending = pageRecoveryInFlight;
+  if (pending) await pending.catch(() => {});
+  pageRecoveryDirty = false;
+  pageRecoveryHasSnapshot = false;
+  try {
+    await window.brightdesk.deleteRecovery('pages-active');
+    recoveryCandidate = null;
+    recoveryDismissed = true;
+    renderRecoveryBanner();
+  } catch (error) {
+    console.warn('The saved document recovery copy could not be removed.', error);
+  }
+}
 function persist() {
-  try { commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-docs-v3', state.docs); setStatus('Saved on this device'); }
-  catch (error) { setStatus('Could not save locally'); console.error(error); }
+  try {
+    commonJsonStorage.writeJsonValue(localStorage, 'brightdesk-docs-v3', state.docs);
+    setStatus('Saved on this device');
+    markPageRecoveryDirty();
+    return true;
+  } catch (error) {
+    setStatus('Could not save locally');
+    console.error(error);
+    return false;
+  }
 }
 function loadLocal() {
   try {
@@ -73,6 +211,7 @@ function loadLocal() {
     if (launchAppId) { state.app = launchAppId; state.view = 'workspace'; }
     else if (!state.setupComplete) state.view = 'manager';
     else if (!installedApp(state.app)) state.app = state.installedApps[0] || 'pages';
+    state.theme = pagesTheme.normalizeTheme(localStorage.getItem('brightdesk-pages-theme'));
     state.displayLanguage = localStorage.getItem('brightdesk-display-language') || 'en-AU';
     state.proofingLanguage = localStorage.getItem('brightdesk-proofing-language') || state.displayLanguage;
   } catch (error) { console.warn('Local project or app settings could not be read.', error); state.view = 'manager'; }
@@ -85,7 +224,7 @@ function appLabel(id) { return catalog.find(item => item.id === id)?.name || id;
 
 function safeHtml(html) {
   const parsed = new DOMParser().parseFromString(String(html || ''), 'text/html');
-  const allowed = new Set(['P','DIV','H1','H2','H3','STRONG','B','EM','I','U','UL','OL','LI','BLOCKQUOTE','BR','SPAN','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','HR']);
+  const allowed = new Set(['P','DIV','H1','H2','H3','STRONG','B','EM','I','U','UL','OL','LI','BLOCKQUOTE','BR','SPAN','A','TABLE','THEAD','TBODY','TFOOT','TR','TD','TH','HR']);
   const walk = (node) => {
     [...node.childNodes].forEach(child => {
       if (child.nodeType === Node.ELEMENT_NODE) {
@@ -93,7 +232,16 @@ function safeHtml(html) {
         [...child.attributes].forEach(attr => {
           const isCell = child.tagName === 'TD' || child.tagName === 'TH';
           const isSpan = isCell && (attr.name === 'colspan' || attr.name === 'rowspan') && /^[1-9]\d{0,2}$/.test(attr.value) && Number(attr.value) <= 100;
-          if (!isSpan) child.removeAttribute(attr.name);
+          const isPageBreak = child.tagName === 'HR' && attr.name === 'data-pages-page-break' && attr.value === 'true';
+          const isTitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-title';
+          const isNoSpacingStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-no-spacing';
+          const isSubtitleStyle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-doc-subtitle';
+          const isHeadingId = ['H1','H2','H3'].includes(child.tagName) && attr.name === 'id' && pagesReferences.normalizeHeadingId(attr.value);
+          const isTocClass = child.tagName === 'DIV' && attr.name === 'class' && attr.value === 'pages-toc';
+          const isTocTitle = child.tagName === 'P' && attr.name === 'class' && attr.value === 'pages-toc-title';
+          const isTocLevel = child.tagName === 'LI' && attr.name === 'class' && /^pages-toc-level-[23]$/.test(attr.value);
+          const isInternalTocLink = child.tagName === 'A' && attr.name === 'href' && pagesReferences.normalizeHeadingHref(attr.value);
+          if (!isSpan && !isPageBreak && !isTitleStyle && !isNoSpacingStyle && !isSubtitleStyle && !isHeadingId && !isTocClass && !isTocTitle && !isTocLevel && !isInternalTocLink) child.removeAttribute(attr.name);
         });
         walk(child);
       } else if (child.nodeType !== Node.TEXT_NODE) child.remove();
@@ -106,7 +254,7 @@ function cellRaw(row, col) { return String(activeDoc().cells?.[row]?.[col] ?? ''
 function cellNumeric(row, col) { return window.BrightdeskFormula.calculateCell(activeDoc().cells || [], row, col); }
 function colIndex(label) { return window.BrightdeskFormula.columnIndex(label); }
 const ribbonTabs = {
-  pages: ['home', 'insert', 'layout', 'review', 'view'],
+  pages: ['home', 'insert', 'design', 'layout', 'references', 'review', 'view'],
   sheets: ['home', 'insert', 'formulas', 'data', 'view'],
   slides: ['home', 'insert', 'design', 'slideShow', 'view'],
   notes: ['home', 'insert', 'view']
@@ -127,6 +275,512 @@ function renderRibbonTabs() {
     button.addEventListener('click', () => { state.ribbonTab = tabKey; renderToolbar(); }); tabs.append(button);
   });
 }
+function refreshPagesOutline() {
+  const list = $('pages-outline');
+  if (!list) return;
+  const query = ($('pages-outline-search')?.value || '').trim().toLocaleLowerCase();
+  const headings = [...editor.querySelectorAll('h1,h2,h3')].filter(heading => heading.textContent.trim());
+  const visible = headings.filter(heading => !query || heading.textContent.toLocaleLowerCase().includes(query));
+  list.replaceChildren();
+  if (!headings.length) {
+    const empty = document.createElement('p');
+    empty.className = 'pages-outline-empty';
+    empty.textContent = 'Add headings to build your document outline.';
+    list.append(empty);
+    return;
+  }
+  if (!visible.length) {
+    const empty = document.createElement('p');
+    empty.className = 'pages-outline-empty';
+    empty.textContent = 'No matching headings.';
+    list.append(empty);
+    return;
+  }
+  visible.forEach(heading => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-outline-item';
+    button.dataset.level = heading.tagName.toLowerCase();
+    button.textContent = heading.textContent.trim();
+    button.title = heading.textContent.trim();
+    button.addEventListener('click', () => {
+      heading.scrollIntoView({ block: 'center', behavior: 'auto' });
+      editor.focus();
+    });
+    list.append(button);
+  });
+}
+
+let pagesFindMatchIndex = -1;
+
+function getPagesSearchSegments() {
+  const blockTags = new Set(['ADDRESS','ARTICLE','BLOCKQUOTE','DIV','H1','H2','H3','LI','P','PRE','SECTION','TD','TH']);
+  const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT);
+  const segments = [];
+  let node;
+  while ((node = walker.nextNode())) {
+    if (!node.nodeValue || !node.nodeValue.length) continue;
+    let block = node.parentElement;
+    while (block && block !== editor && !blockTags.has(block.tagName)) block = block.parentElement;
+    segments.push({ text: node.nodeValue, blockId: block || editor, node });
+  }
+  return segments;
+}
+
+function findPagesMatches() {
+  const query = $('pages-find-query').value;
+  return window.BrightdeskTextSearch.findTextMatches(getPagesSearchSegments(), query, {
+    caseSensitive: $('pages-find-case').checked,
+    wholeWord: $('pages-find-whole-word').checked
+  });
+}
+
+function updatePagesFindStatus(matches, selectedIndex = -1) {
+  const status = $('pages-find-status');
+  if (!status) return;
+  const query = $('pages-find-query').value;
+  if (!query) {
+    status.textContent = 'Enter text to find.';
+    return;
+  }
+  if (!matches.length) {
+    status.textContent = 'No matches found.';
+    return;
+  }
+  const countText = matches.length === 1 ? '1 match' : `${matches.length} matches`;
+  status.textContent = selectedIndex >= 0
+    ? `${countText} · Match ${selectedIndex + 1} of ${matches.length}`
+    : countText;
+}
+
+function selectPagesSearchMatch(match) {
+  if (!match?.parts?.length) return false;
+  const first = match.parts[0];
+  const last = match.parts[match.parts.length - 1];
+  if (!first.node?.isConnected || !last.node?.isConnected) return false;
+  const range = document.createRange();
+  range.setStart(first.node, first.start);
+  range.setEnd(last.node, last.end);
+  editor.focus();
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  first.node.parentElement?.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+  return true;
+}
+
+function refreshPagesFindStatus() {
+  pagesFindMatchIndex = -1;
+  const matches = findPagesMatches();
+  updatePagesFindStatus(matches);
+}
+
+function findNextPagesMatch() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  pagesFindMatchIndex = (pagesFindMatchIndex + 1) % matches.length;
+  if (!selectPagesSearchMatch(matches[pagesFindMatchIndex])) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus([]);
+    return;
+  }
+  updatePagesFindStatus(matches, pagesFindMatchIndex);
+}
+
+function replacePagesMatch(match, replacement) {
+  if (!match?.parts?.length) return false;
+  const first = match.parts[0];
+  const last = match.parts[match.parts.length - 1];
+  if (!first.node?.isConnected || !last.node?.isConnected) return false;
+  const range = document.createRange();
+  range.setStart(first.node, first.start);
+  range.setEnd(last.node, last.end);
+  range.deleteContents();
+  const inserted = document.createTextNode(replacement);
+  range.insertNode(inserted);
+  const caret = document.createRange();
+  caret.setStartAfter(inserted);
+  caret.collapse(true);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  return true;
+}
+
+function commitPagesSearchReplacement() {
+  state.docs.pages.html = serializePagesDocument();
+  persist();
+  schedulePagesPagination();
+  refreshPagesOutline();
+  pagesFindMatchIndex = -1;
+  refreshPagesFindStatus();
+}
+
+function replaceCurrentPagesMatch() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  const index = pagesFindMatchIndex >= 0 && pagesFindMatchIndex < matches.length ? pagesFindMatchIndex : 0;
+  const replacement = $('pages-replace-query').value;
+  if (!replacePagesMatch(matches[index], replacement)) {
+    refreshPagesFindStatus();
+    return;
+  }
+  commitPagesSearchReplacement();
+}
+
+function replaceAllPagesMatches() {
+  const matches = findPagesMatches();
+  if (!matches.length) {
+    pagesFindMatchIndex = -1;
+    updatePagesFindStatus(matches);
+    return;
+  }
+  const replacement = $('pages-replace-query').value;
+  let replaced = 0;
+  for (const match of [...matches].reverse()) {
+    if (replacePagesMatch(match, replacement)) replaced++;
+  }
+  commitPagesSearchReplacement();
+  $('pages-find-status').textContent = replaced === 1
+    ? 'Replaced 1 occurrence.'
+    : `Replaced ${replaced} occurrences.`;
+}
+
+function openPagesFindPanel(focusReplace = false) {
+  const panel = $('pages-find-panel');
+  panel.hidden = false;
+  $('pages-find-toggle').setAttribute('aria-expanded', 'true');
+  (focusReplace ? $('pages-replace-query') : $('pages-find-query')).focus();
+}
+
+function applyPagesParagraphStyle(styleKey) {
+  const styles = {
+    normal: { tag: 'P' },
+    noSpacing: { tag: 'P', className: 'pages-doc-no-spacing' },
+    title: { tag: 'P', className: 'pages-doc-title' },
+    subtitle: { tag: 'P', className: 'pages-doc-subtitle' },
+    heading1: { tag: 'H1' },
+    heading2: { tag: 'H2' },
+    heading3: { tag: 'H3' }
+  };
+  const style = styles[styleKey];
+  if (!style) return;
+  editor.focus();
+  document.execCommand('formatBlock', false, style.tag);
+  const selection = window.getSelection();
+  let block = selection?.anchorNode;
+  if (block?.nodeType === Node.TEXT_NODE) block = block.parentElement;
+  while (block && block !== editor && !['P','H1','H2','H3','DIV'].includes(block.tagName)) block = block.parentElement;
+  if (block && block !== editor) {
+    block.classList.remove('pages-doc-title', 'pages-doc-no-spacing', 'pages-doc-subtitle');
+    if (style.className) block.classList.add(style.className);
+  }
+  persist();
+  refreshPagesOutline();
+  schedulePagesPagination();
+}
+
+function addPagesStylesGallery(toolbar) {
+  const group = document.createElement('div');
+  group.className = 'ribbon-group pages-style-gallery';
+  const choices = [
+    { label: 'Normal', styleKey: 'normal', style: 'normal', sample: 'AaBbCcDd' },
+    { label: 'No Spacing', styleKey: 'noSpacing', style: 'no-spacing', sample: 'AaBbCcDd' },
+    { label: 'Heading 1', styleKey: 'heading1', style: 'heading-one', sample: 'Heading 1' },
+    { label: 'Title', styleKey: 'title', style: 'title', sample: 'Document title' },
+    { label: 'Heading 2', styleKey: 'heading2', style: 'heading-two', sample: 'Heading 2' },
+    { label: 'Subtitle', styleKey: 'subtitle', style: 'subtitle', sample: 'Document subtitle' }
+  ];
+  const commands = document.createElement('div');
+  commands.className = 'ribbon-command-row pages-style-options';
+  choices.forEach(choice => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-style-preview';
+    button.dataset.style = choice.style;
+    button.setAttribute('aria-label', `Apply ${choice.label} paragraph style`);
+    button.title = `Apply ${choice.label} paragraph style`;
+    const sample = document.createElement('span');
+    sample.className = `pages-style-sample ${choice.style}`;
+    sample.textContent = choice.sample;
+    const label = document.createElement('span');
+    label.className = 'pages-style-label';
+    label.textContent = choice.label;
+    button.append(sample, label);
+    button.addEventListener('click', () => applyPagesParagraphStyle(choice.styleKey));
+    commands.append(button);
+  });
+  const caption = document.createElement('span');
+  caption.className = 'ribbon-group-label';
+  caption.textContent = 'Styles';
+  group.append(commands, caption);
+  toolbar.append(group);
+}
+
+function applyPagesDocumentDesign() {
+  if (state.app !== 'pages' || !pagesStyleSets) return;
+  editor.dataset.styleSet = pagesStyleSets.normalizeStyleSet(activeDoc().styleSet);
+  editor.dataset.watermark = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+  editor.dataset.pageColor = pagesStyleSets.normalizePageColor(activeDoc().pageColor);
+  editor.dataset.pageBorder = pagesStyleSets.normalizePageBorder(activeDoc().pageBorder);
+}
+
+function setPagesStyleSet(styleSetId) {
+  if (state.app !== 'pages') return;
+  activeDoc().styleSet = pagesStyleSets.normalizeStyleSet(styleSetId);
+  applyPagesDocumentDesign();
+  paginatePagesDocument();
+  activeDoc().html = serializePagesDocument();
+  persist();
+  renderToolbar();
+}
+
+function setPagesWatermark(watermark) {
+  if (state.app !== 'pages') return;
+  activeDoc().watermark = pagesStyleSets.normalizeWatermark(watermark);
+  applyPagesDocumentDesign();
+  paginatePagesDocument();
+  activeDoc().html = serializePagesDocument();
+  persist();
+  renderToolbar();
+}
+
+function stopPagesReadAloud(updateStatus = true) {
+  pagesReadAloudRunId++;
+  window.speechSynthesis?.cancel();
+  pagesReadAloudQueue = [];
+  pagesReadAloudIndex = 0;
+  pagesReadAloudVoice = null;
+  if (updateStatus) setStatus('Read Aloud stopped.');
+}
+
+function speakNextPagesReadAloud(runId) {
+  if (runId !== pagesReadAloudRunId || state.app !== 'pages') return;
+  if (pagesReadAloudIndex >= pagesReadAloudQueue.length) {
+    pagesReadAloudQueue = [];
+    pagesReadAloudVoice = null;
+    setStatus('Finished reading the document.');
+    return;
+  }
+
+  const utterance = new window.SpeechSynthesisUtterance(pagesReadAloudQueue[pagesReadAloudIndex]);
+  utterance.voice = pagesReadAloudVoice;
+  utterance.lang = pagesReadAloudVoice.lang || state.proofingLanguage || 'en-AU';
+  utterance.onend = () => {
+    if (runId !== pagesReadAloudRunId) return;
+    pagesReadAloudIndex++;
+    speakNextPagesReadAloud(runId);
+  };
+  utterance.onerror = () => {
+    if (runId !== pagesReadAloudRunId) return;
+    stopPagesReadAloud(false);
+    setStatus('Read Aloud stopped because the local voice could not continue.');
+  };
+  window.speechSynthesis.speak(utterance);
+}
+
+function startPagesReadAloud() {
+  if (state.app !== 'pages') return;
+  const speech = window.speechSynthesis;
+  if (!speech || typeof window.SpeechSynthesisUtterance !== 'function') {
+    setStatus('Read Aloud is not available on this computer.');
+    return;
+  }
+
+  const voice = pagesReadAloud.selectLocalVoice(speech.getVoices(), state.proofingLanguage);
+  if (!voice) {
+    setStatus('No local speech voice is available. Add a voice in your system settings and try again.');
+    return;
+  }
+
+  const chunks = pagesReadAloud.splitTextIntoChunks(editor.innerText || '');
+  if (!chunks.length) {
+    setStatus('There is no document text to read yet.');
+    return;
+  }
+
+  stopPagesReadAloud(false);
+  pagesReadAloudQueue = chunks;
+  pagesReadAloudIndex = 0;
+  pagesReadAloudVoice = voice;
+  const runId = ++pagesReadAloudRunId;
+  setStatus(`Reading aloud with ${voice.name} (local voice).`);
+  speakNextPagesReadAloud(runId);
+}
+
+function togglePagesReadAloud() {
+  const speech = window.speechSynthesis;
+  if (!speech) {
+    startPagesReadAloud();
+    return;
+  }
+  if (speech.speaking && !speech.paused) {
+    speech.pause();
+    setStatus('Read Aloud paused.');
+  } else if (speech.paused) {
+    speech.resume();
+    setStatus('Read Aloud resumed.');
+  } else {
+    startPagesReadAloud();
+  }
+}
+
+function createPagesHeadingId() {
+  const bytes = new Uint8Array(12);
+  window.crypto.getRandomValues(bytes);
+  return `pages-heading-${[...bytes].map(value => value.toString(16).padStart(2, '0')).join('')}`;
+}
+
+function collectPagesTocEntries() {
+  const headings = [...editor.querySelectorAll('h1,h2,h3')]
+    .filter(heading => !heading.closest('.pages-toc'));
+  const usedIds = new Set();
+
+  const rows = headings.map(heading => {
+    let id = pagesReferences.normalizeHeadingId(heading.id);
+    if (!id || usedIds.has(id)) {
+      do { id = createPagesHeadingId(); } while (usedIds.has(id));
+      heading.id = id;
+    }
+    usedIds.add(id);
+    return { id, level: Number(heading.tagName.slice(1)), text: heading.textContent };
+  });
+
+  return pagesReferences.buildTocEntries(rows);
+}
+
+function insertOrUpdatePagesTableOfContents() {
+  const entries = collectPagesTocEntries();
+  if (!entries.length) {
+    setStatus('Add a Heading 1, Heading 2 or Heading 3 before inserting a table of contents.');
+    return;
+  }
+
+  const toc = document.createElement('div');
+  toc.className = 'pages-toc';
+  const title = document.createElement('p');
+  title.className = 'pages-toc-title';
+  title.textContent = 'Contents';
+  const list = document.createElement('ol');
+
+  entries.forEach(entry => {
+    const item = document.createElement('li');
+    if (entry.level > 1) item.className = `pages-toc-level-${entry.level}`;
+    const link = document.createElement('a');
+    link.href = `#${entry.id}`;
+    link.textContent = entry.text;
+    item.append(link);
+    list.append(item);
+  });
+
+  toc.append(title, list);
+  const existing = editor.querySelector('.pages-toc');
+  if (existing) existing.replaceWith(toc);
+  else editor.insertBefore(toc, editor.firstChild);
+
+  activeDoc().html = serializePagesDocument();
+  persist();
+  schedulePagesPagination();
+  setStatus(`Table of contents updated with ${entries.length} heading(s).`);
+}
+
+function setPagesPageColor(pageColor) {
+  if (state.app !== 'pages') return;
+  activeDoc().pageColor = pagesStyleSets.normalizePageColor(pageColor);
+  applyPagesDocumentDesign();
+  persist();
+}
+
+function setPagesPageBorder(pageBorder) {
+  if (state.app !== 'pages') return;
+  activeDoc().pageBorder = pagesStyleSets.normalizePageBorder(pageBorder);
+  applyPagesDocumentDesign();
+  persist();
+}
+
+function addPagesDesignGallery(toolbar) {
+  const group = document.createElement('div');
+  group.className = 'ribbon-group pages-design-gallery';
+  const commands = document.createElement('div');
+  commands.className = 'ribbon-command-row pages-design-options';
+  const selected = pagesStyleSets.normalizeStyleSet(activeDoc().styleSet);
+
+  Object.values(pagesStyleSets.STYLE_SETS).forEach(styleSet => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'pages-design-card';
+    button.dataset.styleSet = styleSet.id;
+    button.setAttribute('aria-pressed', String(selected === styleSet.id));
+    button.setAttribute('aria-label', `Apply ${styleSet.name} document style`);
+    button.title = styleSet.description;
+
+    const preview = document.createElement('span');
+    preview.className = 'pages-design-swatch';
+    const heading = document.createElement('span');
+    heading.className = 'pages-design-swatch-title';
+    heading.textContent = 'Aa';
+    const body = document.createElement('span');
+    body.className = 'pages-design-swatch-lines';
+    body.textContent = 'Document heading';
+    preview.append(heading, body);
+
+    const label = document.createElement('span');
+    label.className = 'pages-design-card-label';
+    label.textContent = styleSet.name;
+    button.append(preview, label);
+    button.addEventListener('click', () => setPagesStyleSet(styleSet.id));
+    commands.append(button);
+  });
+
+  const caption = document.createElement('span');
+  caption.className = 'ribbon-group-label';
+  caption.textContent = 'Style set';
+  group.append(commands, caption);
+  toolbar.append(group);
+}
+
+function addPagesWatermarkControl(toolbar) {
+  const commands = ribbonGroup(toolbar, 'Page background');
+  const settings = document.createElement('div');
+  settings.className = 'pages-design-settings';
+  const addSelect = (labelText, ariaLabel, options, currentValue, onChange) => {
+    const label = document.createElement('label');
+    label.className = 'pages-watermark-setting';
+    label.textContent = labelText;
+    const select = document.createElement('select');
+    select.className = 'pages-watermark-select';
+    select.setAttribute('aria-label', ariaLabel);
+    options.forEach(([value, text]) => {
+      const option = document.createElement('option');
+      option.value = value;
+      option.textContent = text;
+      select.append(option);
+    });
+    select.value = currentValue;
+    select.addEventListener('change', () => onChange(select.value));
+    label.append(select);
+    settings.append(label);
+  };
+  addSelect('Watermark', 'Document watermark', [
+    ['none', 'None'], ['draft', 'Draft'], ['confidential', 'Confidential']
+  ], pagesStyleSets.normalizeWatermark(activeDoc().watermark), setPagesWatermark);
+  addSelect('Page colour', 'Page colour', [
+    ['white', 'White'], ['warm', 'Warm'], ['mist', 'Mist']
+  ], pagesStyleSets.normalizePageColor(activeDoc().pageColor), setPagesPageColor);
+  addSelect('Page border', 'Page border', [
+    ['subtle', 'Fine line'], ['none', 'None'], ['double', 'Double line']
+  ], pagesStyleSets.normalizePageBorder(activeDoc().pageBorder), setPagesPageBorder);
+  commands.append(settings);
+}
+
 function renderToolbar() {
   const toolbar = $('toolbar'); toolbar.innerHTML = ''; renderRibbonTabs();
   const label = (key) => t(`common.${key}`);
@@ -140,13 +794,15 @@ function renderToolbar() {
     if (tab === 'home') {
       const font = group('text');
       [[label('bold'),'bold'],[label('italic'),'italic'],[label('underline'),'underline'],[label('heading1'),'heading'],[label('heading2'),'subheading']].forEach(([label, cmd]) => addButton(font, label, () => {
-        editor.focus(); if (cmd === 'heading') document.execCommand('formatBlock', false, 'H1'); else if (cmd === 'subheading') document.execCommand('formatBlock', false, 'H2'); else document.execCommand(cmd); persist();
+        editor.focus(); if (cmd === 'heading') document.execCommand('formatBlock', false, 'H1'); else if (cmd === 'subheading') document.execCommand('formatBlock', false, 'H2'); else document.execCommand(cmd); persist(); refreshPagesOutline();
       }, label));
+      addPagesStylesGallery(toolbar);
       const para = group('paragraph');
       addButton(para, label('bullets'), () => { editor.focus(); document.execCommand('insertUnorderedList'); persist(); });
       addButton(para, label('numbering'), () => { editor.focus(); document.execCommand('insertOrderedList'); persist(); });
       addButton(para, label('quote'), () => { editor.focus(); document.execCommand('formatBlock', false, 'BLOCKQUOTE'); persist(); });
       const edit = group('editing');
+      addButton(edit, 'Find & Replace', openPagesFindPanel, 'Find and replace text in this document');
       addButton(edit, label('undo'), () => { editor.focus(); document.execCommand('undo'); persist(); });
       addButton(edit, label('redo'), () => { editor.focus(); document.execCommand('redo'); persist(); });
       addButton(group('export'), label('pdf'), exportPdf, 'Export as PDF');
@@ -155,6 +811,10 @@ function renderToolbar() {
       addButton(insert, label('table'), () => { editor.focus(); document.execCommand('insertHTML', false, '<table><tbody><tr><td> </td><td> </td></tr><tr><td> </td><td> </td></tr></tbody></table><p></p>'); persist(); });
       addButton(insert, label('horizontalLine'), () => { editor.focus(); document.execCommand('insertHorizontalRule'); persist(); });
       addButton(insert, label('date'), () => { editor.focus(); document.execCommand('insertText', false, new Date().toLocaleDateString()); persist(); });
+      addButton(insert, 'Page break', insertPagesPageBreak, 'Start a new page at this point');
+    } else if (tab === 'design') {
+      addPagesDesignGallery(toolbar);
+      addPagesWatermarkControl(toolbar);
     } else if (tab === 'layout') {
       const layout = group('paragraph');
       [[label('alignLeft'),'justifyLeft'],[label('centre'),'justifyCenter'],[label('alignRight'),'justifyRight'],[label('justify'),'justifyFull']].forEach(([label, command]) => addButton(layout, label, () => { editor.focus(); document.execCommand(command); persist(); }));
@@ -164,19 +824,34 @@ function renderToolbar() {
         const select = document.createElement('select'); select.className = 'page-setting-select'; select.setAttribute('aria-label', caption);
         options.forEach(([value, text]) => { const option = document.createElement('option'); option.value = value; option.textContent = text; select.append(option); });
         const current = pageLayout.normalizePageLayout(activeDoc().pageSettings || {}); select.value = current[key];
-        select.addEventListener('change', () => { const next = pageLayout.normalizePageLayout({ ...activeDoc().pageSettings, [key]: select.value }); activeDoc().pageSettings = next; applyPageLayout(); persist(); });
+        select.addEventListener('change', () => { const next = pageLayout.normalizePageLayout({ ...activeDoc().pageSettings, [key]: select.value }); activeDoc().pageSettings = next; applyPageLayout(); activeDoc().html = serializePagesDocument(); persist(); });
         wrap.append(select); page.append(wrap);
       };
       addPageSelect('Paper', 'size', [['A4','A4'],['Letter','US Letter'],['Legal','US Legal']]);
       addPageSelect('Orientation', 'orientation', [['portrait','Portrait'],['landscape','Landscape']]);
       addPageSelect('Margins', 'margin', [['normal','Normal'],['narrow','Narrow'],['moderate','Moderate'],['wide','Wide']]);
+    } else if (tab === 'references') {
+      const references = group('Document references');
+      addButton(references, 'Table of contents', insertOrUpdatePagesTableOfContents, 'Insert or update a linked table of contents from document headings');
     } else if (tab === 'review') {
       const review = group('proofing');
       addButton(review, label('wordCount'), () => { const count = (editor.innerText.trim().match(/\S+/g) || []).length; setStatus(`${count} ${t('common.words')}`); });
       addButton(review, label('spellCheck'), () => { editor.spellcheck = !editor.spellcheck; setStatus(`Spell check ${editor.spellcheck ? 'on' : 'off'}`); });
+      const aloud = group('Read Aloud');
+      addButton(aloud, 'Read aloud / Pause', togglePagesReadAloud, 'Start, pause or resume using a local system voice only');
+      addButton(aloud, 'Stop', () => stopPagesReadAloud(), 'Stop reading the document');
     } else {
       const view = group('zoom');
+      const themeButton = addButton(view, state.theme === 'dark' ? 'Light mode' : 'Dark mode', togglePagesTheme, 'Switch the Pages workspace between light and dark themes');
+      themeButton.setAttribute('aria-pressed', String(state.theme === 'dark'));
       addButton(view, label('zoomOut'), () => changeEditorZoom(-10)); addButton(view, '100%', () => { state.editorZoom = 100; applyEditorZoom(); }); addButton(view, label('zoomIn'), () => changeEditorZoom(10));
+      const rulerButton = addButton(view, 'Show ruler', () => {
+        state.showRuler = !state.showRuler;
+        updatePagesRuler();
+        renderToolbar();
+      }, 'Show or hide the document ruler');
+      rulerButton.setAttribute('aria-pressed', String(state.showRuler));
+      rulerButton.classList.toggle('is-selected', state.showRuler);
       addButton(view, label('focusMode'), () => { state.focusMode = !state.focusMode; $('workspace').classList.toggle('focus-mode', state.focusMode);
     $('workspace').classList.toggle('todo-mode', isTodo); });
     }
@@ -253,15 +928,292 @@ function sortSheetColumn(descending) {
     return descending ? -result : result;
   }); renderSheet(); persist();
 }
+function updatePagesRuler() {
+  const wrap = $('pages-ruler-wrap');
+  if (!wrap || !pageLayout) return;
+  const visible = state.app === 'pages' && state.showRuler;
+  wrap.hidden = !visible;
+  if (!visible) return;
+
+  const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const ruler = $('pages-ruler');
+  ruler.style.width = `${dimensions.width}px`;
+  ruler.style.maxWidth = 'calc(100% - 40px)';
+  $('pages-ruler-left-margin').style.width = `${margin / dimensions.width * 100}%`;
+  $('pages-ruler-right-margin').style.width = `${margin / dimensions.width * 100}%`;
+
+  const ticks = $('pages-ruler-ticks');
+  ticks.replaceChildren();
+  for (const mark of pageLayout.getRulerMarks(settings, 'cm')) {
+    const tick = document.createElement('span');
+    tick.className = mark.major ? 'pages-ruler-tick is-major' : 'pages-ruler-tick';
+    tick.style.left = `${mark.position / dimensions.width * 100}%`;
+    tick.setAttribute('aria-label', `${mark.value} centimetres`);
+    if (mark.label) {
+      const label = document.createElement('span');
+      label.className = 'pages-ruler-label';
+      label.textContent = mark.label;
+      tick.append(label);
+    }
+    ticks.append(tick);
+  }
+  ruler.setAttribute('aria-label', `Horizontal ruler in centimetres for ${settings.size} ${settings.orientation}`);
+}
+
+let pagesPaginationTimer = null;
+
+function serializePagesDocument() {
+  const output = document.createElement('div');
+  for (const node of [...editor.childNodes]) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.classList.contains('pages-document-page')) {
+      for (const child of [...node.childNodes]) output.append(child.cloneNode(true));
+    } else {
+      output.append(node.cloneNode(true));
+    }
+  }
+  return output.innerHTML;
+}
+
+function getPagesSourceNodes() {
+  const source = [];
+  for (const child of [...editor.childNodes]) {
+    if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains('pages-document-page')) {
+      source.push(...child.childNodes);
+    } else {
+      source.push(child);
+    }
+  }
+
+  const nodes = [];
+  for (const node of source) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      if (!node.nodeValue.trim()) continue;
+      const paragraph = document.createElement('p');
+      paragraph.textContent = node.nodeValue;
+      node.parentNode?.replaceChild(paragraph, node);
+      nodes.push(paragraph);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      nodes.push(node);
+    }
+  }
+
+  // Keep explicit breaks between top-level blocks, not inside editable paragraphs.
+  for (let index = 0; index < nodes.length; index++) {
+    const block = nodes[index];
+    if (block.tagName === 'HR' || typeof block.querySelectorAll !== 'function') continue;
+    const nestedBreaks = [...block.querySelectorAll('hr[data-pages-page-break="true"]')];
+    for (const marker of nestedBreaks) {
+      marker.remove();
+      nodes.splice(index + 1, 0, marker);
+      index++;
+    }
+  }
+  return nodes;
+}
+
+function measurePagesDocumentBlocks(items, settings) {
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const contentWidth = Math.max(80, dimensions.width - margin * 2);
+  const measurer = document.createElement('div');
+  measurer.className = 'editor pages-page-measurer';
+  const editorStyle = getComputedStyle(editor);
+  Object.assign(measurer.style, {
+    position: 'fixed',
+    left: '-100000px',
+    top: '0',
+    width: `${contentWidth}px`,
+    minWidth: `${contentWidth}px`,
+    maxWidth: `${contentWidth}px`,
+    minHeight: '0',
+    height: 'auto',
+    padding: '0',
+    margin: '0',
+    overflow: 'visible',
+    display: 'block',
+    flex: 'none',
+    visibility: 'hidden',
+    pointerEvents: 'none',
+    fontFamily: editorStyle.fontFamily,
+    fontSize: editorStyle.fontSize,
+    lineHeight: editorStyle.lineHeight
+  });
+  document.body.append(measurer);
+  try {
+    return items.map(item => {
+      measurer.replaceChildren(item.node.cloneNode(true));
+      const measured = measurer.firstElementChild;
+      if (!measured) return { ...item, height: 0 };
+      const rect = measured.getBoundingClientRect();
+      const style = getComputedStyle(measured);
+      const marginTop = Number.parseFloat(style.marginTop) || 0;
+      const marginBottom = Number.parseFloat(style.marginBottom) || 0;
+      return { ...item, height: rect.height + marginTop + marginBottom };
+    });
+  } finally {
+    measurer.remove();
+  }
+}
+
+function paginatePagesDocument() {
+  if (state.app !== 'pages' || !pageLayout || !pagePagination) return 0;
+  const selection = window.getSelection();
+  const savedRange = selection?.rangeCount && editor.contains(selection.anchorNode)
+    ? selection.getRangeAt(0).cloneRange()
+    : null;
+  const existingPages = [...editor.children].filter(node => node.classList.contains('pages-document-page'));
+  const sourceNodes = getPagesSourceNodes();
+  const flowItems = [];
+  let pendingBreaks = [];
+  let orphanBreaks = [];
+
+  for (const node of sourceNodes) {
+    if (node.nodeType === Node.ELEMENT_NODE && node.matches('hr[data-pages-page-break="true"]')) {
+      pendingBreaks.push(node);
+      continue;
+    }
+    flowItems.push({
+      node,
+      height: 0,
+      pageBreakBefore: pendingBreaks.length > 0,
+      leadingBreaks: pendingBreaks,
+      trailingBreaks: []
+    });
+    pendingBreaks = [];
+  }
+  if (pendingBreaks.length) {
+    if (flowItems.length) flowItems[flowItems.length - 1].trailingBreaks.push(...pendingBreaks);
+    else orphanBreaks = pendingBreaks;
+  }
+
+  const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
+  const dimensions = pageLayout.getPageDimensions(settings);
+  const margin = pageLayout.PAGE_MARGINS[settings.margin];
+  const availableHeight = Math.max(80, dimensions.height - margin * 2);
+  const measured = measurePagesDocumentBlocks(flowItems, settings);
+  const groups = pagePagination.paginateBlocks(measured, availableHeight);
+  const pageGroups = groups.length ? groups : [[]];
+
+  editor.style.width = '100%';
+  editor.style.maxWidth = 'none';
+  editor.style.minHeight = '0';
+  editor.style.height = 'auto';
+  editor.style.padding = '0';
+  editor.style.margin = '0';
+  editor.style.background = 'transparent';
+  editor.style.border = '0';
+  editor.style.boxShadow = 'none';
+  editor.style.display = 'flex';
+  editor.style.flexDirection = 'column';
+  editor.style.alignItems = 'center';
+  editor.style.gap = '24px';
+  editor.style.overflow = 'visible';
+
+  pageGroups.forEach((indices, pageIndex) => {
+    const page = document.createElement('div');
+    page.className = 'pages-document-page';
+    page.setAttribute('role', 'group');
+    page.setAttribute('aria-label', `Page ${pageIndex + 1}`);
+    page.dataset.pageNumber = String(pageIndex + 1);
+    const watermark = pagesStyleSets.normalizeWatermark(activeDoc().watermark);
+    if (watermark !== 'none') page.dataset.watermark = watermark;
+    page.setAttribute('data-placeholder', editor.getAttribute('data-placeholder') || 'Start writing…');
+    const pageStyle = pageLayout.getPageStyle(settings);
+    Object.assign(page.style, pageStyle, {
+      background: pagesStyleSets.getPageColor(activeDoc().pageColor),
+      border: pagesStyleSets.getPageBorder(activeDoc().pageBorder),
+      height: `${dimensions.height}px`,
+      minHeight: `${dimensions.height}px`,
+      margin: '0 auto',
+      flex: '0 0 auto',
+      overflow: 'visible',
+      position: 'relative'
+    });
+    editor.append(page);
+
+    for (const itemIndex of indices) {
+      const item = measured[itemIndex];
+      if (!item) continue;
+      item.leadingBreaks.forEach(marker => page.append(marker));
+      if (item.node) page.append(item.node);
+      item.trailingBreaks.forEach(marker => page.append(marker));
+    }
+    if (pageIndex === 0) orphanBreaks.forEach(marker => page.append(marker));
+    if (page.scrollHeight > page.clientHeight + 1) {
+      page.classList.add('is-overflowing');
+      page.style.height = `${page.scrollHeight}px`;
+      page.style.minHeight = `${page.scrollHeight}px`;
+    }
+  });
+
+  existingPages.forEach(page => page.remove());
+  if (savedRange && savedRange.startContainer.isConnected && savedRange.endContainer.isConnected) {
+    try {
+      selection.removeAllRanges();
+      selection.addRange(savedRange);
+    } catch {}
+  }
+  return pageGroups.length;
+}
+
+function schedulePagesPagination() {
+  if (state.app !== 'pages') return;
+  if (pagesPaginationTimer) clearTimeout(pagesPaginationTimer);
+  pagesPaginationTimer = setTimeout(() => {
+    pagesPaginationTimer = null;
+    if (state.app !== 'pages') return;
+    paginatePagesDocument();
+    activeDoc().html = serializePagesDocument();
+    persist();
+    refreshPagesOutline();
+    if (!$('pages-find-panel').hidden) refreshPagesFindStatus();
+  }, 180);
+}
+
+function insertPagesPageBreak() {
+  editor.focus();
+  let selection = window.getSelection();
+  let range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+  if (!range || !editor.contains(range.commonAncestorContainer)) {
+    range = document.createRange();
+    const lastPage = editor.querySelector('.pages-document-page:last-child');
+    if (lastPage?.lastChild) range.selectNodeContents(lastPage.lastChild);
+    else range.selectNodeContents(editor);
+    range.collapse(false);
+    selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+  range.deleteContents();
+  const marker = document.createElement('hr');
+  marker.setAttribute('data-pages-page-break', 'true');
+  range.insertNode(marker);
+  const page = marker.closest('.pages-document-page');
+  let topBlock = marker;
+  while (topBlock.parentElement && topBlock.parentElement !== page) topBlock = topBlock.parentElement;
+  if (page && topBlock !== marker && topBlock.parentElement === page) topBlock.after(marker);
+  const caret = document.createRange();
+  caret.setStartAfter(marker);
+  caret.collapse(true);
+  selection.removeAllRanges();
+  selection.addRange(caret);
+  activeDoc().html = serializePagesDocument();
+  persist();
+  schedulePagesPagination();
+}
+
 function applyPageLayout() {
   if (!pageLayout || state.app !== 'pages') return;
+  applyPagesDocumentDesign();
   const settings = pageLayout.normalizePageLayout(activeDoc().pageSettings || {});
   activeDoc().pageSettings = settings;
-  Object.assign(editor.style, pageLayout.getPageStyle(settings));
-  editor.style.maxWidth = 'calc(100% - 40px)';
+  paginatePagesDocument();
+  updatePagesRuler();
 }
 function changeEditorZoom(delta) { state.editorZoom = Math.max(70, Math.min(160, state.editorZoom + delta)); applyEditorZoom(); }
-function applyEditorZoom() { editor.style.fontSize = `${14 * state.editorZoom / 100}px`; setStatus(`Document zoom ${state.editorZoom}%`); }
+function applyEditorZoom() { editor.style.fontSize = `${14 * state.editorZoom / 100}px`; setStatus(`Document zoom ${state.editorZoom}%`); schedulePagesPagination(); }
 function changeSheetZoom(delta) { state.sheetZoom = Math.max(70, Math.min(160, state.sheetZoom + delta)); applySheetZoom(); }
 function applySheetZoom() { sheetWrap.style.zoom = `${state.sheetZoom}%`; setStatus(`Sheet zoom ${state.sheetZoom}%`); }
 function insertNoteText(value) { const input = $('notes-editor'); const start = input.selectionStart, end = input.selectionEnd; input.setRangeText(value, start, end, 'end'); activeDoc().text = input.value; persist(); input.focus(); }
@@ -815,6 +1767,7 @@ async function changeProofingLanguage(code) {
 }
 
 function render() {
+  applyPagesTheme();
   window.BrightdeskI18n.localizeStaticElements();
   document.querySelectorAll('.nav[data-app]').forEach(btn => {
     const appId = btn.dataset.app;
@@ -859,9 +1812,11 @@ function render() {
     $('todo-wrap').hidden = !isTodo; $('lists-wrap').hidden = !isLists; $('forms-wrap').hidden = !isForms; $('planner-wrap').hidden = !isPlanner; $('database-wrap').hidden = !isDatabase; $('workspace-app-wrap').hidden = !isWorkspace;
     $('open-button').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('save-project').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('export-button').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace;
     document.querySelector('.document-bar').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('ribbon-tabs').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace; $('toolbar').hidden = isTodo || isLists || isForms || isPlanner || isDatabase || isWorkspace;
+    $('pages-editor-layout').hidden = state.app !== 'pages';
     editor.hidden = !['pages'].includes(state.app); sheetWrap.hidden = state.app !== 'sheets'; slideWrap.hidden = state.app !== 'slides'; notesWrap.hidden = !['notes'].includes(state.app);
     editor.innerHTML = state.app === 'pages' ? safeHtml(doc.html) : '';
     if (state.app === 'pages') applyPageLayout(); else editor.removeAttribute('style');
+    refreshPagesOutline();
     $('notes-editor').value = state.app === 'notes' ? (doc.text || '') : '';
     updateDocumentLanguage();
     if (state.app === 'sheets') renderSheet(); if (state.app === 'slides') renderSlides();
@@ -875,6 +1830,7 @@ function render() {
     renderToolbar();
     $('workspace').classList.toggle('focus-mode', state.focusMode);
   }
+  renderRecoveryBanner();
   syncAppNavigation();
   document.querySelectorAll('.nav[data-app]').forEach(btn => {
     const visible = launchAppId ? btn.dataset.app === launchAppId : installedApp(btn.dataset.app); btn.hidden = !visible; btn.classList.toggle('active', !manager && !languages && btn.dataset.app === state.app);
@@ -888,6 +1844,7 @@ function collectDocxBlocks() {
   const walk=(el,type='paragraph')=>{
     if(el.nodeType===Node.TEXT_NODE){if(el.textContent.trim())blocks.push({type,text:el.textContent.trim()});return;}
     if(el.nodeType!==Node.ELEMENT_NODE)return;
+    if (el.classList?.contains('pages-document-page')) { el.childNodes.forEach(n=>walk(n,type)); return; }
     const tag=el.tagName.toLowerCase();const blockType=tag==='h1'?'h1':tag==='h2'?'h2':tag==='li'?'li':type;
     if(['p','div','h1','h2','h3','li','blockquote'].includes(tag)){
       const runs=[];const run=(node,style={})=>{if(node.nodeType===Node.TEXT_NODE){if(node.textContent)runs.push({text:node.textContent,...style});}else if(node.nodeType===Node.ELEMENT_NODE){const next={...style,bold:style.bold||['b','strong'].includes(node.tagName.toLowerCase()),italic:style.italic||['i','em'].includes(node.tagName.toLowerCase()),underline:style.underline||node.tagName.toLowerCase()==='u'};node.childNodes.forEach(n=>run(n,next));}};
@@ -898,13 +1855,13 @@ function collectDocxBlocks() {
 }
 function exportPayload(){
   const doc=activeDoc(),title=$('doc-title').value||'Brightdesk file';doc.title=title;
-  if(state.app==='pages')return {kind:'pages',title,html:editor.innerHTML,blocks:collectDocxBlocks()};
+  if(state.app==='pages')return {kind:'pages',title,html:serializePagesDocument(),blocks:collectDocxBlocks()};
   if(state.app==='sheets')return {kind:'sheets',title,rows:doc.cells||[]};
   if(state.app==='slides')return {kind:'slides',title,slides:doc.slides||[]};
   return {kind:'notes',title,text:$('notes-editor').value||''};
 }
-async function exportCurrent(){try{const result=await window.brightdesk.exportFile(exportPayload());if(result?.canceled)return;setStatus('Exported successfully');}catch(error){alert(`Export failed: ${error.message}`);}}
-async function exportPdf(){try{const result=await window.brightdesk.exportPdf({title:$('doc-title').value});if(!result?.canceled)setStatus('PDF exported');}catch(error){alert(`PDF export failed: ${error.message}`);}}
+async function exportCurrent(){try{const result=await window.brightdesk.exportFile(exportPayload());if(result?.canceled)return;if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Exported successfully');}catch(error){alert(`Export failed: ${error.message}`);}}
+async function exportPdf(){try{const settings=pageLayout.normalizePageLayout(activeDoc().pageSettings||{});const result=await window.brightdesk.exportPdf({title:$('doc-title').value,pageSize:settings.size,landscape:settings.orientation==='landscape'});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('PDF exported');}}catch(error){alert(`PDF export failed: ${error.message}`);}}
 function importProject(data){
   if (launchAppId && data?.kind && data.kind !== launchAppId) throw new Error(`This Brightdesk ${appLabel(launchAppId)} installation opens ${appLabel(launchAppId)} files only.`);
   if(data?.docs && typeof data.docs === 'object'){
@@ -925,9 +1882,9 @@ function importProject(data){
   state.app=kind; state.ribbonTab='home';
 }
 function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
-async function openFile(){try{const data=await window.brightdesk.openFile();if(!data)return;importProject(data);persist();render();setStatus('File opened');}catch(error){alert(`Could not open file: ${error.message}`);}}
-async function saveProject(){try{const result=await window.brightdesk.saveProject({title:$('doc-title').value,docs:state.docs});if(!result?.canceled)setStatus('Project saved');}catch(error){alert(`Could not save project: ${error.message}`);}}
-function setApp(app){if((launchAppId && app !== launchAppId) || !(configs[app] || genericConfigs[app]) || !installedApp(app))return;state.app=app;state.view='workspace';state.ribbonTab='home';render();persist();}
+async function openFile(){try{const data=await window.brightdesk.openFile();if(!data)return;stopPagesReadAloud(false);importProject(data);persist();render();setStatus('File opened');}catch(error){alert(`Could not open file: ${error.message}`);}}
+async function saveProject(){try{const result=await window.brightdesk.saveProject({title:$('doc-title').value,docs:state.docs});if(!result?.canceled){if(state.app==='pages')await clearPageRecoverySnapshot();setStatus('Project saved');}}catch(error){alert(`Could not save project: ${error.message}`);}}
+function setApp(app){if((launchAppId && app !== launchAppId) || !(configs[app] || genericConfigs[app]) || !installedApp(app))return;if(state.app==='pages'&&app!=='pages')stopPagesReadAloud(false);state.app=app;state.view='workspace';state.ribbonTab='home';render();persist();}
 
 document.querySelectorAll('.nav[data-app]').forEach(btn=>btn.addEventListener('click',()=>setApp(btn.dataset.app)));
 $('manage-apps').addEventListener('click',()=>{if (launchAppId) return; state.view='manager';render();});
@@ -940,7 +1897,57 @@ $('check-current-document').addEventListener('click',checkCurrentDocumentSpellin
 $('back-to-apps').addEventListener('click',()=>{state.view=state.setupComplete?'workspace':'manager';render();});
 $('finish-app-setup').addEventListener('click',()=>{if(state.setupComplete){state.view='workspace';render();}else completeAppSetup();});
 $('doc-title').addEventListener('change',()=>{activeDoc().title=$('doc-title').value;persist();});
-editor.addEventListener('input',()=>{activeDoc().html=editor.innerHTML;persist();});
+editor.addEventListener('input',()=>{if(state.app==='pages'){activeDoc().html=serializePagesDocument();schedulePagesPagination();}else{activeDoc().html=editor.innerHTML;}persist();refreshPagesOutline();if(!$('pages-find-panel').hidden)refreshPagesFindStatus();});
+$('pages-outline-search').addEventListener('input', refreshPagesOutline);
+document.addEventListener('keydown', event => {
+  if (state.app !== 'pages' || event.altKey) return;
+  const modifier = event.ctrlKey || event.metaKey;
+  if (!modifier) return;
+  if (event.key === 'Enter' && (event.target === editor || editor.contains(event.target))) {
+    event.preventDefault();
+    insertPagesPageBreak();
+    return;
+  }
+  if (!['f','h'].includes(event.key.toLowerCase())) return;
+  if (event.key.toLowerCase() === 'h' && (!event.ctrlKey || event.metaKey)) return;
+  event.preventDefault();
+  openPagesFindPanel(event.key.toLowerCase() === 'h');
+});
+$('pages-find-toggle').addEventListener('click', () => {
+  const panel = $('pages-find-panel');
+  panel.hidden = !panel.hidden;
+  $('pages-find-toggle').setAttribute('aria-expanded', String(!panel.hidden));
+  if (!panel.hidden) $('pages-find-query').focus();
+});
+$('pages-find-query').addEventListener('input', refreshPagesFindStatus);
+$('pages-find-case').addEventListener('change', refreshPagesFindStatus);
+$('pages-find-whole-word').addEventListener('change', refreshPagesFindStatus);
+$('pages-find-next').addEventListener('click', findNextPagesMatch);
+$('pages-replace-one').addEventListener('click', replaceCurrentPagesMatch);
+$('pages-replace-all').addEventListener('click', replaceAllPagesMatches);
+$('recovery-open').addEventListener('click',async()=>{
+  if(!recoveryCandidate)return;
+  stopPagesReadAloud(false);
+  try{
+    const record=await window.brightdesk.readRecovery(recoveryCandidate.id);
+    if(!record||record.productId!=='pages')throw new Error('This recovery copy is no longer available.');
+    state.docs.pages={title:record.title,html:safeHtml(record.html),pageSettings:pageLayout.normalizePageLayout(record.pageSettings||{}),styleSet:pagesStyleSets.normalizeStyleSet(record.styleSet),watermark:pagesStyleSets.normalizeWatermark(record.watermark),pageColor:pagesStyleSets.normalizePageColor(record.pageColor),pageBorder:pagesStyleSets.normalizePageBorder(record.pageBorder)};
+    pageRecoveryHasSnapshot=true;
+    state.app='pages';state.view='workspace';state.ribbonTab='home';state.focusMode=false;
+    recoveryDismissed=true;persist();render();
+    setStatus('Recovered copy opened. Save or export it as a new document.');
+  }catch(error){alert(`Could not recover this document: ${error.message}`);await refreshRecoveryCandidate();}
+});
+$('recovery-discard').addEventListener('click',async()=>{
+  if(!recoveryCandidate)return;
+  if(!confirm('Discard this recovery copy? This does not delete any original document file.'))return;
+  try{
+    await window.brightdesk.deleteRecovery(recoveryCandidate.id);
+    recoveryCandidate=null;pageRecoveryHasSnapshot=false;pageRecoveryDirty=false;recoveryDismissed=true;renderRecoveryBanner();
+    markPageRecoveryDirty();
+    setStatus('Recovery copy discarded');
+  }catch(error){alert(`Could not discard this recovery copy: ${error.message}`);}
+});
 $('notes-editor').addEventListener('input',()=>{activeDoc().text=$('notes-editor').value;persist();});
 $('todo-create-form').addEventListener('submit', createTodoTask);
 $('todo-search').addEventListener('input', event => { state.todoQuery = event.target.value; renderTodoWorkspace(); });
@@ -1014,6 +2021,10 @@ productSidebarToggle?.addEventListener('click', () => {
 });
 window.addEventListener('resize', syncSidebarDensity);
 syncSidebarDensity();
+window.setInterval(() => { void flushPageRecovery(); }, 10000);
+window.addEventListener('beforeunload', () => stopPagesReadAloud(false));
+window.addEventListener('blur', () => { void flushPageRecovery(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flushPageRecovery(); });
 
 loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platform}`;
 (async()=>{
@@ -1023,5 +2034,6 @@ loadLocal();$('platform').textContent=`Desktop app · ${window.brightdesk.platfo
   } catch (error) { console.warn('The desktop version could not be read.', error); }
   try { await refreshLanguageData(); } catch(error) { console.error('Language packs could not be loaded.',error); }
   try { await refreshDictionaries(); } catch(error) { console.error('Spelling dictionaries could not be loaded.',error); }
+  try { await refreshRecoveryCandidate(); } catch(error) { console.error('Recovery copies could not be checked.',error); }
   render();
 })();
