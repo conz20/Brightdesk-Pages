@@ -63,6 +63,7 @@ test('support workflow is owner-main-triggered and uses only read-only repositor
   assert.match(workflow, /push:\s*\n\s*branches:\s*\[main\]/);
   assert.ok(workflow.includes('validate-support-policy-prs'));
   assert.ok(workflow.includes('if: github.actor == github.repository_owner'));
+  assert.ok(workflow.includes('ref: ${{ github.sha }}'), 'controller must use the exact owner push commit');
   assert.match(workflow, /permissions:\s*\n\s*contents:\s*read/);
   assert.match(workflow, /actions\/create-github-app-token/);
   assert.match(workflow, /permission-contents:\s*read/);
