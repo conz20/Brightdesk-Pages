@@ -28,7 +28,7 @@ jobs:
       - name: Check out trusted Pages main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up pinned Node.js for controller validation
@@ -113,7 +113,7 @@ jobs:
       - name: Check out trusted Pages controller
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: main
+          ref: ${{ github.sha }}
           path: controller
           persist-credentials: false
 
