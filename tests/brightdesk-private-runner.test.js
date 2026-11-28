@@ -633,3 +633,18 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.match(job, /detailed output was kept only on the temporary runner/i);
   assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
 });
+
+
+test('shared foundation test failures reveal only sanitised failing test names', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const diagnostics = fs.readFileSync(
+    path.join(__dirname, '..', 'scripts', 'brightdesk-private-runner', 'private-test-diagnostics.js'),
+    'utf8'
+  );
+
+  assert.ok(foundationJob.includes('private-test-diagnostics.js'));
+  assert.ok(foundationJob.includes('base64 --decode'));
+  assert.ok(diagnostics.includes('failing test cases (names only; assertion messages and stack traces were withheld)'));
+  assert.doesNotMatch(foundationJob, /cat .*brightdesk-foundation-validation\\.log/);
+});
