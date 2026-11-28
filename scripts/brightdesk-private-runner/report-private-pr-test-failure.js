@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('node:fs');
-const { parseTapFailureNames } = require('./private-test-diagnostics');
+const { cleanTestName, parseTapFailureNames } = require('./private-test-diagnostics');
 
 const MARKER_PREFIX = '<!-- brightdesk-private-pr-test-diagnostic:';
 const ALLOWED_PROJECTS = new Set([
@@ -24,7 +24,7 @@ function buildPrivatePrDiagnostic({ project, prNumber, failedNames }) {
   if (!ALLOWED_PROJECTS.has(project)) throw new Error('Only approved private product repositories can receive diagnostics.');
   if (!Number.isSafeInteger(prNumber) || prNumber < 1) throw new Error('A valid private product PR number is required.');
   const names = Array.isArray(failedNames)
-    ? [...new Set(failedNames.map(name => String(name).replace(/[\u0000-\u001f\u007f]/g,' ').replace(/\s+/g,' ').trim().slice(0,200)).filter(Boolean))].slice(0,30)
+    ? [...new Set(failedNames.map(cleanTestName)
     : [];
   const marker = `${MARKER_PREFIX}${project}#${prNumber} -->`;
   const detail = names.length
