@@ -97,7 +97,7 @@ test('daily private checks target the current runner-migration PR branches', () 
   }
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
   assert.ok(checkout.includes('ref: ${{ matrix.ref }}'));
-  assert.doesNotMatch(dailyJob, /fix\\/suite-diagnostic-tests/);
+  assert.equal(dailyJob.includes('fix/suite-diagnostic-tests'), false);
 });
 
 test('shared foundation checks target the open Common-Libs and Developer-Tools PRs', () => {
