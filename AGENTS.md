@@ -1,7 +1,7 @@
 # Brightdesk Pages contributor instructions
 
 ## Runtime
-Use exactly Node.js **24.22.2 LTS**. Do not change the pinned runtime in package.json, .nvmrc, .node-version, .npmrc, the dev container or GitHub Actions without explicit project-owner approval.
+Use exactly Node.js **24.22.3 LTS**. Do not change the pinned runtime in package.json, .nvmrc, .node-version, .npmrc, the dev container or GitHub Actions without explicit project-owner approval.
 
 ## Product identity
 The product in this repository is **Brightdesk Pages**. Use that exact name in customer-facing text, release titles and installer descriptions. Describe distribution only in terms of desktop installers.
