@@ -57,7 +57,7 @@ test('stable refs may advance but timestamped snapshots are never force-pushed',
   assert.match(script, /\+refs\/heads\/\*:refs\/archive\/\$repo\/heads\/\*/);
   assert.match(script, /refs\/archive\/\$repo\/snapshots\/\$stamp\/\*:refs\/archive\/\$repo\/snapshots\/\$stamp\/\*/);
   assert.doesNotMatch(script, /\+refs\/archive\/\$repo\/snapshots/);
-  assert.match(script, /Deliberately do not prune/);
+  assert.match(script, /not pruned from the recovery archive/);
 });
 
 test('each current-run archive ref is checked by exact name and SHA, not total count', () => {
