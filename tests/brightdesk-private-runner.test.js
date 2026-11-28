@@ -186,6 +186,7 @@ test('installer verification and pull request validation use isolated concurrenc
   assert.match(concurrency, /build-brightdesk-suite-installers/);
   assert.match(concurrency, /brightdesk-suite-installer-request-/);
   assert.match(concurrency, /brightdesk-private-project-maintenance/);
+  assert.match(concurrency, /cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}/);
 });
 
 
