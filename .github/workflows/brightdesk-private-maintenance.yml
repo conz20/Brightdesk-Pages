@@ -294,9 +294,6 @@ jobs:
             exit 1
           fi
           if ! git -C source cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
-            git -C source fetch --no-tags origin "$BASE_SHA"
-          fi
-          if ! git -C source cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
             echo "::error::The recorded base commit for $PROJECT PR #$PR_NUMBER is unavailable. Refresh its base SHA before running again."
             exit 1
           fi
