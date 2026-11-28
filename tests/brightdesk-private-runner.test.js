@@ -18,6 +18,8 @@ test('private check script never prints raw build logs', () => {
   assert.match(source, />> "\$LOG_FILE" 2>&1/);
   assert.match(source, /Detailed output was kept only on the temporary runner/);
   assert.doesNotMatch(source, /cat "\$LOG_FILE"/);
+  assert.match(source, /node --test --test-reporter=tap tests\/\*\.test\.js test\/\*\.test\.mjs/);
+  assert.match(source, /\.\/node_modules\/\.bin\/vitest run/);
   assert.match(source, /npm test -- --test-reporter=tap/);
   assert.match(source, /failure_summary_file/);
   assert.ok(source.includes('failure-summary.b64'));
@@ -82,7 +84,7 @@ test('daily private project checkouts use each repository default branch', () =>
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
 
-test('trusted controller updates trigger daily private checks but never start the installer matrix', () => {
+test('controller PRs and trusted pushes trigger daily private checks but never start the installer matrix', () => {
   const source = fs.readFileSync(workflow, 'utf8');
   const pushTrigger = source.match(/push:\n([\s\S]*?)\n  schedule:/)?.[1] ?? '';
   assert.match(pushTrigger, /branches: \[main\]/);
@@ -91,7 +93,7 @@ test('trusted controller updates trigger daily private checks but never start th
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   assert.match(
     dailyJob,
-    /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'/
+    /if: github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\|if: github\.event_name == 'pull_request' \\|\\| github\.event_name == 'schedule' \\|\\| github\.event_name == 'workflow_dispatch' \\|\\| github\.event_name == 'push'/
   );
 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';

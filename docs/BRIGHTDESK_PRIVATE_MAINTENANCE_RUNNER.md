@@ -64,7 +64,7 @@ Pull-request changes validate the controller automatically on a GitHub-hosted Ub
 
 The workflow also runs daily. A trusted push to the controller on `main` triggers the same ten-repository daily checks, while pull-request events validate the controller only and do not check out private projects. Its weekly schedule builds and verifies configured Windows, macOS and Linux packages after the daily checks pass. Controller validation runs on GitHub-hosted `ubuntu-slim`; daily private-project checks run on GitHub-hosted `ubuntu-latest`; cross-platform installer jobs run on `windows-latest`, `macos-latest`, and `ubuntu-latest`. Brightdesk-Pages is public, so standard hosted runners are free. Private project checkout remains scoped to short-lived read-only GitHub App tokens; no self-hosted runner or owner's MacBook is required.
 
-All build commands use the existing non-publishing scripts. The controller does not upload artifacts or publish a release.
+All build commands use the existing non-publishing scripts. The Suite's Node.js test runner is invoked with TAP output separately from Vitest, so the reporter flag cannot be misrouted to Vitest. The controller does not upload artifacts or publish a release.
 
 ## Privacy
 

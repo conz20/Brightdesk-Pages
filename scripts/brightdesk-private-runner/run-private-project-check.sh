@@ -92,7 +92,15 @@ fi
 
 run_private_tests() {
   STAGE="automated tests"
-  if (cd "$PROJECT_DIR" && npm test -- --test-reporter=tap) >> "$LOG_FILE" 2>&1; then
+  if (
+    cd "$PROJECT_DIR"
+    if [[ "$PROJECT_NAME" == "Brightdesk-suite" ]]; then
+      # Keep node:test's TAP reporter flag away from the Vitest CLI.
+      node --test --test-reporter=tap tests/*.test.js test/*.test.mjs && ./node_modules/.bin/vitest run
+    else
+      npm test -- --test-reporter=tap
+    fi
+  ) >> "$LOG_FILE" 2>&1; then
     return 0
   else
     local status=$?
