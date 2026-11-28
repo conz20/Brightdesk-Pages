@@ -29,5 +29,6 @@ test('private diagnostics tolerate ANSI-coloured and indented TAP failures', () 
 test('private diagnostics never include raw assertion messages or stack traces', () => {
   const summary = formatPrivateFailureSummary('Brightdesk-Developer-Tools', ['Linux path normalization remains portable']);
   assert.match(summary, /Linux path normalization remains portable/);
-  assert.doesNotMatch(summary, /private detail|Error:|stack trace/i);
+  assert.match(summary, /stack traces were withheld/);\n  assert.doesNotMatch(summary, /private detail|Error:|
+\\s+at\\s+/i);
 });
