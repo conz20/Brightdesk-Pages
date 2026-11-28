@@ -1,5 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -39,8 +40,14 @@ test('separate tokens are used for source reads and archive writes', () => {
   assert.doesNotMatch(script, /x-access-token:[^\s@]+@github\.com/);
 });
 
+test('archive sync shell script passes Bash syntax validation', () => {
+  const scriptPath = path.join(__dirname, '..', 'scripts', 'brightdesk-archive', 'sync.sh');
+  const result = spawnSync('bash', ['-n', scriptPath], { encoding: 'utf8' });
+  assert.equal(result.status, 0, result.stderr || 'bash -n failed');
+});
+
 test('source refs and timestamped snapshots are retained without pruning', () => {
-  assert.match(script, /git fsck --full --no-reflogs/);
+  assert.ok(script.includes('fsck --full --no-reflogs'));
   assert.ok(script.includes('refs/archive/$repo/snapshots/'));
   assert.match(script, /git push --quiet archive/);
   assert.match(script, /git ls-remote --refs archive/);
