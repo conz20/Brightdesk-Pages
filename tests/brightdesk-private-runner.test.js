@@ -35,13 +35,13 @@ test('controller grants only read access through the default workflow token', ()
 
 test('private checkout tokens remain read-only and diagnostic token is issue-only', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 6);
-  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 3);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 4);
+  assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 7);
+  assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 4);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 5);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
-  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 4);
+  assert.equal((source.match(/token: \$\{\{ steps\.app-token\.outputs\.token \}\}/g) || []).length, 5);
   assert.match(source, /vars\.BRIGHTDESK_APP_ID/);
   assert.match(source, /secrets\.BRIGHTDESK_APP_PRIVATE_KEY/);
   assert.match(source, /persist-credentials: false/);
@@ -93,7 +93,7 @@ test('controller PRs and trusted pushes trigger daily private checks but never s
   const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
   assert.match(
     dailyJob,
-    /if:\s*>\-\s*\(github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\) &&\s*\(github\.event_name != 'workflow_dispatch' \|\| inputs\.project == 'all' \|\| matrix\.project == inputs\.project\)/
+    /if:\s*>\-\s*\(github\.event_name == 'pull_request' \|\| github\.event_name == 'schedule' \|\| github\.event_name == 'workflow_dispatch' \|\| github\.event_name == 'push'\) &&\s*\(github\.event_name != 'workflow_dispatch' \|\| \(inputs\.run_reviewed_product_pr_matrix != true && \(inputs\.project == 'all' \|\| matrix\.project == inputs\.project\)\)\)/
   );
 
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
@@ -669,4 +669,70 @@ test('public Pages repository references use the current Brightdesk project owne
       assert.match(source, /github\.com\/conz20\/Brightdesk-suite\/releases/);
     }
   }
+});
+
+
+test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and read-only', () => {
+  const source = fs.readFileSync(workflow, 'utf8');
+  const dispatch = source.split('  workflow_dispatch:')[1]?.split('\n\npermissions:')[0] ?? '';
+  assert.match(dispatch, /run_reviewed_product_pr_matrix:/);
+  assert.match(dispatch, /type: boolean/);
+  assert.match(dispatch, /default: false/);
+
+  const job = source.split('  reviewed-product-pr-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  assert.match(job, /github\.event_name == 'workflow_dispatch'/);
+  assert.match(job, /inputs\.run_reviewed_product_pr_matrix == true/);
+  assert.match(job, /runs-on: ubuntu-latest/);
+  assert.match(job, /matrix:\s*\n\s*include:/);
+  assert.match(job, /permission-contents: read/);
+  assert.match(job, /persist-credentials: false/);
+  assert.match(job, /fetch-depth: 0/);
+  assert.ok(job.includes('repository: ${{ github.repository_owner }}/${{ matrix.project }}'));
+  assert.ok(job.includes('ref: ${{ matrix.project_ref }}'));
+  assert.match(job, /expected_head_sha/);
+  assert.match(job, /base_sha/);
+  assert.match(job, /git -C source rev-parse HEAD/);
+  assert.match(job, /git -C source diff --name-only/);
+  assert.doesNotMatch(job, /git -C source fetch/);
+  assert.match(job, /run-private-project-check\.sh/);
+  assert.match(job, /Run private project tests without publishing source logs/);
+  assert.doesNotMatch(job, /permission-contents:\s*write|permission-pull-requests:\s*write|upload-artifact|npm run dist:/);
+
+  for (const project of [
+    'Brightdesk-Sheets',
+    'Brightdesk-Decks',
+    'Brightdesk-Notes',
+    'Brightdesk-Database',
+    'Brightdesk-Forms',
+    'Brightdesk-Lists',
+    'Brightdesk-Planner',
+    'Brightdesk-To-Do',
+    'Brightdesk-Workspace'
+  ]) assert.ok(job.includes(project), project + ' must be covered by the reviewed PR batch');
+
+  assert.match(job, /pr_number: 26/);
+  assert.match(job, /pr_number: 27/);
+
+  assert.equal((job.match(/^\s+- project:/gm) || []).length, 10);
+  assert.equal((job.match(/^\s+- project: Brightdesk-Lists$/gm) || []).length, 2);
+  assert.equal((job.match(/^\s+pr_number: 48$/gm) || []).length, 2);
+  for (const sha of [
+    '9063fd07abe275016bf894a68af1d7a77f57a8ed',
+    '1a7d7eed376addec3c0867b8cef5ac6e2f27bb3f',
+    'c1eb924171bad1ffa9d1c74fa69a979dc23ae7db',
+    '3978ff39a901478c7193f797e6f0659b2c763eee',
+    'cad084c26b925db6748117b63651538b3b24df5d',
+    '4eee7ae0fffbdcdc5df8a021c767a79dc1825fea',
+    '5324585a8c7a03cad7f418b2e115d194189c2219',
+    'f1e072500717cb494ff2c2b6de7347c2aa321a5f',
+    'b500fc5a386d02d0e0b710582a61e923315a24ea',
+    'ea94a8acee1331321100c707151955698831c74c'
+  ]) assert.ok(job.includes('expected_head_sha: ' + sha), sha + ' must stay pinned');
+
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
+  assert.match(dailyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  const foundationJob = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
+  assert.match(foundationJob, /inputs\.run_reviewed_product_pr_matrix != true/);
+  const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
+  assert.match(weeklyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
 });

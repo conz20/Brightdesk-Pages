@@ -52,6 +52,11 @@ on:
         type: boolean
         required: true
         default: false
+      run_reviewed_product_pr_matrix:
+        description: Test the ten currently reviewed product PR heads on Linux using read-only tokens (no installer builds)
+        type: boolean
+        required: true
+        default: false
 
 permissions:
   contents: read
@@ -83,7 +88,7 @@ jobs:
     name: Test ${{ matrix.project }} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
-      (github.event_name != 'workflow_dispatch' || inputs.project == 'all' || matrix.project == inputs.project)
+      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && (inputs.project == 'all' || matrix.project == inputs.project)))
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
@@ -181,11 +186,159 @@ jobs:
             echo "No private Suite diagnostic report is required for this job."
           fi
 
+  reviewed-product-pr-tests:
+    name: Validate ${{ matrix.project }} PR #${{ matrix.pr_number }} on Linux
+    if: github.event_name == 'workflow_dispatch' && inputs.run_reviewed_product_pr_matrix == true
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: Brightdesk-Sheets
+            pr_number: 48
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: 9063fd07abe275016bf894a68af1d7a77f57a8ed
+            base_sha: 284bd578d4abe69fe13c5d3d6102aca4a730299d
+          - project: Brightdesk-Decks
+            pr_number: 48
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: 1a7d7eed376addec3c0867b8cef5ac6e2f27bb3f
+            base_sha: 7c89a79f6b2a03f43bec2a162307e3dafee8f951
+          - project: Brightdesk-Notes
+            pr_number: 43
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: c1eb924171bad1ffa9d1c74fa69a979dc23ae7db
+            base_sha: fae342534d360c983131f93a4df7e7b8ae5d1148
+          - project: Brightdesk-Database
+            pr_number: 44
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: 3978ff39a901478c7193f797e6f0659b2c763eee
+            base_sha: b3323349193661cfe8537cc193587f843fcfef9b
+          - project: Brightdesk-Forms
+            pr_number: 44
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: cad084c26b925db6748117b63651538b3b24df5d
+            base_sha: 4b1ce62b9bcc463f2599a2e3099398f6267b2fce
+          - project: Brightdesk-Lists
+            pr_number: 27
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: 4eee7ae0fffbdcdc5df8a021c767a79dc1825fea
+            base_sha: 960bf3b99988842e44111b08a2194315d6c947e2
+          - project: Brightdesk-Planner
+            pr_number: 26
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: 5324585a8c7a03cad7f418b2e115d194189c2219
+            base_sha: 2183313f5c6f80238e62fb57fc1851c6a769004a
+          - project: Brightdesk-To-Do
+            pr_number: 24
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: f1e072500717cb494ff2c2b6de7347c2aa321a5f
+            base_sha: f9c9f87c303ce78f8554a92ce026ee686b5a19f8
+          - project: Brightdesk-Workspace
+            pr_number: 25
+            project_ref: legal/brightdesk-licence-security-brand-2026-11-28
+            expected_head_sha: b500fc5a386d02d0e0b710582a61e923315a24ea
+            base_sha: d7cd16788e0e1fdd1c2255ed8706dfc2815c2f14
+          - project: Brightdesk-Lists
+            pr_number: 26
+            project_ref: security/official-dictionary-resources-only
+            expected_head_sha: ea94a8acee1331321100c707151955698831c74c
+            base_sha: 960bf3b99988842e44111b08a2194315d6c947e2
+    steps:
+      - name: Check out the Brightdesk Pages controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: controller
+          persist-credentials: false
+      - name: Require owner-configured private check credentials
+        shell: bash
+        env:
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -z "$APP_ID" || -z "$APP_PRIVATE_KEY" ]]; then
+            echo "::error::The Brightdesk read-only GitHub App credentials are not configured."
+            exit 1
+          fi
+      - name: Create a short-lived Contents read-only token for this project
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.project }}
+          permission-contents: read
+      - name: Check out the exact reviewed private PR head
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
+          ref: ${{ matrix.project_ref }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify the exact PR head and README freshness
+        shell: bash
+        env:
+          EXPECTED_HEAD_SHA: ${{ matrix.expected_head_sha }}
+          BASE_SHA: ${{ matrix.base_sha }}
+          PR_NUMBER: ${{ matrix.pr_number }}
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -Eeuo pipefail
+          actual_head="$(git -C source rev-parse HEAD)"
+          if [[ "$actual_head" != "$EXPECTED_HEAD_SHA" ]]; then
+            echo "::error::$PROJECT PR #$PR_NUMBER head changed since this matrix was reviewed. Refresh the pinned ref and SHA before running again."
+            exit 1
+          fi
+          if ! git -C source cat-file -e "$BASE_SHA^{commit}" 2>/dev/null; then
+            echo "::error::The recorded base commit for $PROJECT PR #$PR_NUMBER is unavailable. Refresh its base SHA before running again."
+            exit 1
+          fi
+          if [[ ! -f source/README.md ]]; then
+            echo "::error::$PROJECT PR #$PR_NUMBER has no root README.md."
+            exit 1
+          fi
+          changed_files="$(git -C source diff --name-only "$BASE_SHA...$actual_head")"
+          readme_changed=false
+          non_markdown_changed=false
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            if [[ "$file" == "README.md" ]]; then
+              readme_changed=true
+            fi
+            case "$file" in
+              *.md|*.mdx|.github/workflows/readme-freshness.yml)
+                ;;
+              *)
+                non_markdown_changed=true
+                ;;
+            esac
+          done <<< "$changed_files"
+          if [[ "$non_markdown_changed" == "true" && "$readme_changed" != "true" ]]; then
+            echo "::error::$PROJECT PR #$PR_NUMBER changes non-Markdown files without updating the root README.md."
+            exit 1
+          fi
+          echo "Exact PR head and README freshness verified for $PROJECT PR #$PR_NUMBER."
+      - name: Set up the required Node.js runtime
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Run private project tests without publishing source logs
+        shell: bash
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh \
+            test source "${{ matrix.project }}"
+
   daily-private-foundation-tests:
     name: Test ${{ matrix.project }} on Linux
     if: >-
       (github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push') &&
-      (github.event_name != 'workflow_dispatch' || inputs.project == 'all')
+      (github.event_name != 'workflow_dispatch' || (inputs.run_reviewed_product_pr_matrix != true && inputs.project == 'all'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -398,7 +551,7 @@ jobs:
     name: Build ${{ matrix.project }} for ${{ matrix.platform }}
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
-      (github.event_name == 'workflow_dispatch' && inputs.project == 'all' && inputs.run_cross_platform_builds == true)
+      (github.event_name == 'workflow_dispatch' && inputs.project == 'all' && inputs.run_cross_platform_builds == true && inputs.run_reviewed_product_pr_matrix != true)
     needs: [daily-private-tests, daily-private-foundation-tests]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
