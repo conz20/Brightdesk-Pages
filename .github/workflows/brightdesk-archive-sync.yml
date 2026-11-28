@@ -1,0 +1,54 @@
+name: Brightdesk portfolio archive sync
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-archive-sync.yml'
+      - 'scripts/brightdesk-archive/sync.sh'
+      - 'tests/brightdesk-archive-sync.test.js'
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-portfolio-archive-sync
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate archive sync workflow and script
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Brightdesk Pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check Bash syntax
+        run: bash -n scripts/brightdesk-archive/sync.sh
+      - name: Test repository inventory, verification and token boundaries
+        run: node --test tests/brightdesk-archive-sync.test.js
+
+  mirror:
+    name: Mirror 27 source repositories into Brightdesk Archives
+    # Never expose backup secrets to pull requests or non-main branches.
+    if: (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out Brightdesk Pages
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check Bash syntax
+        run: bash -n scripts/brightdesk-archive/sync.sh
+      - name: Mirror and verify source repository refs
+        shell: bash
+        env:
+          SOURCE_READ_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_SOURCE_READ_TOKEN }}
+          ARCHIVE_WRITE_TOKEN: ${{ secrets.BRIGHTDESK_ARCHIVE_WRITE_TOKEN }}
+        run: bash scripts/brightdesk-archive/sync.sh
