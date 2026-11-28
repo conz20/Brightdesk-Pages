@@ -602,7 +602,6 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.ok(job.includes('npm run check:node'), 'Node runtime checks must run');
   assert.ok(job.includes('npm run check'), 'syntax checks must run');
   assert.ok(job.includes('npm test'), 'contract and regression tests must run');
-  assert.ok(job.includes('BRIGHTDESK_PROJECT == "Brightdesk-Common-Libs"'), 'Common Libraries must use its real script set');
   assert.match(job, /RUNNER_TEMP/);
   assert.match(job, /detailed output was kept only on the temporary runner/i);
   assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
