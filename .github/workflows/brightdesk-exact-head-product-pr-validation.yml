@@ -1,0 +1,177 @@
+name: Brightdesk exact-head private product PR validation
+
+on:
+  pull_request_target:
+    branches: [main]
+    paths:
+      - '.github/workflows/brightdesk-exact-head-product-pr-validation.yml'
+      - '.github/requests/brightdesk-product-pr-validation.json'
+      - 'README.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brightdesk-exact-head-private-product-pr-validation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Validate approved private product request
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-slim
+    outputs:
+      matrix: ${{ steps.request.outputs.matrix }}
+    steps:
+      - name: Check out the validation controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Validate the exact-head request
+        id: request
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const allowed = new Set([
+            'Brightdesk-Pages',
+            'Brightdesk-Sheets',
+            'Brightdesk-Decks',
+            'Brightdesk-Notes',
+            'Brightdesk-Database',
+            'Brightdesk-Forms',
+            'Brightdesk-Lists',
+            'Brightdesk-Planner',
+            'Brightdesk-To-Do',
+            'Brightdesk-Workspace'
+          ]);
+          const file = '.github/requests/brightdesk-product-pr-validation.json';
+          const request = JSON.parse(fs.readFileSync(file, 'utf8'));
+          if (request.schema !== 1 || !Array.isArray(request.projects) ||
+              request.projects.length < 1 || request.projects.length > 10) {
+            throw new Error('The private product validation request has an invalid schema or project count.');
+          }
+          const seen = new Set();
+          for (const item of request.projects) {
+            if (!item || !allowed.has(item.project) || seen.has(item.project)) {
+              throw new Error('The request contains an unknown or duplicate product.');
+            }
+            if (!Number.isSafeInteger(item.pr) || item.pr < 1 ||
+                !/^[a-f0-9]{40}$/.test(item.head_sha || '') ||
+                !/^[a-f0-9]{40}$/.test(item.base_sha || '')) {
+              throw new Error('Every entry must contain a valid PR number and exact 40-character base/head commit SHA.');
+            }
+            seen.add(item.project);
+          }
+          const matrix = JSON.stringify({ include: request.projects });
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'matrix=' + matrix + '\n');
+          NODE
+
+  validate:
+    name: Test ${{ matrix.project }} PR #${{ matrix.pr }}
+    needs: prepare
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix).include }}
+
+    steps:
+      - name: Check out the validation controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          path: controller
+          persist-credentials: false
+
+      - name: Mask private commit identifiers
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ matrix.head_sha }}
+          EXPECTED_BASE: ${{ matrix.base_sha }}
+        run: |
+          echo "::add-mask::$EXPECTED_HEAD"
+          echo "::add-mask::$EXPECTED_BASE"
+
+      - name: Create a short-lived read-only token for this product
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: ${{ matrix.project }}
+          permission-contents: read
+
+      - name: Check out the exact private PR commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ github.repository_owner }}/${{ matrix.project }}
+          ref: ${{ matrix.head_sha }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact head, base ancestry and README freshness
+        shell: bash
+        env:
+          EXPECTED_HEAD: ${{ matrix.head_sha }}
+          EXPECTED_BASE: ${{ matrix.base_sha }}
+          PROJECT: ${{ matrix.project }}
+        run: |
+          set -Eeuo pipefail
+          actual_head="$(git -C source rev-parse HEAD)"
+          if [[ "$actual_head" != "$EXPECTED_HEAD" ]]; then
+            echo "::error::The checked-out source revision does not match the requested PR head."
+            exit 1
+          fi
+          git -C source cat-file -e "$EXPECTED_BASE^{commit}"
+          if ! git -C source merge-base --is-ancestor "$EXPECTED_BASE" "$EXPECTED_HEAD"; then
+            echo "::error::The requested PR base is not an ancestor of the exact head; refresh the validation request."
+            exit 1
+          fi
+          changed_files="$(git -C source diff --name-only "$EXPECTED_BASE...$EXPECTED_HEAD")"
+          non_markdown_changed=false
+          while IFS= read -r file; do
+            [[ -z "$file" ]] && continue
+            case "$file" in
+              *.md|*.mdx|.github/workflows/readme-freshness.yml) ;;
+              *) non_markdown_changed=true ;;
+            esac
+          done <<< "$changed_files"
+          if [[ "$non_markdown_changed" == "true" ]] &&
+             ! grep -Fxq 'README.md' <<< "$changed_files"; then
+            echo "::error::The PR changes non-Markdown files without changing the root README.md."
+            exit 1
+          fi
+          if [[ ! -f source/README.md ]]; then
+            echo "::error::The private product root README.md is missing."
+            exit 1
+          fi
+          {
+            echo "## Exact-head and README freshness validation"
+            echo
+            echo "- Project: $PROJECT"
+            echo "- PR: #${{ matrix.pr }}"
+            echo "- Exact source head: verified"
+            echo "- Base ancestry: verified"
+            echo "- README freshness: passed"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up the required Node.js runtime
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.22.2
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+
+      - name: Run private tests, licence checks and release preflight
+        shell: bash
+        run: |
+          bash controller/scripts/brightdesk-private-runner/run-private-project-check.sh test source "${{ matrix.project }}"
