@@ -56,5 +56,6 @@
       "head_sha": "4fc0e4cc984491d98d6cede2b0a61855f1d38b63",
       "base_sha": "d7cd16788e0e1fdd1c2255ed8706dfc2815c2f14"
     }
-  ]
+  ],
+  "validation_round": "initial-exact-head-check-2026-11-29"
 }
