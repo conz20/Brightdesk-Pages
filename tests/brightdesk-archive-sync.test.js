@@ -86,6 +86,8 @@ test('scheduled archive checks poll for changes every five minutes and retain th
   assert.ok(workflow.includes('cron: "17 */6 * * *"'), 'Expected the six-hour safety reconciliation');
   assert.match(workflow, /ONLY_CHANGED:/);
   assert.match(workflow, /github\.event_name == 'schedule'/);
+  assert.ok(workflow.includes("vars.BRIGHTDESK_ARCHIVE_CHANGE_CHECKS_ENABLED == 'true'"), 'Five-minute checks stay disabled until owner setup is complete');
+  assert.ok(workflow.includes("github.event.schedule == '3/5 * * * *'"), 'Only the five-minute schedule uses changed-only mode');
 });
 
 test('change-aware archive mode checks source branch and tag SHAs before cloning', () => {
