@@ -74,3 +74,8 @@ test('mirror secrets are available only to the main-branch mirror job', () => {
   assert.match(workflow, /ARCHIVE_WRITE_TOKEN:/);
   assert.match(workflow, /persist-credentials: false/);
 });
+
+test('portfolio backups are scheduled every six hours on GitHub-hosted runners', () => {
+  assert.match(workflow, /cron:\s*[\"']17 \\*\\/6 \\* \\* \\*[\"']/);
+  assert.match(workflow, /runs-on: ubuntu-latest/);
+});
