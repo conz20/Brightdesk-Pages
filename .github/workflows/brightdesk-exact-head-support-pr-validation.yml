@@ -31,6 +31,13 @@ jobs:
           ref: main
           persist-credentials: false
 
+      - name: Check support validation script syntax and controller test
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          bash -n scripts/brightdesk-private-runner/run-support-project-check.sh
+          node --test tests/brightdesk-support-private-validation.test.js
+
       - name: Validate the support PR request
         id: request
         shell: bash
