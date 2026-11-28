@@ -15,7 +15,7 @@ function readList(name) {
   const open = start + prefix.length;
   const close = script.indexOf(')', open);
   assert.notEqual(close, -1, 'Unclosed ' + name + ' list');
-  return script.slice(open, close).trim().split(/\\s+/);
+  return script.slice(open, close).trim().split(/\s+/);
 }
 
 test('archive job covers exactly the 27 non-archive repositories', () => {
@@ -38,7 +38,7 @@ test('separate least-privilege credentials are used for source reads and archive
   assert.match(script, /SOURCE_READ_TOKEN/);
   assert.match(script, /ARCHIVE_WRITE_TOKEN/);
   assert.match(script, /GIT_ASKPASS/);
-  assert.doesNotMatch(script, /x-access-token:[^\\s@]+@github\\.com/);
+  assert.doesNotMatch(script, /x-access-token:[^\s@]+@github\.com/);
 });
 
 test('archive sync shell script passes Bash syntax validation', () => {
@@ -54,22 +54,22 @@ test('every backup attempt gets a unique snapshot namespace', () => {
 });
 
 test('stable refs may advance but timestamped snapshots are never force-pushed', () => {
-  assert.match(script, /\\+refs\\/heads\\/\\*:refs\\/archive\\/\\$repo\\/heads\\/\\*/);
-  assert.match(script, /refs\\/archive\\/\\$repo\\/snapshots\\/\\$stamp\\/\\*:refs\\/archive\\/\\$repo\\/snapshots\\/\\$stamp\\/\\*/);
-  assert.doesNotMatch(script, /\\+refs\\/archive\\/\\$repo\\/snapshots/);
+  assert.match(script, /\+refs\/heads\/\*:refs\/archive\/\$repo\/heads\/\*/);
+  assert.match(script, /refs\/archive\/\$repo\/snapshots\/\$stamp\/\*:refs\/archive\/\$repo\/snapshots\/\$stamp\/\*/);
+  assert.doesNotMatch(script, /\+refs\/archive\/\$repo\/snapshots/);
   assert.match(script, /Deliberately do not prune/);
 });
 
 test('each current-run archive ref is checked by exact name and SHA, not total count', () => {
   assert.match(script, /ls-remote --refs archive/);
-  assert.match(script, /awk -v target=\\"\\$expected_ref\\"/);
+  assert.match(script, /awk -v target="\$expected_ref"/);
   assert.match(script, /actual_sha.*expected_sha/s);
   assert.doesNotMatch(script, /actual_refs=/);
 });
 
 test('mirror secrets are available only to the main-branch mirror job', () => {
-  assert.match(workflow, /github\\.event_name == 'pull_request'/);
-  assert.match(workflow, /github\\.ref == 'refs\\/heads\\/main'/);
+  assert.match(workflow, /github\.event_name == 'pull_request'/);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/main'/);
   assert.match(workflow, /SOURCE_READ_TOKEN:/);
   assert.match(workflow, /ARCHIVE_WRITE_TOKEN:/);
   assert.match(workflow, /persist-credentials: false/);
