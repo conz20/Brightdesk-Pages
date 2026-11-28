@@ -107,7 +107,7 @@ test('Brightdesk-AI validation follows current main and records the exact tested
     'brightdesk-ai-test-coverage-validation.yml'
   ]) {
     const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', name), 'utf8');
-    assert.match(source, /repository: conz20\/Brightdesk-AI/);
+    assert.match(source, /repository: \\$\\{\\{ github\\.repository_owner \\}\\}\\/Brightdesk-AI/);
     assert.match(source, /ref: main/);
     assert.doesNotMatch(source, /ref: [a-f0-9]{40}/);
     assert.match(source, /git -C private-ai rev-parse HEAD/);
@@ -173,7 +173,7 @@ test('one-time Suite installer request starts only Suite platform builds', () =>
   assert.match(oneTimeJob, /github\.event_name == 'push'/);
   assert.match(oneTimeJob, /github\.event\.head_commit\.message/);
   assert.match(oneTimeJob, /\[build-brightdesk-suite-installers\]/);
-  assert.ok(oneTimeJob.includes('repository: conz20/Brightdesk-suite'));
+  assert.ok(oneTimeJob.includes('repository: ${{ github.repository_owner }}/Brightdesk-suite'));
   assert.match(oneTimeJob, /ref: main/);
   for (const platform of ['win', 'mac', 'linux']) assert.ok(oneTimeJob.includes('platform: ' + platform));
   assert.doesNotMatch(weeklyJob, /github\.event_name == 'push'/);
