@@ -59,7 +59,7 @@ jobs:
 
   daily-private-tests:
     name: Test ${{ matrix.project }} on Linux
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:

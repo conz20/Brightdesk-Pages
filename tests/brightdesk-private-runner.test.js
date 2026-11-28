@@ -550,6 +550,7 @@ test('private maintenance controller uses GitHub-hosted runners for every projec
 
   assert.match(validateJob, /runs-on: ubuntu-slim/);
   assert.match(dailyJob, /runs-on: ubuntu-latest/);
+  assert.match(dailyJob, /if: github\\.event_name == 'pull_request' \\|\\| github\\.event_name == 'schedule'/);
   for (const job of [suiteInstallerJob, weeklyInstallerJob]) {
     assert.match(job, /runs-on: \$\{\{ matrix\.runner \}\}/);
     assert.match(job, /runner: windows-latest/);
