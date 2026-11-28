@@ -656,7 +656,7 @@ test('shared foundation test failures reveal only sanitised failing test names',
 
 
 test('engineering failures share only sanitized names on the controller PR', () => {
-  const source = read('.github/workflows/brightdesk-private-maintenance.yml');
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-private-maintenance.yml'), 'utf8');
   const job = source.split('  daily-private-foundation-tests:')[1]?.split('  suite-one-time-installer-smoke-tests:')[0] ?? '';
   assert.match(job, /issues: write/);
   assert.match(job, /Share sanitized engineering test names on the controller PR/);
