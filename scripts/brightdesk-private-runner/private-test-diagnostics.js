@@ -4,6 +4,8 @@ function cleanTestName(value) {
   return String(value)
     .replace(/\u001b\[[0-9;]*m/g, '')
     .replace(/[\u0000-\u001f\u007f]/g, ' ')
+    .replace(/https?:\/\/[^\s]+/gi, '[URL redacted]')
+    .replace(/(?:[A-Za-z]:)?[\\/](?:[^\s\\/]+[\\/]){2,}[^\s]*/g, '[path redacted]')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 200);
@@ -59,4 +61,4 @@ if (require.main === module) {
   process.stdout.write(Buffer.from(summary, 'utf8').toString('base64'));
 }
 
-module.exports = { parseTapFailureNames, formatPrivateFailureSummary };
+module.exports = { cleanTestName, parseTapFailureNames, formatPrivateFailureSummary };
