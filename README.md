@@ -5,7 +5,7 @@
 
 <p align="center"><strong>Create letters, reports and formatted documents.</strong></p>
 
-<p align="center"><a href="https://raw.githubusercontent.com/connormolloy12/Brightdesk-Pages/main/assets/previews/pages-workspace.svg"><img src="assets/previews/pages-workspace.svg" alt="Brightdesk Pages interface design" width="100%"></a></p>
+<p align="center"><a href="https://raw.githubusercontent.com/conz20/Brightdesk-Pages/main/assets/previews/pages-workspace.svg"><img src="assets/previews/pages-workspace.svg" alt="Brightdesk Pages interface design" width="100%"></a></p>
 
 <p align="center"><sub>Select the interface image to open the full-size design.</sub></p>
 
@@ -15,7 +15,7 @@ Brightdesk Pages is a dedicated desktop application within the independent Brigh
 
 ## Shared Brightdesk design standard
 
-This product follows the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
+This product follows the [Brightdesk visual and interaction standard](https://github.com/conz20/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md) for branding, icon usage, layout, responsive behaviour and accessibility.
 
 
 
@@ -37,7 +37,7 @@ The product stylesheet is mirrored into the Pages source so the installed produc
 
 ## Cross-platform consistency
 
-The Windows, macOS and Linux editions use the same approved Brightdesk interface and supported product scope. Shared layout, typography, spacing, component states and navigation follow the [Brightdesk visual and interaction standard](https://github.com/connormolloy12/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md). This product's original icon and approved accent remain the same on every operating system. Only operating-system integrations such as window controls, native file dialogs, keyboard conventions and package formats may adapt to platform conventions.
+The Windows, macOS and Linux editions use the same approved Brightdesk interface and supported product scope. Shared layout, typography, spacing, component states and navigation follow the [Brightdesk visual and interaction standard](https://github.com/conz20/Brightdesk-suite/blob/main/docs/BRIGHTDESK_VISUAL_STANDARD.md). This product's original icon and approved accent remain the same on every operating system. Only operating-system integrations such as window controls, native file dialogs, keyboard conventions and package formats may adapt to platform conventions.
 
 | Operating system | Configured package targets |
 | --- | --- |
@@ -99,7 +99,7 @@ Use `win` on Windows or `linux` on Linux instead of `mac`.
 
 ## Related project
 
-[Brightdesk Office Suite](https://github.com/connormolloy12/Brightdesk-suite) brings the approved Brightdesk products together in one desktop installation.
+[Brightdesk Office Suite](https://github.com/conz20/Brightdesk-suite) brings the approved Brightdesk products together in one desktop installation.
 
 ## Private maintenance checks
 
@@ -122,7 +122,7 @@ The checked-in copy is loaded locally before the renderer. It is not fetched fro
 
 ## Customer network policy
 
-Once installed, this product uses the internet only to check for, download and install official Brightdesk updates. Spelling checks run locally. Already-installed, integrity-verified dictionaries remain available offline. Catalogue entries that are not included in this build are reference information only and cannot be downloaded in-product. Future pack discovery, download and updates must use verified official Brightdesk resources; full online/offline/hybrid pack support remains pending until packs are licensed, built and tested. The product does not provide separate in-product installer downloads, customer accounts, passwords, profiles, subscriptions, cloud storage or online services. Normal product work remains local and available offline. Initial installer distribution takes place outside the running product.
+Normal customer operation is local and works offline. The only permitted customer-facing internet activity is official Brightdesk product updates and official Brightdesk-controlled language-resource discovery, download and update. This is a policy boundary, not a claim that update delivery is active: this product's current `electron-builder` configuration has no publish provider, so no updater source is configured or verified. Spelling checks use installed local dictionaries; document text is never uploaded. The shared 92-entry language catalogue currently has no available dictionary packs, and any entry not included in the installed build remains unavailable in-product. Future discovery, download and update must use the official Brightdesk Localization channel only, after licence, signature, SHA-256 and compatibility checks pass. No third-party runtime dictionary downloads, remote spelling checks, customer accounts, subscriptions, cloud storage or online collaboration are permitted. Initial installer distribution is separate from normal product operation.
 
 
 ## Individual product window
