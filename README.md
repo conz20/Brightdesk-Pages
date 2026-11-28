@@ -174,3 +174,8 @@ The current five-entry exact-head validation request is labelled `fresh-main-lic
 ## Private PR test diagnostics
 
 When a private product PR fails its automated tests in the public exact-head validation workflow, the controller keeps the raw TAP log only on the temporary GitHub-hosted runner. It extracts failing test names, redacts absolute paths and URLs, and updates a single marked diagnostic comment on the matching **private** product PR using a short-lived GitHub App token with **Issues: write** permission for that one repository only. Assertion details, source text, stack traces, raw logs and artifacts are not published to this public Pages repository. If issue-scoped permission is unavailable, the diagnostic step is best-effort and the test job remains failed without exposing its output.
+
+
+## Private exact-head product PR validation
+
+The owner-maintained request at `.github/requests/brightdesk-product-pr-validation.json` pins selected private product pull requests by exact head and base commit SHA. The GitHub-hosted controller uses a short-lived, repository-scoped read-only token to verify those commits, README freshness, tests, licence notices and release preflight. When automated tests fail, it can write only sanitized failing test names to the matching private PR using an issue-scoped token. Raw TAP logs, assertions, stack traces, source files, paths, URLs and artifacts remain on the temporary hosted runner and are not published here. The request file and this README must be updated together whenever the validation batch changes.
