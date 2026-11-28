@@ -18,7 +18,7 @@ function run(command, args, label) {
 
 function main() {
   if (!expectedNode || process.versions.node !== expectedNode) {
-    throw new Error(`Brightdesk requires Node.js ${expectedNode || '24.22.2'} exactly. Found ${process.version}. Install it with scripts/install-node24.sh or scripts/install-node24.ps1, activate it, then retry.`);
+    throw new Error(`Brightdesk requires Node.js ${expectedNode || '24.22.3'} exactly. Found ${process.version}. Install it with scripts/install-node24.sh or scripts/install-node24.ps1, activate it, then retry.`);
   }
 
   const lockPath = path.join(root, 'package-lock.json');
