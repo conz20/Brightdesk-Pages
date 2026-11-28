@@ -213,12 +213,12 @@ jobs:
           - project: Brightdesk-Database
             pr_number: 44
             project_ref: legal/brightdesk-licence-security-brand-2026-11-28
-            expected_head_sha: 3978ff39a901478c7193f797e6f0659b2c763eee
+            expected_head_sha: 223cec0c893eb0e9cf2dc698570ac8f900bd5e9b
             base_sha: b3323349193661cfe8537cc193587f843fcfef9b
           - project: Brightdesk-Forms
             pr_number: 44
             project_ref: legal/brightdesk-licence-security-brand-2026-11-28
-            expected_head_sha: cad084c26b925db6748117b63651538b3b24df5d
+            expected_head_sha: a00b0b11a034de8e61309f06f4880cf95f4324f2
             base_sha: 4b1ce62b9bcc463f2599a2e3099398f6267b2fce
           - project: Brightdesk-Lists
             pr_number: 27
@@ -238,7 +238,7 @@ jobs:
           - project: Brightdesk-Workspace
             pr_number: 25
             project_ref: legal/brightdesk-licence-security-brand-2026-11-28
-            expected_head_sha: b500fc5a386d02d0e0b710582a61e923315a24ea
+            expected_head_sha: 4fc0e4cc984491d98d6cede2b0a61855f1d38b63
             base_sha: d7cd16788e0e1fdd1c2255ed8706dfc2815c2f14
           - project: Brightdesk-Lists
             pr_number: 26

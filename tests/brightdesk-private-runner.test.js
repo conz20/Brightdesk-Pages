@@ -720,12 +720,12 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
     '9063fd07abe275016bf894a68af1d7a77f57a8ed',
     '1a7d7eed376addec3c0867b8cef5ac6e2f27bb3f',
     'c1eb924171bad1ffa9d1c74fa69a979dc23ae7db',
-    '3978ff39a901478c7193f797e6f0659b2c763eee',
-    'cad084c26b925db6748117b63651538b3b24df5d',
+    '223cec0c893eb0e9cf2dc698570ac8f900bd5e9b',
+    'a00b0b11a034de8e61309f06f4880cf95f4324f2',
     '4eee7ae0fffbdcdc5df8a021c767a79dc1825fea',
     '5324585a8c7a03cad7f418b2e115d194189c2219',
     'f1e072500717cb494ff2c2b6de7347c2aa321a5f',
-    'b500fc5a386d02d0e0b710582a61e923315a24ea',
+    '4fc0e4cc984491d98d6cede2b0a61855f1d38b63',
     'ea94a8acee1331321100c707151955698831c74c'
   ]) assert.ok(job.includes('expected_head_sha: ' + sha), sha + ' must stay pinned');
 
