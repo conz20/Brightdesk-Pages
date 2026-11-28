@@ -24,7 +24,7 @@ function buildPrivatePrDiagnostic({ project, prNumber, failedNames }) {
   if (!ALLOWED_PROJECTS.has(project)) throw new Error('Only approved private product repositories can receive diagnostics.');
   if (!Number.isSafeInteger(prNumber) || prNumber < 1) throw new Error('A valid private product PR number is required.');
   const names = Array.isArray(failedNames)
-    ? [...new Set(failedNames.map(cleanTestName)
+    ? [...new Set(failedNames.map(cleanTestName).filter(Boolean))].slice(0, 30)
     : [];
   const marker = `${MARKER_PREFIX}${project}#${prNumber} -->`;
   const detail = names.length
