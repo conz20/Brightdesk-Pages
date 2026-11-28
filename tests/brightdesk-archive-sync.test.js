@@ -97,4 +97,10 @@ test('change-aware archive mode checks source branch and tag SHAs before cloning
   assert.match(script, /refs\/archive\/\$repo\/tags/);
   assert.match(script, /No source changes detected/);
   assert.match(script, /UNCHANGED/);
+  assert.match(script, /archived_refs\[\$stable_ref\]/);
+  const changeCheck = script.indexOf('if [[ "$only_changed" == "true" ]]');
+  const noChangeExit = script.indexOf('No source changes detected');
+  const firstClone = script.indexOf('git clone --bare');
+  assert.ok(changeCheck >= 0 && noChangeExit > changeCheck && firstClone > noChangeExit, 'No-change exit must happen before any repository clone');
+  assert.match(script, /refs\/heads\/\*.*refs\/tags\/\*/s);
 });
