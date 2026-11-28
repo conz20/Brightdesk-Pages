@@ -1,0 +1,60 @@
+{
+  "schema": 1,
+  "purpose": "Exact-head validation of the nine approved standalone product licensing/security pull requests.",
+  "projects": [
+    {
+      "project": "Brightdesk-Sheets",
+      "pr": 48,
+      "head_sha": "9063fd07abe275016bf894a68af1d7a77f57a8ed",
+      "base_sha": "284bd578d4abe69fe13c5d3d6102aca4a730299d"
+    },
+    {
+      "project": "Brightdesk-Decks",
+      "pr": 48,
+      "head_sha": "1a7d7eed376addec3c0867b8cef5ac6e2f27bb3f",
+      "base_sha": "7c89a79f6b2a03f43bec2a162307e3dafee8f951"
+    },
+    {
+      "project": "Brightdesk-Notes",
+      "pr": 43,
+      "head_sha": "c1eb924171bad1ffa9d1c74fa69a979dc23ae7db",
+      "base_sha": "fae342534d360c983131f93a4df7e7b8ae5d1148"
+    },
+    {
+      "project": "Brightdesk-Database",
+      "pr": 44,
+      "head_sha": "223cec0c893eb0e9cf2dc698570ac8f900bd5e9b",
+      "base_sha": "b3323349193661cfe8537cc193587f843fcfef9b"
+    },
+    {
+      "project": "Brightdesk-Forms",
+      "pr": 44,
+      "head_sha": "a00b0b11a034de8e61309f06f4880cf95f4324f2",
+      "base_sha": "4b1ce62b9bcc463f2599a2e3099398f6267b2fce"
+    },
+    {
+      "project": "Brightdesk-Lists",
+      "pr": 27,
+      "head_sha": "4eee7ae0fffbdcdc5df8a021c767a79dc1825fea",
+      "base_sha": "960bf3b99988842e44111b08a2194315d6c947e2"
+    },
+    {
+      "project": "Brightdesk-Planner",
+      "pr": 26,
+      "head_sha": "5324585a8c7a03cad7f418b2e115d194189c2219",
+      "base_sha": "2183313f5c6f80238e62fb57fc1851c6a769004a"
+    },
+    {
+      "project": "Brightdesk-To-Do",
+      "pr": 24,
+      "head_sha": "f1e072500717cb494ff2c2b6de7347c2aa321a5f",
+      "base_sha": "f9c9f87c303ce78f8554a92ce026ee686b5a19f8"
+    },
+    {
+      "project": "Brightdesk-Workspace",
+      "pr": 25,
+      "head_sha": "4fc0e4cc984491d98d6cede2b0a61855f1d38b63",
+      "base_sha": "d7cd16788e0e1fdd1c2255ed8706dfc2815c2f14"
+    }
+  ]
+}
