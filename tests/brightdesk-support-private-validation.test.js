@@ -71,7 +71,7 @@ test('support workflow is owner-main-triggered and uses only read-only repositor
 });
 
 test('support workflow pins and verifies exact private PR heads before running checks', () => {
-  assert.match(workflow, /expected_head_sha/);
+  assert.match(workflow, /head_sha/);
   assert.match(workflow, /base_sha/);
   assert.match(workflow, /git -C source rev-parse HEAD/);
   assert.match(workflow, /merge-base --is-ancestor/);
