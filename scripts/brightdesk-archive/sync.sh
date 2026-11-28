@@ -60,19 +60,19 @@ private_repos=(
 # are skipped, so no clone or new timestamped snapshot is created for them.
 # Include the workflow run and retry number so concurrent/manual reruns never
 # reuse a snapshot namespace. Earlier snapshots remain immutable.
-stamp="$(date -u +%Y%m%dT%H%M%SZ)-run\${GITHUB_RUN_ID}-attempt\${GITHUB_RUN_ATTEMPT}"
+stamp="$(date -u +%Y%m%dT%H%M%SZ)-run${GITHUB_RUN_ID}-attempt${GITHUB_RUN_ATTEMPT}"
 printf '## Brightdesk archive sync %s\n\n' "$stamp" >> "$GITHUB_STEP_SUMMARY"
 
 # Scheduled change-check mode compares current source refs with stable archive
 # refs before downloading Git objects. Unchanged sources do not get cloned.
-only_changed="\${ONLY_CHANGED:-false}"
+only_changed="${ONLY_CHANGED:-false}"
 declare -A changed_lookup=()
 changed_repos=()
 
 is_private_repo() {
   local candidate="$1"
   local private_repo
-  for private_repo in "\${private_repos[@]}"; do
+  for private_repo in "${private_repos[@]}"; do
     if [[ "$candidate" == "$private_repo" ]]; then
       return 0
     fi
@@ -87,7 +87,7 @@ if [[ "$only_changed" == "true" ]]; then
   echo "::group::Checking source refs for changes"
   scan_failures=0
 
-  for repo in "\${repos[@]}"; do
+  for repo in "${repos[@]}"; do
     source_url="$source_base/$repo.git"
     source_refs="$work/$repo.source-refs"
     archive_refs="$work/$repo.archive-stable-refs"
@@ -127,11 +127,11 @@ if [[ "$only_changed" == "true" ]]; then
     while read -r sha source_ref; do
       [[ -n "$source_ref" ]] || continue
       case "$source_ref" in
-        refs/heads/*) stable_ref="refs/archive/$repo/heads/\${source_ref#refs/heads/}" ;;
-        refs/tags/*) stable_ref="refs/archive/$repo/tags/\${source_ref#refs/tags/}" ;;
+        refs/heads/*) stable_ref="refs/archive/$repo/heads/${source_ref#refs/heads/}" ;;
+        refs/tags/*) stable_ref="refs/archive/$repo/tags/${source_ref#refs/tags/}" ;;
         *) continue ;;
       esac
-      if [[ "\${archived_refs[$stable_ref]:-}" != "$sha" ]]; then
+      if [[ "${archived_refs[$stable_ref]:-}" != "$sha" ]]; then
         repo_changed=true
         break
       fi
@@ -153,22 +153,19 @@ if [[ "$only_changed" == "true" ]]; then
     exit 1
   fi
 
-  if (( \${#changed_repos[@]} == 0 )); then
+  if (( ${#changed_repos[@]} == 0 )); then
     echo "No source changes detected; no clones, pushes or new snapshots created."
     printf '\n- Repositories checked: 27\n- Repositories changed: 0\n- Git clone and snapshot work: skipped (no changes)\n' >> "$GITHUB_STEP_SUMMARY"
     echo "::endgroup::"
     exit 0
   fi
 
-  echo "Changed repositories: \${changed_repos[*]}"
+  echo "Changed repositories: ${changed_repos[*]}"
   echo "::endgroup::"
 fi
 
 failures=0
 succeeded=0
-unchanged=0
-
-
 unchanged=0
 
 for repo in "${repos[@]}"; do
