@@ -1,6 +1,6 @@
 # Brightdesk Pages project notes
 
-The standing project requirement is exactly Node.js 24.22.2 LTS for development, testing and desktop installer builds.
+The standing project requirement is exactly Node.js 24.22.3 LTS for development, testing and desktop installer builds.
 
 The product in this repository is called **Brightdesk Pages**. Use that name on its own in customer-facing text, repository descriptions, installer names and release titles. Describe its distribution in terms of desktop installers.
 
