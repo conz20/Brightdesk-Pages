@@ -9,7 +9,7 @@ function cleanTestName(value) {
     .slice(0, 200);
 }
 
-function parseFailureNames(tapOutput) {
+function parseTapFailureNames(tapOutput) {
   const names = [];
   const seen = new Set();
 
@@ -32,9 +32,9 @@ function parseSpecFailureNames(specOutput) {
   const names = [];
   const seen = new Set();
 
-  for (const line of String(specOutput).split(/\\r?\\n/)) {
-    const normalizedLine = line.replace(/\\u001b\\[[0-9;]*m/g, '').trimStart();
-    const match = normalizedLine.match(/^✖\\s+(.+?)(?:\\s+\\(\\d+(?:\\.\\d+)?ms\\))?$/u);
+  for (const line of String(specOutput).split(/\r?\n/)) {
+    const normalizedLine = line.replace(/\u001b\[[0-9;]*m/g, '').trimStart();
+    const match = normalizedLine.match(/^✖\s+(.+?)(?:\s+\(\d+(?:\.\d+)?ms\))?$/u);
     if (!match) continue;
 
     const name = cleanTestName(match[1]);
@@ -80,7 +80,7 @@ if (require.main === module) {
   const project = process.argv[3] || 'unknown project';
   if (!logPath) process.exit(2);
   const tapOutput = fs.readFileSync(logPath, 'utf8');
-  const summary = formatPrivateFailureSummary(project, parseTapFailureNames(tapOutput));
+  const summary = formatPrivateFailureSummary(project, parseFailureNames(tapOutput));
   process.stdout.write(Buffer.from(summary, 'utf8').toString('base64'));
 }
 
