@@ -153,6 +153,10 @@ Pages uses the Brightdesk Common-Libs JSON storage helper from a checked-in loca
 
 
 
+## Portfolio archive backup
+
+The `brightdesk-archive-sync.yml` workflow is the scheduled/manual controller for the private Brightdesk-Archives repository. It runs on a standard GitHub-hosted runner from this public repository, so portfolio backups do not depend on the owner's MacBook or private-repository Actions compute. It clones 13 public sources anonymously and reads the 14 private sources with a narrowly scoped, read-only credential; a separate credential can write only to Brightdesk-Archives. It verifies cloned Git objects, preserves timestamped branch/tag refs without pruning older snapshots, and checks the remote ref counts. Pull-request validation runs only syntax and inventory tests; it never receives backup secrets or runs a mirror. The initial full backup and restore checks remain pending until the owner configures the two Actions secrets and dispatches a successful run. This Git mirror does not include GitHub settings, secrets, discussions, release assets, workflow artifacts, package data, Git LFS objects, local uncommitted files or an independent off-GitHub copy.
+
 ## Repository automation
 
 The repository bootstrap templates use pinned GitHub Actions checkout v7.0.1 and setup-node v7.1.0 actions. README freshness checks run on GitHub-hosted Ubuntu.
