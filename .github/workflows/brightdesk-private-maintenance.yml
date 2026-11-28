@@ -156,10 +156,128 @@ jobs:
             echo "No private Suite diagnostic report is required for this job."
           fi
 
+  daily-private-foundation-tests:
+    name: Test ${{ matrix.project }} on Linux
+    if: github.event_name == 'pull_request' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - Brightdesk-Common-Libs
+          - Brightdesk-Developer-Tools
+    steps:
+      - name: Check out the Brightdesk Pages controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: controller
+      - name: Check whether read-only GitHub App credentials are configured
+        id: private-token
+        shell: bash
+        env:
+          APP_ID: ${{ vars.BRIGHTDESK_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+        run: |
+          if [[ -n "$APP_ID" && -n "$APP_PRIVATE_KEY" ]]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "Shared engineering checks are paused until the Brightdesk App credentials are configured." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Create a short-lived read-only token for this project
+        id: app-token
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          app-id: ${{ vars.BRIGHTDESK_APP_ID }}
+          private-key: ${{ secrets.BRIGHTDESK_APP_PRIVATE_KEY }}
+          owner: conz20
+          repositories: ${{ matrix.project }}
+          permission-contents: read
+      - name: Check out the private Brightdesk engineering project
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: conz20/${{ matrix.project }}
+          token: ${{ steps.app-token.outputs.token }}
+          path: source
+          persist-credentials: false
+      - name: Read the exact Node.js version from the project manifest
+        id: node-version
+        if: steps.private-token.outputs.available == 'true'
+        working-directory: source
+        shell: bash
+        run: |
+          node_version="$(node -e "const manifest = require('./package.json'); process.stdout.write(manifest.engines?.node ?? '')")"
+          if [[ ! "$node_version" =~ ^24\.[0-9]+\.[0-9]+$ ]]; then
+            echo "The project does not declare a supported exact Node.js 24 runtime." >&2
+            exit 1
+          fi
+          printf 'value=%s\n' "$node_version" >> "$GITHUB_OUTPUT"
+      - name: Set up the project-pinned Node.js runtime
+        if: steps.private-token.outputs.available == 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ steps.node-version.outputs.value }}
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Run private engineering checks without publishing source logs
+        if: steps.private-token.outputs.available == 'true'
+        working-directory: source
+        env:
+          BRIGHTDESK_PROJECT: ${{ matrix.project }}
+          RUNNER_TEMP: ${{ runner.temp }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          log_file="$RUNNER_TEMP/brightdesk-foundation-validation.log"
+          fail_stage() {
+            local stage="$1"
+            local status="$2"
+            {
+              echo "## Private Brightdesk engineering validation"
+              echo
+              echo "- Project: $BRIGHTDESK_PROJECT"
+              echo "- Result: **FAILED**"
+              echo "- Failed stage: $stage"
+              echo "- Detailed output was kept only on the temporary runner."
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error title=Private Brightdesk validation failed::$BRIGHTDESK_PROJECT failed during $stage. Detailed output was kept only on the temporary runner."
+            exit "$status"
+          }
+          run_safely() {
+            local stage="$1"
+            shift
+            if "$@" >> "$log_file" 2>&1; then
+              echo "Passed: $stage"
+            else
+              local status="$?"
+              fail_stage "$stage" "$status"
+            fi
+          }
+          run_safely "locked dependency installation" npm ci --no-audit --no-fund
+          if [[ "$BRIGHTDESK_PROJECT" == "Brightdesk-Common-Libs" ]]; then
+            run_safely "shared library verification and contract tests" npm run verify
+          else
+            run_safely "Node.js runtime validation" npm run check:node
+            run_safely "syntax validation" npm run check
+            run_safely "developer-tool regression tests" npm test
+            run_safely "JSON diagnostic validation" bash -euc 'node bin/brightdesk-dev.mjs doctor --root . --json > "$RUNNER_TEMP/brightdesk-developer-tools-doctor.json"'
+          fi
+          {
+            echo "## Private Brightdesk engineering validation"
+            echo
+            echo "- Project: $BRIGHTDESK_PROJECT"
+            echo "- Result: **PASSED**"
+            echo "- Runtime: ${{ steps.node-version.outputs.value }}"
+            echo "- Detailed output was kept only on the temporary runner."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   suite-one-time-installer-smoke-tests:
     name: Build Brightdesk Suite for ${{ matrix.platform }}
     if: github.event_name == 'push' && contains(github.event.head_commit.message, '[build-brightdesk-suite-installers]')
-    needs: daily-private-tests
+    needs: [daily-private-tests, daily-private-foundation-tests]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -256,7 +374,7 @@ jobs:
     if: >-
       (github.event_name == 'schedule' && github.event.schedule == '17 17 * * 0') ||
       (github.event_name == 'workflow_dispatch' && inputs.run_cross_platform_builds == true)
-    needs: daily-private-tests
+    needs: [daily-private-tests, daily-private-foundation-tests]
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
