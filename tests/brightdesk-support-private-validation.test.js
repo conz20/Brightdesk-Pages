@@ -75,6 +75,8 @@ test('support workflow pins and verifies exact private PR heads before running c
   assert.match(workflow, /git -C source rev-parse HEAD/);
   assert.match(workflow, /merge-base --is-ancestor/);
   assert.match(workflow, /persist-credentials:\s*false/);
+  assert.ok(workflow.includes("grep -R -E '^[[:space:]]*runs-on:"));
+  assert.ok(workflow.includes('self-hosted'));
 });
 
 test('Pages README documents the support validation trust and privacy boundary', () => {
