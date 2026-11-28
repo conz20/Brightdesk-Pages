@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "purpose": "Exact-head validation of current-main replacements for the remaining standalone product licensing/security corrections.",
+  "purpose": "Exact-head validation of current-main product licensing/security PRs and GitHub-hosted runner migration PRs.",
   "projects": [
     {
       "project": "Brightdesk-Sheets",
@@ -31,7 +31,31 @@
       "pr": 26,
       "head_sha": "18a515bc0da867a0bf632b7821dd7f0e31435921",
       "base_sha": "491e3893fb1aa05222ddb8872d08666581d18a58"
+    },
+    {
+      "project": "Brightdesk-Notes",
+      "pr": 39,
+      "head_sha": "0e4afd1c634cc97d4cfa2d67e8e8db3e688a6f06",
+      "base_sha": "063dfe065f2404ab16cb9bbde777d8c05a89a0a3"
+    },
+    {
+      "project": "Brightdesk-Lists",
+      "pr": 7,
+      "head_sha": "75dd2a6825b46653cb3fa0ebb081e8fe2dbbf1ba",
+      "base_sha": "e51ee9135c870ab0b4707fe8aa0fbe353517fff4"
+    },
+    {
+      "project": "Brightdesk-Planner",
+      "pr": 8,
+      "head_sha": "0b823f0932b78f4e502f638bf270a5ddde353c64",
+      "base_sha": "4abd039b0a3535e09f7a9a3d1538537b459b46b3"
+    },
+    {
+      "project": "Brightdesk-To-Do",
+      "pr": 7,
+      "head_sha": "e080ab3c4441493d7570fb6efa5747a192d9c7d6",
+      "base_sha": "8da2f34b0d4636e65a473dd61e4942a55929ac78"
     }
   ],
-  "validation_round": "fresh-main-licence-security-validation-2026-11-29"
+  "validation_round": "current-main-runner-migration-validation-2026-11-29"
 }
