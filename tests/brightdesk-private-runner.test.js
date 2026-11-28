@@ -37,7 +37,7 @@ test('private checkout tokens remain read-only and diagnostic token is issue-onl
   const source = fs.readFileSync(workflow, 'utf8');
   assert.equal((source.match(/actions\/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1/g) || []).length, 6);
   assert.equal((source.match(/repositories: \$\{\{ matrix\.project \}\}/g) || []).length, 3);
-  assert.equal((source.match(/permission-contents: read/g) || []).length, 4);
+  assert.equal((source.match(/permission-contents: read/g) || []).length, 5);
   assert.equal((source.match(/permission-issues: write/g) || []).length, 2);
   assert.match(source, /repositories: Brightdesk-suite/);
   assert.match(source, /matrix\.project == 'Brightdesk-suite'/);
