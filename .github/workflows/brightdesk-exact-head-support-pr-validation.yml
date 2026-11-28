@@ -188,7 +188,12 @@ jobs:
             echo "::error::$PROJECT PR #$PR_NUMBER changes non-Markdown files without a root README update."
             exit 1
           fi
-          echo "Exact head, base ancestry and README freshness verified."
+          if [[ -d source/.github/workflows ]] &&
+             grep -R -E '^[[:space:]]*runs-on:[[:space:]]*(self-hosted|\\[.*self-hosted)' source/.github/workflows --include='*.yml' --include='*.yaml' >/dev/null 2>&1; then
+            echo "::error::$PROJECT PR #$PR_NUMBER still contains a self-hosted workflow runner."
+            exit 1
+          fi
+          echo "Exact head, base ancestry, README freshness and hosted-runner policy verified."
 
       - name: Run private support checks without publishing source logs
         shell: bash
