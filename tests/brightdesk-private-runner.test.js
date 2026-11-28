@@ -75,12 +75,12 @@ test('weekly build matrix includes Windows, macOS and Linux for every private pr
   for (const platform of ['win', 'mac', 'linux']) assert.ok(source.includes('platform: ' + platform));
 });
 
-test('daily private project checkouts use each repository default branch', () => {
+test('daily Suite checks use the active independent branch while other private projects use main', () => {
   const source = fs.readFileSync(workflow, 'utf8');
-  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  weekly-private-installer-builds:')[0] ?? '';
+  const dailyJob = source.split('  daily-private-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   const checkout = dailyJob.split('      - name: Check out the private Brightdesk project')[1]?.split('      - name: Set up the required Node.js runtime')[0] ?? '';
   assert.ok(checkout.includes('repository: conz20/${{ matrix.project }}'));
-  assert.doesNotMatch(checkout, /^\s*ref:/m);
+  assert.ok(checkout.includes("ref: ${{ matrix.project == 'Brightdesk-suite' && 'ci/github-hosted-runners-independent-of-macbook' || 'main' }}"));
   assert.doesNotMatch(dailyJob, /fix\/suite-diagnostic-tests/);
 });
 
@@ -599,11 +599,11 @@ test('private shared engineering repositories are tested through the hosted cont
   assert.ok(job.includes('Brightdesk-Developer-Tools'), 'Developer Tools must be checked');
   assert.ok(job.includes('permission-contents: read'), 'private source tokens must remain read-only');
   assert.ok(job.includes('node-version: ${{ steps.node-version.outputs.value }}'), 'Node must follow each repository engine pin');
-  assert.ok(job.includes('npm run verify'), 'Common Libraries contract verification must run');
-  assert.ok(job.includes('npm run check:node'), 'Developer Tools runtime validation must run');
-  assert.ok(job.includes('npm run check'), 'Developer Tools syntax validation must run');
-  assert.ok(job.includes('npm test'), 'Developer Tools regression tests must run');
+  assert.ok(job.includes('npm run check:node'), 'Node runtime checks must run');
+  assert.ok(job.includes('npm run check'), 'syntax checks must run');
+  assert.ok(job.includes('npm test'), 'contract and regression tests must run');
+  assert.ok(job.includes('BRIGHTDESK_PROJECT == "Brightdesk-Common-Libs"'), 'Common Libraries must use its real script set');
   assert.match(job, /RUNNER_TEMP/);
   assert.match(job, /detailed output was kept only on the temporary runner/i);
-  assert.doesNotMatch(job, /cat .*\.log|upload-artifact/);
+  assert.doesNotMatch(job, /npm run verify|cat .*\.log|upload-artifact/);
 });
