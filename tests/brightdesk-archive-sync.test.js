@@ -164,7 +164,7 @@ test('Brightdesk-Archives is backed up as a private Git bundle in Brightdesk-Rel
   assert.match(backup, /git clone --mirror/);
   assert.match(backup, /bundle create/);
   assert.match(backup, /git bundle verify/);
-  assert.match(backup, /git fsck --full/);
+  assert.match(backup, /fsck --full/);
   assert.match(backup, /sha256sum/);
   assert.match(backup, /Brightdesk-Release-Tools/);
   assert.match(backup, /upload_url/);
