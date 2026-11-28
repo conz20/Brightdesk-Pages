@@ -8,7 +8,8 @@ on:
       - 'scripts/brightdesk-archive/sync.sh'
       - 'tests/brightdesk-archive-sync.test.js'
   schedule:
-    - cron: "17 2 * * *"
+    # Reconcile the portfolio four times per day; manual dispatch remains available.
+    - cron: "17 */6 * * *"
   workflow_dispatch:
 
 permissions:
