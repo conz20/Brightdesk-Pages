@@ -679,7 +679,7 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(dispatch, /type: boolean/);
   assert.match(dispatch, /default: false/);
 
-  const job = source.split('  reviewed-product-pr-tests:')[1] ?? '';
+  const job = source.split('  reviewed-product-pr-tests:')[1]?.split('  daily-private-foundation-tests:')[0] ?? '';
   assert.match(job, /github\.event_name == 'workflow_dispatch'/);
   assert.match(job, /inputs\.run_reviewed_product_pr_matrix == true/);
   assert.match(job, /runs-on: ubuntu-latest/);
@@ -687,6 +687,8 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   assert.match(job, /permission-contents: read/);
   assert.match(job, /persist-credentials: false/);
   assert.match(job, /fetch-depth: 0/);
+  assert.match(job, /repository: \\\$\\{\\{ github\\.repository_owner \\}\\}\\/\\\$\\{\\{ matrix\\.project \\}\\}/);
+  assert.match(job, /ref: \\\$\\{\\{ matrix\\.project_ref \\}\\}/);
   assert.match(job, /expected_head_sha/);
   assert.match(job, /base_sha/);
   assert.match(job, /git rev-parse HEAD/);
