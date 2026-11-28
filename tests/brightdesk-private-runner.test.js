@@ -736,3 +736,44 @@ test('manual reviewed-product PR batch is owner-triggered, exact-head pinned and
   const weeklyJob = source.split('  weekly-private-installer-builds:')[1] ?? '';
   assert.match(weeklyJob, /inputs\.run_reviewed_product_pr_matrix != true/);
 });
+
+
+test('exact-head private PR validation supports owner-approved pushes without exposing private write access', () => {
+  const source = fs.readFileSync(
+    path.join(__dirname, '..', '.github', 'workflows', 'brightdesk-exact-head-product-pr-validation.yml'),
+    'utf8'
+  );
+  assert.match(source, /pull_request_target:/);
+  assert.match(source, /push:/);
+  assert.match(source, /github\.actor == github\.repository_owner/);
+  assert.match(source, /validate-exact-head-private-prs/);
+  assert.match(source, /github\.ref == 'refs\/heads\/main'/);
+  assert.match(source, /permission-contents: read/);
+  assert.match(source, /persist-credentials: false/);
+  assert.match(source, /repositories: \$\{\{ matrix\.project \}\}/);
+  assert.doesNotMatch(source, /self-hosted|permission-contents:\s*write|upload-artifact/);
+});
+
+test('exact-head private PR request pins unique project/PR pairs within the approved limit', () => {
+  const request = JSON.parse(fs.readFileSync(
+    path.join(__dirname, '..', '.github', 'requests', 'brightdesk-product-pr-validation.json'),
+    'utf8'
+  ));
+  assert.equal(request.schema, 1);
+  assert.ok(request.projects.length >= 1 && request.projects.length <= 20);
+  const seen = new Set();
+  for (const item of request.projects) {
+    const key = item.project + '#' + item.pr;
+    assert.ok(!seen.has(key), key + ' must be unique');
+    seen.add(key);
+    assert.match(item.head_sha, /^[a-f0-9]{40}$/);
+    assert.match(item.base_sha, /^[a-f0-9]{40}$/);
+  }
+  assert.equal(request.projects.length, 13);
+  for (const expected of [
+    'bcac6f5ade6c6b6b22d8d517294cba503b32d0fe',
+    'ccab697714c803c11f0cf3a5c9ce5274178ce94b',
+    '55479bc485bf182adb197c74970859ff05e09086',
+    '5639b1d44bdd32ed72acec6d2cf2d58927cef084'
+  ]) assert.ok(request.projects.some(item => item.head_sha === expected), expected);
+});
