@@ -663,3 +663,9 @@ test('engineering failures share only sanitized names on the controller PR', () 
   assert.match(job, /--body-file "\\$SUMMARY_FILE"/);
   assert.match(job, /Detailed output was kept only on the temporary runner/);
 });
+
+
+test('README freshness does not demand documentation changes for legal metadata only', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'readme-freshness.yml'), 'utf8');
+  assert.match(source, /LICENSE\\|LICENSE\.\*\\|NOTICE\\|NOTICE\.\*\\|COPYING\\|COPYING\.\*/);
+});
