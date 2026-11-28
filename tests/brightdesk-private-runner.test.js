@@ -560,14 +560,20 @@ test('private maintenance validation uses the Mac runner and all installer jobs 
 });
 
 
-test('Pages installer workflow uses private runners for build, verification and release jobs', () => {
+test('Pages installer workflow uses the approved GitHub-hosted runner matrix', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', '.github', 'workflows', 'desktop-installers.yml'), 'utf8');
+  const testJob = source.split('  test:')[1]?.split('  build:')[0] ?? '';
   const build = source.split('  build:')[1]?.split('  publish:')[0] ?? '';
   const publish = source.split('  publish:')[1] ?? '';
 
-  assert.match(build, /runner: \["self-hosted", "Windows", "X64"\]/);
-  assert.match(build, /runner: \["self-hosted", "macOS", "ARM64"\]/);
-  assert.match(build, /runner: \["self-hosted", "Linux", "X64"\]/);
-  assert.match(publish, /runs-on: \[self-hosted, macOS, ARM64, brightdesk-product-ci\]/);
-  assert.doesNotMatch(source, /ubuntu-latest|windows-latest|macos-latest/);
+  assert.match(testJob, /runs-on: ubuntu-slim/);
+  assert.match(testJob, /node-version: 24\.22\.2/);
+  assert.match(build, /runner: windows-latest/);
+  assert.match(build, /runner: macos-latest/);
+  assert.match(build, /runner: ubuntu-latest/);
+  assert.match(build, /runs-on: \$\{\{ matrix\.runner \}\}/);
+  assert.match(publish, /runs-on: ubuntu-slim/);
+  assert.doesNotMatch(source, /self-hosted|connormolloy12/);
+  assert.match(source, /actions\/checkout@[0-9a-f]{40}/);
+  assert.match(source, /actions\/setup-node@[0-9a-f]{40}/);
 });
